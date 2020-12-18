@@ -1,0 +1,7 @@
+type CorrelationRate {
+    x: Axis,
+    y: Axis,
+    rate: Float,
+    quality: Float,
+    correlation: Float
+}

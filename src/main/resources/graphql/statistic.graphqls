@@ -1,0 +1,10 @@
+type Statistic {
+    testField: String
+    axis: [Axis],
+    meta: Meta,
+    initAxis: InitAxis,
+    overlays: [Overlay],
+#    copyrights: Copyrights,
+#    translations: Translations,
+    correlationRates: [CorrelationRate]
+}

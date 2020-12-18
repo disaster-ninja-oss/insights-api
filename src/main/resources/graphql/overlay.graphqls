@@ -1,0 +1,8 @@
+type Overlay {
+    name: String,
+    description: String,
+    active: Boolean,
+    color: [Color],
+    x: Axis,
+    y: Axis
+}

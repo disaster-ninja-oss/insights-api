@@ -1,0 +1,2 @@
+statistics:
+  path: ${file_path}

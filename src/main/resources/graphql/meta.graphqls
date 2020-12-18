@@ -1,0 +1,4 @@
+type Meta {
+    maxZoom: Int,
+    minZoom: Int
+}
