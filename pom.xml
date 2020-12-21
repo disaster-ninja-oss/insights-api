@@ -17,6 +17,7 @@
 
     <properties>
         <java.version>11</java.version>
+        <project.resource.directory>src/main/resources</project.resource.directory>
     </properties>
 
     <dependencies>
