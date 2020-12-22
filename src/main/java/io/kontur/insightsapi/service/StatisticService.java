@@ -1,16 +1,12 @@
 package io.kontur.insightsapi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kontur.insightsapi.model.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.kontur.insightsapi.model.Statistic;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 @Service
 public class StatisticService {

@@ -3,11 +3,9 @@ package io.kontur.insightsapi.service.resolver;
 import com.coxautodev.graphql.tools.GraphQLQueryResolver;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.service.StatisticService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class StatisticResolver implements GraphQLQueryResolver {
