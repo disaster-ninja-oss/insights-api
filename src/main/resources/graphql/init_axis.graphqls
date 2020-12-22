@@ -1,0 +1,4 @@
+type InitAxis {
+    x: Axis,
+    y: Axis
+}

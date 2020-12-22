@@ -1,0 +1,6 @@
+type Axis {
+    label: String,
+    steps: [Step],
+    quality: Float,
+    quotient: [String]
+}
