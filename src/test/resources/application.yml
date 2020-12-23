@@ -1,2 +1,5 @@
-statistics:
-  path: 'test_file_path'
+spring:
+  datasource:
+    driverClassName: org.testcontainers.jdbc.ContainerDatabaseDriver
+    platform: postgres
+    url: 'test_url'

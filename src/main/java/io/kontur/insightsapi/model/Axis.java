@@ -13,7 +13,7 @@ public class Axis {
 
     private List<Step> steps;
 
-    private Float quality;
+    private Double quality;
 
     private List<String> quotient;
 }

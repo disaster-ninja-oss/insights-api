@@ -1,2 +1,6 @@
-statistics:
-  path: '/opt/kontur/home/insights-api/default_statistics.json'
+spring:
+  datasource:
+    platform: postgres
+    url: 'jdbc:postgresql://localhost:5432/insights_api'
+    username: insights_api_user01
+    password: 'CHANGE_ME_TO_SECURE_PASSWORD'

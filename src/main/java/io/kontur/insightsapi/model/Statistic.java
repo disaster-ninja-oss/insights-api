@@ -9,8 +9,6 @@ import java.util.List;
 @Setter
 public class Statistic {
 
-    private String testField;
-
     private List<Axis> axis;
 
     private Meta meta;

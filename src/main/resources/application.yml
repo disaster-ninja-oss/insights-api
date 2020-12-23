@@ -2,5 +2,16 @@ server:
   servlet:
     contextPath: /insights-api
   port: 8625
+
+spring:
+  datasource:
+    platform: postgres
+    url: 'jdbc:postgresql://localhost:5432/postgres'
+    username: postgres
+    password: password
+    hikari:
+      register-mbeans: true
+      pool-name: HikariPool-1
+
 statistics:
   path: ${file_path}

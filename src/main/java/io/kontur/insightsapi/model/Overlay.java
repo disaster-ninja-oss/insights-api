@@ -15,7 +15,7 @@ public class Overlay {
 
     private Boolean active;
 
-    private List<Color> color;
+    private List<Color> colors;
 
     private Axis x;
 

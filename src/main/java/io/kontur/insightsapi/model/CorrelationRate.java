@@ -11,9 +11,9 @@ public class CorrelationRate {
 
     private Axis y;
 
-    private Float rate;
+    private Double rate;
 
-    private Float quality;
+    private Double quality;
 
-    private Float correlation;
+    private Double correlation;
 }
