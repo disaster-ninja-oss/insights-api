@@ -9,5 +9,5 @@ public class Step {
 
     private String label;
 
-    private Float value;
+    private Double value;
 }
