@@ -1,6 +1,7 @@
 package io.kontur.insightsapi.service.resolver;
 
 import com.coxautodev.graphql.tools.GraphQLQueryResolver;
+import io.kontur.insightsapi.dto.PolygonStatisticRequest;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.service.StatisticService;
 import lombok.RequiredArgsConstructor;
@@ -14,5 +15,9 @@ public class StatisticResolver implements GraphQLQueryResolver {
 
     public Statistic getAllStatistic(Integer defaultParam) {
         return statisticService.getAllStatistic();
+    }
+
+    public Statistic getPolygonStatistic(PolygonStatisticRequest request){
+        return statisticService.getPolygonStatistic(request);
     }
 }

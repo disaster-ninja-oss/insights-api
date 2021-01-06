@@ -18,4 +18,6 @@ public class Statistic {
     private List<Overlay> overlays;
 
     private List<CorrelationRate> correlationRates;
+
+    private List<Indicator> indicators;
 }

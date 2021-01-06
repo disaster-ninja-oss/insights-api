@@ -1,0 +1,7 @@
+input PolygonStatisticRequest {
+    polygon: String,
+    xDenominatorList: [String],
+    yDenominatorList: [String],
+    xNumeratorList: [String],
+    yNumeratorList: [String]
+}

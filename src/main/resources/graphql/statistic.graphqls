@@ -3,7 +3,7 @@ type Statistic {
     meta: Meta,
     initAxis: InitAxis,
     overlays: [Overlay],
+    indicators: [Indicator],
 #    copyrights: Copyrights,
-#    translations: Translations,
     correlationRates: [CorrelationRate]
 }

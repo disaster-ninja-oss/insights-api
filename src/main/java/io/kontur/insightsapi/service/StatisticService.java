@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.service;
 
+import io.kontur.insightsapi.dto.PolygonStatisticRequest;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,5 +14,9 @@ public class StatisticService {
 
     public Statistic getAllStatistic() {
         return statisticRepository.getAllStatistic();
+    }
+
+    public Statistic getPolygonStatistic(PolygonStatisticRequest request){
+        return statisticRepository.getPolygonStatistic(request);
     }
 }
