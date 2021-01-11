@@ -1,7 +1,7 @@
 server:
   servlet:
     contextPath: /insights-api
-  port: 8626
+  port: 8625
 
 spring:
   datasource:

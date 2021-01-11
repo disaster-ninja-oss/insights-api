@@ -123,8 +123,6 @@ public class StatisticRepository {
     public Statistic getPolygonStatistic(PolygonStatisticRequest request) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", request.getPolygon());
-        paramSource.addValue("xDenominator", request.getXDenominatorList());
-        paramSource.addValue("yDenominator", request.getYDenominatorList());
         paramSource.addValue("xNumerator", request.getXNumeratorList());
         paramSource.addValue("yNumerator", request.getYNumeratorList());
         var query =
@@ -143,8 +141,6 @@ public class StatisticRepository {
                         "                    on (y.denominator = y_den_indicator.param_id))" +
                         "    where" +
                         "          (x.numerator != y.numerator or x.denominator != y.denominator)" +
-                        "      and x.denominator in (:xDenominator)" +
-                        "      and y.denominator in (:yDenominator)" +
                         "      and x.numerator in (:xNumerator)" +
                         "      and y.numerator in (:yNumerator)" +
                         "      and x.quality > 0.5" +

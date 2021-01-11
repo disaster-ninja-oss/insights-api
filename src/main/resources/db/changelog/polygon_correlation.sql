@@ -11,7 +11,7 @@ declare
 begin
     execute 'select corr(' || x_num || '/' || x_den || ',' || y_num || '/' || y_den || ') ' ||
            'from stat_h3 where ' || x_den || '!= 0 and ' || y_den || ' != 0 ' ||
-           'and ST_Intersects(geom, ST_Transform(ST_SetSRID(ST_GeomFromText(''' || polygon || '''), 4326), 3857))' into result;
+           'and ST_Intersects(geom, ST_Transform(ST_GeomFromGeoJSON(''' || polygon || '''), 3857))' into result;
     return result;
 end;
 $function$

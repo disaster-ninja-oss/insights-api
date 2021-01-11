@@ -7,12 +7,10 @@ Get all Earth correlations:
 ```
 {allStatistic(defaultParam: 1){fields}}
 ```
-Get correlations in polygon in wkt format and lists of numerators and denominators for x and y axes:
+Get correlations in polygon in GeoJSON (single polygon or feature collection) format and lists of numerators for x and y axes:
 ```
 {polygonStatistic(polygonStatisticRequest:{
-    polygon: "POLYGON((27.048339843749996 54.06905933872848, 27.0867919921875 53.87196345747181, 27.3724365234375 53.67068019347264, 27.9217529296875 53.81362579235235, 27.872314453125 54.081951104880396, 27.4163818359375 54.19779692488548, 27.048339843749996 54.06905933872848))",
-    xDenominatorList: ["count", "area_km2"],
-    yDenominatorList: ["population", "area_km2"],
+    polygon: "{\"type\":\"Polygon\",\"coordinates\":[[[27.2021484375,54.13347814286039],[26.9989013671875,53.82335438174398],[27.79541015625,53.70321053273598],[27.960205078125,53.90110181472825],[28.004150390625,54.081951104880396],[27.6470947265625,54.21707306629117],[27.2021484375,54.13347814286039]]]}",
     xNumeratorList: ["count", "area_km2"],
     yNumeratorList: ["population", "area_km2"]
   }){fields}
