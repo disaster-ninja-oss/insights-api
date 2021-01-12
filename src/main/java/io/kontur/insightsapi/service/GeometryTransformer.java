@@ -21,16 +21,16 @@ public class GeometryTransformer {
         var type = geoJSON.getType();
         switch (type) {
             case ("FeatureCollection"):
-                return transformToGeometryCollection(geoJsonString);
+                return transformToGeometryCollection(geoJSON);
             case ("Feature"):
-                return transformToGeometry(geoJsonString);
+                return transformToGeometry(geoJSON);
             default:
                 return geoJsonString;
         }
     }
 
-    private String transformToGeometryCollection(String geoJsonString) throws JsonProcessingException {
-        var featureCollection = (FeatureCollection) GeoJSONFactory.create(geoJsonString);
+    private String transformToGeometryCollection(GeoJSON geoJSON) throws JsonProcessingException {
+        var featureCollection = (FeatureCollection) geoJSON;
         var geometries = Arrays.stream(featureCollection.getFeatures())
                 .map(Feature::getGeometry)
                 .collect(toList());
@@ -38,8 +38,8 @@ public class GeometryTransformer {
         return objectMapper.writeValueAsString(resultCollection);
     }
 
-    private String transformToGeometry(String geoJsonString) throws JsonProcessingException {
-        var geometry = ((Feature) GeoJSONFactory.create(geoJsonString)).getGeometry();
+    private String transformToGeometry(GeoJSON geoJSON) throws JsonProcessingException {
+        var geometry = ((Feature) geoJSON).getGeometry();
         return objectMapper.writeValueAsString(geometry);
     }
 }
