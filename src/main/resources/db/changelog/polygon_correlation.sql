@@ -1,8 +1,8 @@
 --liquibase formatted sql
---changeset kstsepina:polygon_correlation splitStatements:false stripComments:false endDelimiter:;
-drop function if exists correlate_bivariate_axes(text, text, text, text, text);
+--changeset insights-api:polygon_correlation splitStatements:false stripComments:false endDelimiter:; runOnChange:true
+drop function if exists correlate_bivariate_axes(json, text, text, text, text);
 
-create function correlate_bivariate_axes(polygon text, x_num text, x_den text, y_num text, y_den text)
+create function correlate_bivariate_axes(polygon json, x_num text, x_den text, y_num text, y_den text)
     returns double precision
 as
 $function$

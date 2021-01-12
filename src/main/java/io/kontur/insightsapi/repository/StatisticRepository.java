@@ -128,7 +128,7 @@ public class StatisticRepository {
         var query =
                 "with bivariate_axis_correlation_polygon as (" +
                         "       select x.numerator as x_num, x.denominator as x_den, y.numerator as y_num, y.denominator as y_den," +
-                        "       correlate_bivariate_axes(:polygon, x.numerator, x.denominator, y.numerator, y.denominator) as correlation," +
+                        "       correlate_bivariate_axes(:polygon::json, x.numerator, x.denominator, y.numerator, y.denominator) as correlation," +
                         "       1 - ((1 - x.quality) * (1 - y.quality)) as quality" +
                         "       from" +
                         "        (bivariate_axis x" +
