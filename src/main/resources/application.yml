@@ -12,6 +12,5 @@ spring:
     hikari:
       register-mbeans: true
       pool-name: HikariPool-1
-
-statistics:
-  path: ${file_path}
+  liquibase:
+    change-log: classpath:db/changelog/master-changelog.xml

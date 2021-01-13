@@ -3,3 +3,5 @@ spring:
     driverClassName: org.testcontainers.jdbc.ContainerDatabaseDriver
     platform: postgres
     url: 'test_url'
+  liquibase:
+    enabled: false
