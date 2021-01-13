@@ -14,4 +14,6 @@ public class Indicator {
     private String label;
 
     private List<String> copyrights;
+
+    private List<List<String>> direction;
 }

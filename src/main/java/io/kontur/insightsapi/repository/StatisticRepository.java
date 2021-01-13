@@ -22,14 +22,23 @@ public class StatisticRepository {
     public Statistic getAllStatistic() {
         var query = "select" +
                 "        jsonb_build_object('axis', ba.axis," +
-                "                           'meta', jsonb_build_object('maxZoom', 8," +
-                "                                                      'minZoom', 0)," +
+                "                           'meta', jsonb_build_object('max_zoom', 8," +
+                "                                                      'min_zoom', 0)," +
                 "                           'indicators', (" +
                 "                               select jsonb_agg(jsonb_build_object('name', param_id," +
                 "                                                                   'label', param_label," +
+                "                                                                   'direction', direction," +
                 "                                                                   'copyrights', copyrights))" +
                 "                               from bivariate_indicators" +
                 "                           )," +
+                "                           'colors', jsonb_build_object(" +
+                "                               'fallback', '#ccc'," +
+                "                               'combinations', (" +
+                "                                   select jsonb_agg(jsonb_build_object('color', color," +
+                "                                                                                   'color_comment', color_comment," +
+                "                                                                                   'corner', corner))" +
+                "                                   from bivariate_colors)" +
+                "                            ),"+
                 "                           'correlationRates', (" +
                 "                               select" +
                 "                                   jsonb_agg(jsonb_build_object(" +
@@ -151,14 +160,23 @@ public class StatisticRepository {
                         ")" +
                         "select" +
                         "        jsonb_build_object('axis', ba.axis," +
-                        "                           'meta', jsonb_build_object('maxZoom', 8," +
-                        "                                                      'minZoom', 0)," +
+                        "                           'meta', jsonb_build_object('max_zoom', 8," +
+                        "                                                      'min_zoom', 0)," +
                         "                           'indicators', (" +
                         "                               select jsonb_agg(jsonb_build_object('name', param_id," +
                         "                                                                   'label', param_label," +
+                        "                                                                   'direction', direction," +
                         "                                                                   'copyrights', copyrights))" +
                         "                               from bivariate_indicators" +
                         "                           )," +
+                        "                           'colors', jsonb_build_object(" +
+                        "                               'fallback', '#ccc'," +
+                        "                               'combinations', (" +
+                        "                                   select jsonb_agg(jsonb_build_object('color', color," +
+                        "                                                                                   'color_comment', color_comment," +
+                        "                                                                                   'corner', corner))" +
+                        "                                   from bivariate_colors)" +
+                        "                            ),"+
                         "                           'correlationRates', (" +
                         "                               select" +
                         "                                   jsonb_agg(jsonb_build_object(" +

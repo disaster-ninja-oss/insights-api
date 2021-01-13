@@ -3,11 +3,13 @@ package io.kontur.insightsapi.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class Color {
 
-    private String id;
+    private String fallback;
 
-    private String color;
+    private List<Combination> combinations;
 }

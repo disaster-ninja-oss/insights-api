@@ -1,0 +1,5 @@
+type Combination {
+    color: String,
+    corner: [String],
+    color_comment: String
+}

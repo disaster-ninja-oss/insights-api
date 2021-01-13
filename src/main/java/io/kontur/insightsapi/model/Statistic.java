@@ -20,4 +20,6 @@ public class Statistic {
     private List<CorrelationRate> correlationRates;
 
     private List<Indicator> indicators;
+
+    private Color colors;
 }
