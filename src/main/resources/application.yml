@@ -14,3 +14,7 @@ spring:
       pool-name: HikariPool-1
   liquibase:
     change-log: classpath:db/changelog/master-changelog.xml
+
+graphql:
+  servlet:
+    corsEnabled: false
