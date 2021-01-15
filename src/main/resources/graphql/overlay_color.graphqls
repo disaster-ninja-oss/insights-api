@@ -1,0 +1,4 @@
+type OverlayColor {
+    id: String,
+    color: String
+}

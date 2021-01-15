@@ -2,7 +2,7 @@ type Overlay {
     name: String,
     description: String,
     active: Boolean,
-    colors: [Color],
+    colors: [OverlayColor],
     x: Axis,
     y: Axis
 }

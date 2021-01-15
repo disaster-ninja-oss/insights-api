@@ -1,7 +1,7 @@
 package io.kontur.insightsapi.service.resolver;
 
-import com.coxautodev.graphql.tools.GraphQLQueryResolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import graphql.kickstart.tools.GraphQLQueryResolver;
 import io.kontur.insightsapi.dto.PolygonStatisticRequest;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.service.StatisticService;

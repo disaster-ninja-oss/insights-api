@@ -1,5 +1,6 @@
 type Indicator {
     name: String,
     label: String,
-    copyrights: [String]
+    copyrights: [String],
+    direction: [[String]]
 }

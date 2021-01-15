@@ -1,4 +1,4 @@
 type Color {
-    id: String,
-    color: String
+    fallback: String,
+    combinations: [Combination]
 }
