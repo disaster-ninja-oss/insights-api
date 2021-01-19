@@ -1,8 +1,8 @@
 package io.kontur.insightsapi.service.resolver;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import graphql.kickstart.tools.GraphQLQueryResolver;
 import io.kontur.insightsapi.dto.PolygonStatisticRequest;
+import io.kontur.insightsapi.model.PolygonStatistic;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.service.StatisticService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ public class StatisticResolver implements GraphQLQueryResolver {
         return statisticService.getAllStatistic();
     }
 
-    public Statistic getPolygonStatistic(PolygonStatisticRequest request) throws JsonProcessingException {
-        return statisticService.getPolygonStatistic(request);
+    public PolygonStatistic getPolygonStatistic(PolygonStatisticRequest request) {
+        return statisticService.getPolygonStatistic();
     }
 }

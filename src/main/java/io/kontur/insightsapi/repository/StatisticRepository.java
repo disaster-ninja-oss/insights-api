@@ -1,7 +1,13 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.PolygonStatisticRequest;
+import io.kontur.insightsapi.mapper.AxisRowMapper;
+import io.kontur.insightsapi.mapper.PolygonCorrelationRateRowMapper;
+import io.kontur.insightsapi.mapper.PolygonStatisticRowMapper;
 import io.kontur.insightsapi.mapper.StatisticRowMapper;
+import io.kontur.insightsapi.model.Axis;
+import io.kontur.insightsapi.model.PolygonCorrelationRate;
+import io.kontur.insightsapi.model.PolygonStatistic;
 import io.kontur.insightsapi.model.Statistic;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -10,18 +16,29 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class StatisticRepository {
 
     private final JdbcTemplate jdbcTemplate;
+
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
     private final StatisticRowMapper statisticRowMapper;
+
+    private final PolygonStatisticRowMapper polygonStatisticRowMapper;
+
+    private final AxisRowMapper axisRowMapper;
+
+    private final PolygonCorrelationRateRowMapper polygonCorrelationRateRowMapper;
 
     @Transactional(readOnly = true)
     public Statistic getAllStatistic() {
         var query = "select" +
-                "        jsonb_build_object('axis', ba.axis," +
+                "        jsonb_build_object(" +
+                "                           'axis', ba.axis," +
                 "                           'meta', jsonb_build_object('max_zoom', 8," +
                 "                                                      'min_zoom', 0)," +
                 "                           'indicators', (" +
@@ -38,7 +55,7 @@ public class StatisticRepository {
                 "                                                                                   'color_comment', color_comment," +
                 "                                                                                   'corner', corner))" +
                 "                                   from bivariate_colors)" +
-                "                            ),"+
+                "                            )," +
                 "                           'correlationRates', (" +
                 "                               select" +
                 "                                   jsonb_agg(jsonb_build_object(" +
@@ -129,37 +146,9 @@ public class StatisticRepository {
     }
 
     @Transactional(readOnly = true)
-    public Statistic getPolygonStatistic(PolygonStatisticRequest request) {
-        var paramSource = new MapSqlParameterSource();
-        paramSource.addValue("polygon", request.getPolygon());
-        paramSource.addValue("xNumerator", request.getXNumeratorList());
-        paramSource.addValue("yNumerator", request.getYNumeratorList());
-        var query =
-                "with bivariate_axis_correlation_polygon as (" +
-                        "       select x.numerator as x_num, x.denominator as x_den, y.numerator as y_num, y.denominator as y_den," +
-                        "       correlate_bivariate_axes(:polygon::json, x.numerator, x.denominator, y.numerator, y.denominator) as correlation," +
-                        "       1 - ((1 - x.quality) * (1 - y.quality)) as quality" +
-                        "       from" +
-                        "        (bivariate_axis x" +
-                        "            join bivariate_indicators x_den_indicator" +
-                        "                    on (x.denominator = x_den_indicator.param_id)" +
-                        "            join bivariate_indicators x_num_indicator" +
-                        "                    on (x.numerator = x_num_indicator.param_id))," +
-                        "            (bivariate_axis y" +
-                        "                join bivariate_indicators y_den_indicator" +
-                        "                    on (y.denominator = y_den_indicator.param_id))" +
-                        "    where" +
-                        "          (x.numerator != y.numerator or x.denominator != y.denominator)" +
-                        "      and x.numerator in (:xNumerator)" +
-                        "      and y.numerator in (:yNumerator)" +
-                        "      and x.quality > 0.5" +
-                        "      and y.quality > 0.5" +
-                        "      and x_den_indicator.is_base" +
-                        "      and y_den_indicator.is_base" +
-                        "      and not x_num_indicator.is_base" +
-                        ")" +
-                        "select" +
-                        "        jsonb_build_object('axis', ba.axis," +
+    public PolygonStatistic getPolygonStatistic() {
+        var query = "select " +
+                        "        jsonb_build_object(" +
                         "                           'meta', jsonb_build_object('max_zoom', 8," +
                         "                                                      'min_zoom', 0)," +
                         "                           'indicators', (" +
@@ -176,25 +165,7 @@ public class StatisticRepository {
                         "                                                                                   'color_comment', color_comment," +
                         "                                                                                   'corner', corner))" +
                         "                                   from bivariate_colors)" +
-                        "                            ),"+
-                        "                           'correlationRates', (" +
-                        "                               select" +
-                        "                                   jsonb_agg(jsonb_build_object(" +
-                        "                                                 'x', jsonb_build_object('label', xcopy.param_label," +
-                        "                                                                         'quotient'," +
-                        "                                                                         jsonb_build_array(x_num, x_den))," +
-                        "                                                 'y', jsonb_build_object('label', ycopy.param_label," +
-                        "                                                                         'quotient'," +
-                        "                                                                         jsonb_build_array(y_num, y_den))," +
-                        "                                                 'rate', correlation," +
-                        "                                                 'correlation', correlation," +
-                        "                                                 'quality', quality" +
-                        "                                                 )" +
-                        "                                             order by abs(correlation) * quality nulls last, abs(correlation) desc)" +
-                        "                               from" +
-                        "                                   bivariate_axis_correlation_polygon, bivariate_indicators xcopy, bivariate_indicators ycopy" +
-                        "                               where xcopy.param_id = x_num and ycopy.param_id = y_num" +
-                        "                           )," +
+                        "                            )," +
                         "                           'initAxis'," +
                         "                           jsonb_build_object('x', jsonb_build_object('label', x.label, 'quotient'," +
                         "                                                                      jsonb_build_array(x.numerator, x.denominator)," +
@@ -263,6 +234,92 @@ public class StatisticRepository {
                         "      and x.denominator = 'area_km2'" +
                         "      and y.numerator = 'view_count'" +
                         "      and y.denominator = 'area_km2'";
-        return namedParameterJdbcTemplate.queryForObject(query, paramSource, statisticRowMapper);
+        return jdbcTemplate.queryForObject(query, polygonStatisticRowMapper);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Axis> getAxisStatistic() {
+        var query = "select" +
+                "            jsonb_build_object('label', label, 'quotient', jsonb_build_array(numerator, denominator), 'quality'," +
+                "                               quality," +
+                "                               'steps', jsonb_build_array(" +
+                "                                       jsonb_build_object('value', min, 'label', min_label)," +
+                "                                       jsonb_build_object('value', p25, 'label', p25_label)," +
+                "                                       jsonb_build_object('value', p75, 'label', p75_label)," +
+                "                                       jsonb_build_object('value', max, 'label', max_label)))" +
+                "   from bivariate_axis";
+        return jdbcTemplate.query(query, axisRowMapper);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PolygonCorrelationRate> getPolygonCorrelationRateStatistics(PolygonStatisticRequest request) {
+        var paramSource = new MapSqlParameterSource();
+        paramSource.addValue("polygon", request.getPolygon());
+        paramSource.addValue("xNumerator", request.getXNumeratorList());
+        paramSource.addValue("yNumerator", request.getYNumeratorList());
+        var query = "with bivariate_axis_correlation_polygon as (" +
+                "    select x.numerator                             as x_num," +
+                "           x.denominator                           as x_den," +
+                "           y.numerator                             as y_num," +
+                "           y.denominator                           as y_den," +
+                "           correlate_bivariate_axes(:polygon::json, x.numerator, x.denominator, y.numerator," +
+                "                                    y.denominator) as correlation," +
+                "           1 - ((1 - x.quality) * (1 - y.quality)) as quality" +
+                "    from (bivariate_axis x" +
+                "             join bivariate_indicators x_den_indicator" +
+                "                  on (x.denominator = x_den_indicator.param_id)" +
+                "             join bivariate_indicators x_num_indicator" +
+                "                  on (x.numerator = x_num_indicator.param_id))," +
+                "         (bivariate_axis y" +
+                "             join bivariate_indicators y_den_indicator" +
+                "                  on (y.denominator = y_den_indicator.param_id))" +
+                "    where (x.numerator != y.numerator or x.denominator != y.denominator)" +
+                "      and x.numerator in (:xNumerator)" +
+                "      and y.numerator in (:yNumerator)" +
+                "      and x.quality > 0.5" +
+                "      and y.quality > 0.5" +
+                "      and x_den_indicator.is_base" +
+                "      and y_den_indicator.is_base" +
+                "      and not x_num_indicator.is_base" +
+                ") " +
+                "select jsonb_build_object(" +
+                "                         'x', jsonb_build_object('label', xcopy.param_label," +
+                "                                                  'quotient'," +
+                "                                                  jsonb_build_array(x_num, x_den))," +
+                "                         'y', jsonb_build_object('label', ycopy.param_label," +
+                "                                                   'quotient'," +
+                "                                                   jsonb_build_array(y_num, y_den))," +
+                "                         'rate', correlation," +
+                "                         'correlation', correlation," +
+                "                         'quality', quality" +
+                "                     )::text " +
+                "from bivariate_axis_correlation_polygon, " +
+                "     bivariate_indicators xcopy, " +
+                "     bivariate_indicators ycopy " +
+                "where xcopy.param_id = x_num " +
+                "  and ycopy.param_id = y_num " +
+                "order by abs(correlation) * quality nulls last, abs(correlation) desc";
+        return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PolygonCorrelationRate> getAllCorrelationRateStatistics() {
+        var query = "select" +
+                "    jsonb_build_object(" +
+                "                      'x', jsonb_build_object('label', xcopy.param_label," +
+                "                                              'quotient'," +
+                "                                              jsonb_build_array(x_num, x_den))," +
+                "                      'y', jsonb_build_object('label', ycopy.param_label," +
+                "                                              'quotient'," +
+                "                                              jsonb_build_array(y_num, y_den))," +
+                "                      'rate', correlation," +
+                "                      'correlation', correlation," +
+                "                      'quality', quality" +
+                "                  ) " +
+                "from" +
+                "    bivariate_axis_correlation, bivariate_indicators xcopy, bivariate_indicators ycopy" +
+                "    where xcopy.param_id = x_num and ycopy.param_id = y_num" +
+                "    order by abs(correlation) * quality nulls last, abs(correlation) desc";
+        return jdbcTemplate.query(query, polygonCorrelationRateRowMapper);
     }
 }
