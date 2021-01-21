@@ -1,13 +1,15 @@
 package io.kontur.insightsapi.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.wololo.geojson.GeoJSON;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HumanitarianImpactDto {
 
     private BigDecimal population;

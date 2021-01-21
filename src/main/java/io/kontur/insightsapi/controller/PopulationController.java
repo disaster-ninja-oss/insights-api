@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ import org.wololo.geojson.FeatureCollection;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -105,42 +107,29 @@ public class PopulationController {
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @PostMapping("/several")
     @Async
-    public CompletableFuture<SeveralPolygonsCalculationOutputDto> calculateSeveralPopulation(@Parameter(description = "The polygons in WKT format to calculate population statistic.")
-                                                        @RequestBody List<SeveralPolygonsCalculationInputDto> data) {
+    public CompletableFuture<List<SeveralPolygonsCalculationOutputDto>> calculateSeveralPopulation(@Parameter(description = "The polygons in WKT format to calculate population statistic.")
+                                                                                                   @RequestBody List<SeveralPolygonsCalculationInputDto> data) {
         if (CollectionUtils.isEmpty(data)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty input geometry");
         }
         Date start = new Date();
         logger.debug("Start time: {}", start.toString());
-        return null;
 
-//        CompletableFuture<SeveralPolygonsCalculationOutputDto> result = new CompletableFuture<>();
-//        data.stream().map(dto->{})
-
-//        Flux.fromIterable(data)
-//                .parallel()
-//                .runOn(Schedulers.boundedElastic())
-//                .map(dto -> {
-//                    try {
-//                        reader.read(dto.getGeometry());
-//                    } catch (ParseException e) {
-//                        throw new WebApplicationException("Bad input geometry", 400);
-//                    }
-//                    SeveralPolygonsCalculationOutputDto outputDTO = new SeveralPolygonsCalculationOutputDto();
-//                    outputDTO.setId(dto.getId());
-//                    outputDTO.setStatistic(calculatePopulation(dto.getGeometry()));
-//                    return outputDTO;
-//                })
-//                .sequential()
-//                .collectList()
-//                .subscribe(r -> {
-//                    Date end = new Date();
-//                    logger.debug("End time: {}. Duration: {} ms", end.toString(), (end.getTime() - start.getTime()));
-//                    response.resume(r);
-//                }, e -> {
-//                    logger.error("Error: {}", e.getMessage());
-//                    response.resume(e);
-//                });
+        List<SeveralPolygonsCalculationOutputDto> result = new ArrayList<>();
+        data.forEach(dto -> {
+            try {
+                reader.read(dto.getGeometry());
+            } catch (ParseException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty input geometry");
+            }
+            SeveralPolygonsCalculationOutputDto outputDTO = new SeveralPolygonsCalculationOutputDto();
+            outputDTO.setId(dto.getId());
+            outputDTO.setStatistic(populationService.calculatePopulation(dto.getGeometry()));
+            result.add(outputDTO);
+        });
+        Date end = new Date();
+        logger.debug("End time: {}. Duration: {} ms", end.toString(), (end.getTime() - start.getTime()));
+        return CompletableFuture.completedFuture(result);
     }
 
 }

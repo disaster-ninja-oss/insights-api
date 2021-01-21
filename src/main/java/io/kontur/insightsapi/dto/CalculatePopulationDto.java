@@ -1,12 +1,14 @@
 package io.kontur.insightsapi.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CalculatePopulationDto {
 
     private BigDecimal population;

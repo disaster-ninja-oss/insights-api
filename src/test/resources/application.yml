@@ -2,6 +2,9 @@ spring:
   datasource:
     driverClassName: org.testcontainers.jdbc.ContainerDatabaseDriver
     platform: postgres
-    url: 'test_url'
+    url: jdbc:tc:postgis:13-master:///
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   liquibase:
-    enabled: false
+    enabled: true
+    change-log: classpath:db/changelog/test-master-changelog.xml

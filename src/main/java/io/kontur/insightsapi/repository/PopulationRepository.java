@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.wololo.geojson.GeoJSONFactory;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,7 +26,12 @@ public class PopulationRepository {
         var query = "select type, population, urban, gdp" +
                 "        from calculate_population_and_gdp_for_wkt(:geometry)";
 
-        return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(query, paramSource, CalculatePopulationDto.class)));
+        return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
+                CalculatePopulationDto.builder()
+                        .population(rs.getBigDecimal("population"))
+                        .gdp(rs.getBigDecimal("gdp"))
+                        .type(rs.getString("type"))
+                        .urban(rs.getBigDecimal("urban")).build())));
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +93,15 @@ public class PopulationRepository {
                 "        from stat_in_area s," +
                 "            total t" +
                 "        where sum_pop <= t.population * 0.68" +
-                "        group by t.population, t.area;";
-        return namedParameterJdbcTemplate.queryForList(query, paramSource, HumanitarianImpactDto.class);
+                "        group by t.population, t.area";
+        return namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) ->
+                HumanitarianImpactDto.builder()
+                        .areaKm2(rs.getBigDecimal("areaKm2"))
+                        .population(rs.getBigDecimal("population"))
+                        .totalPopulation(rs.getBigDecimal("totalPopulation"))
+                        .geometry(GeoJSONFactory.create(rs.getString("geometry")))
+                        .name(rs.getString("name"))
+                        .percentage(rs.getString("percentage"))
+                        .totalAreaKm2(rs.getBigDecimal("totalAreaKm2")).build());
     }
 }

@@ -14,7 +14,7 @@ create function calculate_population_and_gdp_for_wkt(wkt text)
 as
 '
     begin
-        with subdivide_geometry as (
+        return query with subdivide_geometry as (
             select ST_Subdivide(ST_CollectionExtract(
                                         ST_MakeValid(ST_Transform(ST_SetSRID(ST_GeomFromText(wkt), 4326), 3857)),
                                         3), 150) as geom
@@ -33,7 +33,7 @@ as
                  where r.zoom = 8
                    and r.population > 0
              )
-        select sum(a.population * a.area)                 as population,
+         select sum(a.population * a.area)                 as population,
                sum(a.population * a.residential * a.area) as urban,
                sum(a.gdp * a.area)                        as gdp,
                ''population''                             as type
