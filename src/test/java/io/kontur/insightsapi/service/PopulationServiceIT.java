@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.service;
 
-import io.kontur.insightsapi.InsightsApiTestContainer;
 import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -8,9 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -18,13 +14,9 @@ import java.util.Optional;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
-class PopulationServiceITest {
+class PopulationServiceIT {
 
     private static final String POPULATION_QUERY = "POLYGON((0 0,0 5,5 5,5 0,0 0))";
-
-    @Container
-    public static PostgreSQLContainer postgreSQLContainer = InsightsApiTestContainer.getInstance();
 
     @Autowired
     private PopulationService populationService;
