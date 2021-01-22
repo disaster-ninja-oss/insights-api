@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class Statistic extends BaseStatistic {
+public class PolygonStatistic extends BaseStatistic {
 
-    private List<CorrelationRate> correlationRates;
+    private List<PolygonCorrelationRate> correlationRates;
 }
