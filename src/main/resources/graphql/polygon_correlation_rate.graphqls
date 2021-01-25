@@ -1,0 +1,7 @@
+type PolygonCorrelationRate {
+    x: Axis,
+    y: Axis,
+    rate: Float,
+    quality: Float,
+    correlation: Float
+}
