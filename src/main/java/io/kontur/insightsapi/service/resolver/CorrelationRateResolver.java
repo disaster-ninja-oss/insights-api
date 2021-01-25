@@ -25,11 +25,16 @@ public class CorrelationRateResolver implements GraphQLResolver<PolygonStatistic
     public List<PolygonCorrelationRate> getCorrelationRates(PolygonStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         Map<String, Object> arguments = (Map<String, Object>) environment.getExecutionStepInfo()
                 .getParent().getArguments().get("polygonStatisticRequest");
-        if (!arguments.keySet().containsAll(List.of("polygon", "xNumeratorList", "yNumeratorList"))) {
+        if (!arguments.containsKey("polygon")) {
             return statisticRepository.getAllCorrelationRateStatistics();
         }
         var transformedGeometry = geometryTransformer.transform((String) arguments.get("polygon"));
-        return statisticRepository.getPolygonCorrelationRateStatistics(PolygonStatisticRequest.builder()
+        if (!arguments.keySet().containsAll(List.of("xNumeratorList", "yNumeratorList"))) {
+            return statisticRepository.getPolygonCorrelationRateStatistics(PolygonStatisticRequest.builder()
+                    .polygon(transformedGeometry)
+                    .build());
+        }
+        return statisticRepository.getPolygonNumeratorsCorrelationRateStatistics(PolygonStatisticRequest.builder()
                 .polygon(transformedGeometry)
                 .xNumeratorList((List<String>) arguments.get("xNumeratorList"))
                 .yNumeratorList((List<String>) arguments.get("yNumeratorList"))
