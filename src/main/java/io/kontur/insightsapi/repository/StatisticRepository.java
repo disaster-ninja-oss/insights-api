@@ -410,8 +410,9 @@ public class StatisticRepository {
     public List<Double> getPolygonCorrelationRateStatisticsBatch(List<NumeratorsDenominatorsDto> dtoList, String polygon) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", polygon);
-        var requests = dtoList.stream().map(dto -> createCorrelationQueryString(dto.getXNumerator(), dto.getXDenominator(),
-                dto.getYNumerator(), dto.getYDenominator())).collect(Collectors.toList());
+        var requests = dtoList.stream()
+                .map(dto -> createCorrelationQueryString(dto.getXNumerator(), dto.getXDenominator(),
+                        dto.getYNumerator(), dto.getYDenominator())).collect(Collectors.toList());
         var query = "select " + StringUtils.join(requests, ",") +
                 " from stat_h3 where" +
                 "    ST_Intersects(geom, ST_Transform(ST_GeomFromGeoJSON(:polygon::json), 3857))";

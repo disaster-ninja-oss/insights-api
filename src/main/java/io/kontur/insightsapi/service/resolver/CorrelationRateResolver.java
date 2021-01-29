@@ -35,22 +35,7 @@ public class CorrelationRateResolver implements GraphQLResolver<PolygonStatistic
         if (!arguments.keySet().containsAll(List.of("xNumeratorList", "yNumeratorList"))) {
             List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
             return Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
-                    .map(sourceDtoList -> {
-                        List<PolygonCorrelationRate> result = new ArrayList<>();
-                        List<Double> correlations = statisticRepository.getPolygonCorrelationRateStatisticsBatch(sourceDtoList, transformedGeometry);
-                        for (int i = 0; i < sourceDtoList.size(); i++) {
-                            PolygonCorrelationRate polygonCorrelationRate = new PolygonCorrelationRate();
-                            polygonCorrelationRate.setX(createAxis(sourceDtoList.get(i).getXLabel(),
-                                    sourceDtoList.get(i).getXNumerator(), sourceDtoList.get(i).getXDenominator()));
-                            polygonCorrelationRate.setY(createAxis(sourceDtoList.get(i).getYLabel(),
-                                    sourceDtoList.get(i).getYNumerator(), sourceDtoList.get(i).getYDenominator()));
-                            polygonCorrelationRate.setQuality(sourceDtoList.get(i).getQuality());
-                            polygonCorrelationRate.setCorrelation(correlations.get(i));
-                            polygonCorrelationRate.setRate(correlations.get(i));
-                            result.add(polygonCorrelationRate);
-                        }
-                        return result;
-                    })
+                    .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, transformedGeometry))
                     .flatMap(Collection::stream)
                     .sorted(correlationRateComparator())
                     .collect(Collectors.toList());
@@ -62,15 +47,30 @@ public class CorrelationRateResolver implements GraphQLResolver<PolygonStatistic
                 .build());
     }
 
-    private Axis createAxis(String label, String num, String den) {
-        Axis axis = new Axis();
-        axis.setLabel(label);
-        axis.setQuotient(List.of(num, den));
-        return axis;
-    }
-
     private Comparator<PolygonCorrelationRate> correlationRateComparator() {
         return Comparator.nullsLast(Comparator.<PolygonCorrelationRate, Double>comparing(c -> Math.abs(c.getCorrelation()) * c.getQuality()))
                 .thenComparing(Comparator.<PolygonCorrelationRate, Double>comparing(c -> Math.abs(c.getCorrelation())).reversed());
+    }
+
+    private List<PolygonCorrelationRate> calculatePolygonCorrelations(List<NumeratorsDenominatorsDto> sourceDtoList,
+                                                                      String transformedGeometry) {
+        List<PolygonCorrelationRate> result = new ArrayList<>();
+        List<Double> correlations = statisticRepository.getPolygonCorrelationRateStatisticsBatch(sourceDtoList, transformedGeometry);
+        for (int i = 0; i < sourceDtoList.size(); i++) {
+            PolygonCorrelationRate polygonCorrelationRate = new PolygonCorrelationRate();
+            polygonCorrelationRate.setX(Axis.builder()
+                    .label(sourceDtoList.get(i).getXLabel())
+                    .quotient(List.of(sourceDtoList.get(i).getXNumerator(), sourceDtoList.get(i).getXDenominator()))
+                    .build());
+            polygonCorrelationRate.setY(Axis.builder()
+                    .label(sourceDtoList.get(i).getYLabel())
+                    .quotient(List.of(sourceDtoList.get(i).getYNumerator(), sourceDtoList.get(i).getYDenominator()))
+                    .build());
+            polygonCorrelationRate.setQuality(sourceDtoList.get(i).getQuality());
+            polygonCorrelationRate.setCorrelation(correlations.get(i));
+            polygonCorrelationRate.setRate(correlations.get(i));
+            result.add(polygonCorrelationRate);
+        }
+        return result;
     }
 }

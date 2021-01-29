@@ -1,12 +1,14 @@
 package io.kontur.insightsapi.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Axis {
 
     private String label;
