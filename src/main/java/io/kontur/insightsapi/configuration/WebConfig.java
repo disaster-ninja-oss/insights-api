@@ -27,8 +27,8 @@ public class WebConfig {
                 "Population API",
                 "HTTP API for population provided by Kontur",
                 "0.1",
-                "http://swagger.io/terms/",
-                new Contact("Kontur", "http://kontur.io", "support@kontur.io"),
-                "License of API", "API license URL", Collections.emptyList());
+                "https://www.kontur.io/about/#contact",
+                new Contact("Kontur", "http://kontur.io", "hello@kontur.io"),
+                "License of API", "https://www.kontur.io/about/#contact", Collections.emptyList());
     }
 }

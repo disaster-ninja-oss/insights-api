@@ -12,7 +12,7 @@ spring:
     hikari:
       register-mbeans: true
       pool-name: HikariPool-1
-      connection-timeout: 300000
+      connection-timeout: 60000
       validation-timeout: 1000
       maximum-pool-size: 10
   jdbc:
