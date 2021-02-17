@@ -34,15 +34,11 @@ public class CorrelationRateResolver implements GraphQLResolver<PolygonStatistic
         var transformedGeometry = geometryTransformer.transform((String) arguments.get("polygon"));
         if (!arguments.keySet().containsAll(List.of("xNumeratorList", "yNumeratorList"))) {
             List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
-            try {
-                return Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
-                        .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, transformedGeometry))
-                        .flatMap(Collection::stream)
-                        .sorted(correlationRateComparator())
-                        .collect(Collectors.toList());
-            } finally {
-                statisticRepository.jitEnable();
-            }
+            return Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
+                    .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, transformedGeometry))
+                    .flatMap(Collection::stream)
+                    .sorted(correlationRateComparator())
+                    .collect(Collectors.toList());
         }
         return statisticRepository.getPolygonNumeratorsCorrelationRateStatistics(PolygonStatisticRequest.builder()
                 .polygon(transformedGeometry)

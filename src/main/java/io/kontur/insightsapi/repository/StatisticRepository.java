@@ -8,7 +8,6 @@ import io.kontur.insightsapi.model.PolygonCorrelationRate;
 import io.kontur.insightsapi.model.PolygonStatistic;
 import io.kontur.insightsapi.model.Statistic;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -22,7 +21,6 @@ import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
-@Slf4j
 public class StatisticRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -442,11 +440,7 @@ public class StatisticRepository {
         return "corr(" + xNum + " / " + xDen + ", " + yNum + " / " + yDen + ") filter (where " + xDen + " != 0 and " + yDen + " != 0)";
     }
 
-    public void jitEnable() {
-        jdbcTemplate.execute("set jit = on");
-    }
-
     public void jitDisable() {
-        jdbcTemplate.execute("set jit = off");
+        jdbcTemplate.execute("set local jit = off");
     }
 }
