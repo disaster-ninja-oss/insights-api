@@ -423,7 +423,7 @@ public class StatisticRepository {
                 "                   ST_CollectionExtract(" +
                 "                           ST_MakeValid(ST_Transform(" +
                 "                                   ST_WrapX(ST_WrapX(ST_GeomFromGeoJSON(:polygon::json), -180, 360), 180, -360)," +
-                "                                   3857))), 150) as geom), " +
+                "                                   3857)), 3), 150) as geom), " +
                 "     stat_area as (" +
                 "         select distinct " + StringUtils.join(distinctFieldsRequests, ",") +
                 "         from stat_h3 sh3, subdivided_polygon sp where" +
