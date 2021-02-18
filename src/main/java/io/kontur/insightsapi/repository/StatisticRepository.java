@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
@@ -413,13 +414,33 @@ public class StatisticRepository {
         var requests = dtoList.stream()
                 .map(dto -> createCorrelationQueryString(dto.getXNumerator(), dto.getXDenominator(),
                         dto.getYNumerator(), dto.getYDenominator())).collect(Collectors.toList());
-        var query = "select " + StringUtils.join(requests, ",") +
-                " from stat_h3 where" +
-                "    ST_Intersects(geom, ST_Transform(ST_GeomFromGeoJSON(:polygon::json), 3857))";
+        var distinctFieldsRequests = dtoList.stream()
+                .flatMap(dto -> Stream.of(dto.getXNumerator(), dto.getYNumerator(), dto.getXDenominator(), dto.getYDenominator()))
+                .distinct()
+                .collect(Collectors.toList());
+        var query = " with subdivided_polygon as (" +
+                "    select ST_Subdivide(" +
+                "                   ST_CollectionExtract(" +
+                "                           ST_MakeValid(ST_Transform(" +
+                "                                   ST_WrapX(ST_WrapX(ST_GeomFromGeoJSON(:polygon::json), -180, 360), 180, -360)," +
+                "                                   3857)), 3), 150) as geom), " +
+                "     stat_area as (" +
+                "         select distinct h3, " + StringUtils.join(distinctFieldsRequests, ",") +
+                "         from stat_h3 sh3, subdivided_polygon sp where" +
+                "             ST_Intersects(sh3.geom, sp.geom)" +
+                "     )" +
+                " select " + StringUtils.join(requests, ",") +
+                "  from stat_area";
+        //it is important to disable jit in same stream with main request
+        jitDisable();
         return namedParameterJdbcTemplate.queryForObject(query, paramSource, correlationRateRowMapper);
     }
 
     private String createCorrelationQueryString(String xNum, String xDen, String yNum, String yDen) {
         return "corr(" + xNum + " / " + xDen + ", " + yNum + " / " + yDen + ") filter (where " + xDen + " != 0 and " + yDen + " != 0)";
+    }
+
+    public void jitDisable() {
+        jdbcTemplate.execute("set local jit = off");
     }
 }
