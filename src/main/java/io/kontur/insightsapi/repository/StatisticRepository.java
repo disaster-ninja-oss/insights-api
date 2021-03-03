@@ -72,7 +72,7 @@ public class StatisticRepository {
                 "                                                 'correlation', correlation," +
                 "                                                 'quality', quality" +
                 "                                                 )" +
-                "                                             order by abs(correlation) * quality nulls last, abs(correlation) desc)" +
+                "                                             order by abs(correlation) * quality desc nulls last , abs(correlation) desc)" +
                 "                               from" +
                 "                                   bivariate_axis_correlation, bivariate_indicators xcopy, bivariate_indicators ycopy" +
                 "                               where xcopy.param_id = x_num and ycopy.param_id = y_num" +
@@ -301,7 +301,7 @@ public class StatisticRepository {
                 "     bivariate_indicators ycopy " +
                 "where xcopy.param_id = x_num " +
                 "  and ycopy.param_id = y_num " +
-                "order by abs(correlation) * quality nulls last, abs(correlation) desc";
+                "order by abs(correlation) * quality desc nulls last, abs(correlation) desc";
         return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
     }
 
@@ -348,7 +348,7 @@ public class StatisticRepository {
                 "     bivariate_indicators ycopy " +
                 "where xcopy.param_id = x_num " +
                 "  and ycopy.param_id = y_num " +
-                "order by abs(correlation) * quality nulls last, abs(correlation) desc";
+                "order by abs(correlation) * quality desc nulls last, abs(correlation) desc";
         return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
     }
 
@@ -369,7 +369,7 @@ public class StatisticRepository {
                 "from" +
                 "    bivariate_axis_correlation, bivariate_indicators xcopy, bivariate_indicators ycopy" +
                 "    where xcopy.param_id = x_num and ycopy.param_id = y_num" +
-                "    order by abs(correlation) * quality nulls last, abs(correlation) desc";
+                "    order by abs(correlation) * quality desc nulls last, abs(correlation) desc";
         return jdbcTemplate.query(query, polygonCorrelationRateRowMapper);
     }
 

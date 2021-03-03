@@ -48,7 +48,7 @@ public class CorrelationRateResolver implements GraphQLResolver<PolygonStatistic
     }
 
     private Comparator<PolygonCorrelationRate> correlationRateComparator() {
-        return Comparator.nullsLast(Comparator.<PolygonCorrelationRate, Double>comparing(c -> Math.abs(c.getCorrelation()) * c.getQuality()))
+        return Comparator.nullsLast(Comparator.<PolygonCorrelationRate, Double>comparing(c -> Math.abs(c.getCorrelation()) * c.getQuality()).reversed())
                 .thenComparing(Comparator.<PolygonCorrelationRate, Double>comparing(c -> Math.abs(c.getCorrelation())).reversed());
     }
 
