@@ -276,7 +276,7 @@ public class StatisticRepository {
                 "         (bivariate_axis y" +
                 "             join bivariate_indicators y_den_indicator" +
                 "                  on (y.denominator = y_den_indicator.param_id))" +
-                "    where (x.numerator != y.numerator or x.denominator != y.denominator)" +
+                "    where (x.numerator != y.numerator)" +
                 "      and x.numerator in (:xNumerator)" +
                 "      and y.numerator in (:yNumerator)" +
                 "      and x.quality > 0.5" +
@@ -325,7 +325,7 @@ public class StatisticRepository {
                 "         (bivariate_axis y" +
                 "             join bivariate_indicators y_den_indicator" +
                 "                  on (y.denominator = y_den_indicator.param_id))" +
-                "    where (x.numerator != y.numerator or x.denominator != y.denominator)" +
+                "    where (x.numerator != y.numerator)" +
                 "      and x.quality > 0.5" +
                 "      and y.quality > 0.5" +
                 "      and x_den_indicator.is_base" +
@@ -390,7 +390,7 @@ public class StatisticRepository {
                 "         (bivariate_axis y" +
                 "             join bivariate_indicators y_den_indicator" +
                 "                  on (y.denominator = y_den_indicator.param_id))" +
-                "    where (x.numerator != y.numerator or x.denominator != y.denominator)" +
+                "    where (x.numerator != y.numerator)" +
                 "      and x.quality > 0.5" +
                 "      and y.quality > 0.5" +
                 "      and x_den_indicator.is_base" +
