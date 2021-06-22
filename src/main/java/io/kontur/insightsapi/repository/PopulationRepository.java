@@ -51,10 +51,9 @@ public class PopulationRepository {
                 "                select ST_Subdivide(" +
                 "                        ST_CollectionExtract(" +
                 "                                ST_MakeValid(ST_Transform(" +
-                "                                        ST_WrapX(" +
-                "                                                ST_ShiftLongitude(ST_SetSRID(ST_GeomFromEWKT(:wkt), 4326))," +
-                "                                                180," +
-                "                                                -360)," +
+                "                                        ST_WrapX(ST_WrapX(" +
+                "                                                ST_SetSRID(ST_GeomFromEWKT(:wkt), 4326)," +
+                "                                                180, -360), -180, 360)," +
                 "                                        3857))," +
                 "                                3), 150) as geom" +
                 "            )," +
