@@ -1,8 +1,10 @@
 package io.kontur.insightsapi.service.resolver;
 
 import graphql.kickstart.tools.GraphQLQueryResolver;
+import graphql.schema.DataFetchingEnvironment;
 import io.kontur.insightsapi.dto.PolygonStatisticRequest;
 import io.kontur.insightsapi.model.PolygonStatistic;
+import io.kontur.insightsapi.model.PopulationStatistic;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.service.StatisticService;
 import lombok.RequiredArgsConstructor;
@@ -20,5 +22,9 @@ public class StatisticResolver implements GraphQLQueryResolver {
 
     public PolygonStatistic getPolygonStatistic(PolygonStatisticRequest request) {
         return statisticService.getPolygonStatistic();
+    }
+
+    public PopulationStatistic getPopulationStatistic(String polygon, DataFetchingEnvironment environment){
+        return statisticService.getPopulationStatistic();
     }
 }
