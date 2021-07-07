@@ -62,10 +62,10 @@ public class PopulationRepository {
                 "            subdivided_input as (" +
                 "                select ST_Subdivide(" +
                 "                        ST_CollectionExtract(" +
-                "                                ST_MakeValid(" +
-                "                                        ST_WrapX(ST_WrapX(ST_Transform(" +
-                "                                                ST_SetSRID(ST_GeomFromEWKT(:wkt), 4326), 3857)," +
-                "                                                180, -360), -180, 360))," +
+                "                                ST_MakeValid(ST_Transform(" +
+                "                                        ST_WrapX(ST_WrapX(" +
+                "                                                ST_SetSRID(ST_GeomFromEWKT(:wkt), 4326)," +
+                "                                                180, -360), -180, 360), 3857))," +
                 "                                3), 150) as geom" +
                 "            )," +
                 "            stat_in_area as (select s.*, sum(population) over (order by population desc) as sum_pop" +

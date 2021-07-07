@@ -4,8 +4,8 @@ import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
 import io.kontur.insightsapi.dto.PolygonStatisticRequest;
 import io.kontur.insightsapi.mapper.*;
 import io.kontur.insightsapi.model.Axis;
+import io.kontur.insightsapi.model.BivariateStatistic;
 import io.kontur.insightsapi.model.PolygonCorrelationRate;
-import io.kontur.insightsapi.model.PolygonStatistic;
 import io.kontur.insightsapi.model.Statistic;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +29,7 @@ public class StatisticRepository {
 
     private final StatisticRowMapper statisticRowMapper;
 
-    private final PolygonStatisticRowMapper polygonStatisticRowMapper;
+    private final BivariateStatisticRowMapper bivariateStatisticRowMapper;
 
     private final AxisRowMapper axisRowMapper;
 
@@ -149,7 +149,7 @@ public class StatisticRepository {
     }
 
     @Transactional(readOnly = true)
-    public PolygonStatistic getPolygonStatistic() {
+    public BivariateStatistic getBivariateStatistic() {
         var query = "select " +
                 "        jsonb_build_object(" +
                 "                           'meta', jsonb_build_object('max_zoom', 8," +
@@ -237,7 +237,7 @@ public class StatisticRepository {
                 "      and x.denominator = 'area_km2'" +
                 "      and y.numerator = 'view_count'" +
                 "      and y.denominator = 'area_km2'";
-        return jdbcTemplate.queryForObject(query, polygonStatisticRowMapper);
+        return jdbcTemplate.queryForObject(query, bivariateStatisticRowMapper);
     }
 
     @Transactional(readOnly = true)
@@ -421,9 +421,9 @@ public class StatisticRepository {
         var query = " with subdivided_polygon as (" +
                 "    select ST_Subdivide(" +
                 "                   ST_CollectionExtract(" +
-                "                           ST_MakeValid(" +
-                "                                   ST_WrapX(ST_WrapX(ST_Transform(ST_GeomFromGeoJSON(:polygon::json), 3857), -180, 360), 180, -360)), " +
-                "                   3), 150) as geom), " +
+                "                           ST_MakeValid(ST_Transform(" +
+                "                                   ST_WrapX(ST_WrapX(ST_GeomFromGeoJSON(:polygon::json), -180, 360), 180, -360)," +
+                "                                   3857)), 3), 150) as geom), " +
                 "     stat_area as (" +
                 "         select distinct h3, " + StringUtils.join(distinctFieldsRequests, ",") +
                 "         from stat_h3 sh3, subdivided_polygon sp where" +

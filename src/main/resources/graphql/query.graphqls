@@ -2,6 +2,4 @@ type Query {
     allStatistic(defaultParam: Int): Statistic
 
     polygonStatistic(polygonStatisticRequest: PolygonStatisticRequest): PolygonStatistic
-
-    populationStatistic(polygon: String): PopulationStatistic
 }

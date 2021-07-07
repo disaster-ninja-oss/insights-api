@@ -1,7 +1,7 @@
 package io.kontur.insightsapi.service;
 
+import io.kontur.insightsapi.model.BivariateStatistic;
 import io.kontur.insightsapi.model.PolygonStatistic;
-import io.kontur.insightsapi.model.PopulationStatistic;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +17,11 @@ public class StatisticService {
         return statisticRepository.getAllStatistic();
     }
 
-    public PolygonStatistic getPolygonStatistic() {
-        return statisticRepository.getPolygonStatistic();
+    public BivariateStatistic getBivariateStatistic() {
+        return statisticRepository.getBivariateStatistic();
     }
 
-    public PopulationStatistic getPopulationStatistic(){
-        return new PopulationStatistic();
+    public PolygonStatistic getPolygonStatistic(){
+        return new PolygonStatistic();
     }
 }

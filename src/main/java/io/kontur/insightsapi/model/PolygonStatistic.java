@@ -3,11 +3,11 @@ package io.kontur.insightsapi.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
-public class PolygonStatistic extends BaseStatistic {
+public class PolygonStatistic {
 
-    private List<PolygonCorrelationRate> correlationRates;
+    private BivariateStatistic bivariateStatistic;
+
+    private PopulationStatistic populationStatistic;
 }

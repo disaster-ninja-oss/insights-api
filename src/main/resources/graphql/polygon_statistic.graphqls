@@ -1,9 +1,4 @@
 type PolygonStatistic {
-    axis: [Axis],
-    meta: Meta,
-    initAxis: InitAxis,
-    overlays: [Overlay],
-    indicators: [Indicator],
-    correlationRates: [PolygonCorrelationRate],
-    colors: Color
+    bivariateStatistic: BivariateStatistic,
+    populationStatistic: PopulationStatistic
 }

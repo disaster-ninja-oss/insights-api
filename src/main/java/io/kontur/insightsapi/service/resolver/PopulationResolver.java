@@ -14,6 +14,7 @@ import io.kontur.insightsapi.service.PopulationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,7 +28,7 @@ public class PopulationResolver implements GraphQLResolver<PopulationStatistic> 
     private final ObjectMapper objectMapper;
 
     public Population getPopulation(PopulationStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
-        String polygon = (String) environment.getExecutionStepInfo().getParent().getArguments().get("polygon");
+        var polygon = getPolygon(environment);
         var transformedGeometry = geometryTransformer.transformToWkt(polygon);
         StatisticDto populationStatistic = populationService.calculatePopulation(transformedGeometry);
         return Population.builder()
@@ -38,7 +39,7 @@ public class PopulationResolver implements GraphQLResolver<PopulationStatistic> 
     }
 
     public String getHumanitarianImpact(PopulationStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
-        String polygon = (String) environment.getExecutionStepInfo().getParent().getArguments().get("polygon");
+        var polygon = getPolygon(environment);
         var transformedGeometry = geometryTransformer.transformToWkt(polygon);
         var impactDtos = populationService.calculateHumanitarianImpact(transformedGeometry);
         var collection = populationService.convertImpactIntoFeatureCollection(transformedGeometry, impactDtos);
@@ -46,12 +47,18 @@ public class PopulationResolver implements GraphQLResolver<PopulationStatistic> 
     }
 
     public OsmQuality getOsmQuality(PopulationStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
-        var polygon = (String) environment.getExecutionStepInfo().getParent().getArguments().get("polygon");
+        var polygon = getPolygon(environment);
         var transformedGeometry = geometryTransformer.transform(polygon);
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());
         return populationService.calculateOsmQuality(transformedGeometry, fieldList);
+    }
+
+    private String getPolygon(DataFetchingEnvironment environment){
+        var arguments = (Map<String, Object>) environment.getExecutionStepInfo()
+                .getParent().getParent().getArguments().get("polygonStatisticRequest");
+        return (String) arguments.get("polygon");
     }
 
 }
