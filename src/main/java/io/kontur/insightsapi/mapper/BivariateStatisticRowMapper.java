@@ -1,7 +1,7 @@
 package io.kontur.insightsapi.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kontur.insightsapi.model.PolygonStatistic;
+import io.kontur.insightsapi.model.BivariateStatistic;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.jdbc.core.RowMapper;
@@ -11,13 +11,13 @@ import java.sql.ResultSet;
 
 @Service
 @RequiredArgsConstructor
-public class PolygonStatisticRowMapper implements RowMapper<PolygonStatistic> {
+public class BivariateStatisticRowMapper implements RowMapper<BivariateStatistic> {
 
     private final ObjectMapper objectMapper;
 
     @SneakyThrows
     @Override
-    public PolygonStatistic mapRow(ResultSet resultSet, int i) {
-        return objectMapper.readValue(resultSet.getString(1), PolygonStatistic.class);
+    public BivariateStatistic mapRow(ResultSet resultSet, int i) {
+        return objectMapper.readValue(resultSet.getString(1), BivariateStatistic.class);
     }
 }

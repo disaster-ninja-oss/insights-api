@@ -1,0 +1,9 @@
+type OsmQuality {
+    peopleWithoutOsmBuildings: Int,
+    areaWithoutOsmBuildingsKm2: Float,
+    peopleWithoutOsmRoads: Int,
+    areaWithoutOsmRoadsKm2: Float,
+    peopleWithoutOsmObjects: Int,
+    areaWithoutOsmObjectsKm2: Float,
+    osmGapsPercentage: Float
+}

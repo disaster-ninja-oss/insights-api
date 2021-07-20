@@ -1,0 +1,9 @@
+type BivariateStatistic {
+    axis: [Axis],
+    meta: Meta,
+    initAxis: InitAxis,
+    overlays: [Overlay],
+    indicators: [Indicator],
+    correlationRates: [PolygonCorrelationRate],
+    colors: Color
+}

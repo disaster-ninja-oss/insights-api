@@ -1,0 +1,5 @@
+type Population {
+    population: Float,
+    urban: Float,
+    gdp: Float
+}

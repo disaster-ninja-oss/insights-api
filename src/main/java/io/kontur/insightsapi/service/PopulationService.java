@@ -3,6 +3,7 @@ package io.kontur.insightsapi.service;
 import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.dto.StatisticDto;
+import io.kontur.insightsapi.model.OsmQuality;
 import io.kontur.insightsapi.repository.PopulationRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -93,5 +94,9 @@ public class PopulationService {
                 .map(Optional::get)
                 .toArray(Feature[]::new);
         return new FeatureCollection(features);
+    }
+
+    public OsmQuality calculateOsmQuality(String geojson, List<String> osmRequestFields){
+        return populationRepository.calculateOsmQuality(geojson, osmRequestFields);
     }
 }

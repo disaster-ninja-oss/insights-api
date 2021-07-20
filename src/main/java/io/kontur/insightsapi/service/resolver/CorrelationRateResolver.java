@@ -7,8 +7,8 @@ import graphql.schema.DataFetchingEnvironment;
 import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
 import io.kontur.insightsapi.dto.PolygonStatisticRequest;
 import io.kontur.insightsapi.model.Axis;
+import io.kontur.insightsapi.model.BivariateStatistic;
 import io.kontur.insightsapi.model.PolygonCorrelationRate;
-import io.kontur.insightsapi.model.PolygonStatistic;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import lombok.RequiredArgsConstructor;
@@ -19,15 +19,15 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class CorrelationRateResolver implements GraphQLResolver<PolygonStatistic> {
+public class CorrelationRateResolver implements GraphQLResolver<BivariateStatistic> {
 
     private final StatisticRepository statisticRepository;
 
     private final GeometryTransformer geometryTransformer;
 
-    public List<PolygonCorrelationRate> getCorrelationRates(PolygonStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
+    public List<PolygonCorrelationRate> getCorrelationRates(BivariateStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         Map<String, Object> arguments = (Map<String, Object>) environment.getExecutionStepInfo()
-                .getParent().getArguments().get("polygonStatisticRequest");
+                .getParent().getParent().getArguments().get("polygonStatisticRequest");
         if (!arguments.containsKey("polygon")) {
             return statisticRepository.getAllCorrelationRateStatistics();
         }
