@@ -1,0 +1,6 @@
+type ThermalSpotStatistic{
+    industrialArea: Float,
+    wildfires: Int,
+    volcanoesCount: Int,
+    forestAreaKm2: Float
+}
