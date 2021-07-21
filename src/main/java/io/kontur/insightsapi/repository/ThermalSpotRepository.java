@@ -17,8 +17,8 @@ import java.util.Map;
 public class ThermalSpotRepository {
 
     private static final Map<String, String> queryMap = Map.of(
-            "industrialArea", "sum(industrial_area) as industrialArea ",
-            "wildfires", "max(wildfires) as wildfires ",
+            "industrialAreaKm2", "sum(industrial_area) as industrialAreaKm2 ",
+            "hotspotDaysPerYearMax", "max(wildfires) as hotspotDaysPerYearMax ",
             "volcanoesCount", "sum(volcanos_count)  as volcanoesCount ",
             "forestAreaKm2", "sum(forest) as forestAreaKm2"
     );
@@ -43,8 +43,8 @@ public class ThermalSpotRepository {
                 "where ST_Intersects(sh3.geom, sp.geom) and resolution = 8";
         return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                 ThermalSpotStatistic.builder()
-                        .industrialArea(rs.getBigDecimal("industrialArea"))
-                        .wildfires(rs.getLong("wildfires"))
+                        .industrialAreaKm2(rs.getBigDecimal("industrialAreaKm2"))
+                        .hotspotDaysPerYearMax(rs.getLong("hotspotDaysPerYearMax"))
                         .volcanoesCount(rs.getLong("volcanoesCount"))
                         .forestAreaKm2(rs.getBigDecimal("forestAreaKm2"))
                         .build());

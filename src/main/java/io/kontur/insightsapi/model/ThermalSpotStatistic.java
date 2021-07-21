@@ -11,9 +11,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ThermalSpotStatistic {
 
-    private BigDecimal industrialArea;
+    private BigDecimal industrialAreaKm2;
 
-    private Long wildfires;
+    private Long hotspotDaysPerYearMax;
 
     private Long volcanoesCount;
 
