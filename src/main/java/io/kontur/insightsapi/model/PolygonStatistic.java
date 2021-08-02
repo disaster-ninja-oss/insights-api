@@ -10,4 +10,6 @@ public class PolygonStatistic {
     private BivariateStatistic bivariateStatistic;
 
     private PopulationStatistic populationStatistic;
+
+    private ThermalSpotStatistic thermalSpotStatistic;
 }

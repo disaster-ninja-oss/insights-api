@@ -3,6 +3,7 @@ package io.kontur.insightsapi.repository;
 import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.model.OsmQuality;
+import io.kontur.insightsapi.service.Helper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -12,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.wololo.geojson.GeoJSONFactory;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,9 +28,11 @@ public class PopulationRepository {
             "areaWithoutOsmRoadsKm2", "sum(area_km2) filter (where highway_length = 0) as areaWithoutOsmRoadsKm2 ",
             "peopleWithoutOsmObjects", "sum(population) filter (where count = 0) as peopleWithoutOsmObjects ",
             "areaWithoutOsmObjectsKm2", "sum(area_km2) filter (where count = 0) as areaWithoutOsmObjectsKm2 ",
-            "osmGapsPercentage", "( (count(h3) filter (where count = 0))::float / count(h3))*100 as osmGapsPercentage ");
+            "osmGapsPercentage", "( (count(h3) filter (where count = 0))::float / NULLIF(count(h3),0) )*100 as osmGapsPercentage ");
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    private final Helper helper;
 
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
@@ -117,14 +119,14 @@ public class PopulationRepository {
 
     @Transactional(readOnly = true)
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
-        var queryList = transformOsmFieldList(fieldList);
+        var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = "with subdivided_polygon as (" +
                 "    select ST_Subdivide(" +
                 "                   ST_CollectionExtract(" +
                 "                           ST_MakeValid(" +
-                "                                   ST_WrapX(ST_WrapX(" +
-                "                                       ST_Transform(ST_GeomFromGeoJSON(:polygon::json),3857),-180, 360), 180, -360)), " +
+                "                                   ST_Transform(" +
+                "                                       ST_WrapX(ST_WrapX(ST_GeomFromGeoJSON(:polygon::json),-180, 360), 180, -360), 3857)), " +
                 "                    3), 150) as geom) " +
                 "select " + StringUtils.join(queryList, ", ") + " from stat_h3 sh3, subdivided_polygon sp " +
                 "where ST_Intersects(sh3.geom, sp.geom) and resolution = 8 and population > 0";
@@ -138,17 +140,5 @@ public class PopulationRepository {
                         .areaWithoutOsmObjectsKm2(rs.getBigDecimal("areaWithoutOsmObjectsKm2"))
                         .osmGapsPercentage(rs.getBigDecimal("osmGapsPercentage"))
                         .build());
-    }
-
-    private List<String> transformOsmFieldList(List<String> fieldList) {
-        var queryList = new ArrayList<String>();
-        queryMap.forEach((key, value) -> {
-            if (fieldList.contains(key)) {
-                queryList.add(value);
-            } else {
-                queryList.add(String.format("NULL as %s", key));
-            }
-        });
-        return queryList;
     }
 }

@@ -1,0 +1,6 @@
+type ThermalSpotStatistic{
+    industrialAreaKm2: Float,
+    hotspotDaysPerYearMax: Int,
+    volcanoesCount: Int,
+    forestAreaKm2: Float
+}
