@@ -1,11 +1,10 @@
 package io.kontur.insightsapi.service.resolver;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.kickstart.tools.GraphQLResolver;
 import graphql.schema.DataFetchingEnvironment;
-import io.kontur.insightsapi.dto.StatisticDto;
 import io.kontur.insightsapi.model.Analytics;
-import io.kontur.insightsapi.model.Population;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
 import io.kontur.insightsapi.service.PopulationService;
@@ -14,22 +13,21 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class PopulationResolver implements GraphQLResolver<Analytics> {
+public class HumanitarianImpactResolver implements GraphQLResolver<Analytics> {
 
     private final PopulationService populationService;
 
     private final GeometryTransformer geometryTransformer;
 
+    private final ObjectMapper objectMapper;
+
     private final Helper helper;
 
-    public Population getPopulation(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
+    public String getHumanitarianImpact(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
         var transformedGeometry = geometryTransformer.transformToWkt(polygon);
-        StatisticDto populationStatistic = populationService.calculatePopulation(transformedGeometry);
-        return Population.builder()
-                .population(populationStatistic.getPopulation())
-                .gdp(populationStatistic.getGdp())
-                .urban(populationStatistic.getUrban())
-                .build();
+        var impactDtos = populationService.calculateHumanitarianImpact(transformedGeometry);
+        var collection = populationService.convertImpactIntoFeatureCollection(transformedGeometry, impactDtos);
+        return objectMapper.writeValueAsString(collection);
     }
 }

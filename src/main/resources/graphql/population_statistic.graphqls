@@ -1,5 +1,0 @@
-type PopulationStatistic {
-    population: Population,
-    humanitarianImpact: String,
-    osmQuality: OsmQuality
-}

@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.service;
 
+import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,5 +22,11 @@ public class Helper {
             }
         });
         return queryList;
+    }
+
+    public String getPolygonFromRequest(DataFetchingEnvironment environment){
+        var arguments = (Map<String, Object>) environment.getExecutionStepInfo()
+                .getParent().getParent().getArguments().get("polygonStatisticRequest");
+        return (String) arguments.get("polygon");
     }
 }
