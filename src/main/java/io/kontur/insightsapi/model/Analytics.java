@@ -5,11 +5,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PopulationStatistic {
+public class Analytics {
 
     private Population population;
 
     private String humanitarianImpact;
+
+    private ThermalSpotStatistic thermalSpotStatistic;
 
     private OsmQuality osmQuality;
 }

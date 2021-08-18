@@ -1,5 +1,4 @@
 type PolygonStatistic {
     bivariateStatistic: BivariateStatistic,
-    populationStatistic: PopulationStatistic,
-    thermalSpotStatistic: ThermalSpotStatistic
+    analytics: Analytics
 }

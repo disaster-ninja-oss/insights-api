@@ -1,0 +1,6 @@
+type Analytics {
+    population: Population,
+    humanitarianImpact: String,
+    osmQuality: OsmQuality,
+    thermalSpotStatistic: ThermalSpotStatistic
+}

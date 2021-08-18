@@ -3,18 +3,20 @@ package io.kontur.insightsapi.service.resolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import graphql.kickstart.tools.GraphQLResolver;
 import graphql.schema.DataFetchingEnvironment;
-import io.kontur.insightsapi.dto.StatisticDto;
+import graphql.schema.SelectedField;
 import io.kontur.insightsapi.model.Analytics;
-import io.kontur.insightsapi.model.Population;
+import io.kontur.insightsapi.model.OsmQuality;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
 import io.kontur.insightsapi.service.PopulationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.stream.Collectors;
+
 @Component
 @RequiredArgsConstructor
-public class PopulationResolver implements GraphQLResolver<Analytics> {
+public class OsmQualityResolver implements GraphQLResolver<Analytics> {
 
     private final PopulationService populationService;
 
@@ -22,14 +24,12 @@ public class PopulationResolver implements GraphQLResolver<Analytics> {
 
     private final Helper helper;
 
-    public Population getPopulation(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
+    public OsmQuality getOsmQuality(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transformToWkt(polygon);
-        StatisticDto populationStatistic = populationService.calculatePopulation(transformedGeometry);
-        return Population.builder()
-                .population(populationStatistic.getPopulation())
-                .gdp(populationStatistic.getGdp())
-                .urban(populationStatistic.getUrban())
-                .build();
+        var transformedGeometry = geometryTransformer.transform(polygon);
+        var fieldList = environment.getSelectionSet().getFields().stream()
+                .map(SelectedField::getQualifiedName)
+                .collect(Collectors.toList());
+        return populationService.calculateOsmQuality(transformedGeometry, fieldList);
     }
 }
