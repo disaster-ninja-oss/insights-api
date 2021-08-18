@@ -1,9 +1,10 @@
+scalar Long
 type OsmQuality {
-    peopleWithoutOsmBuildings: Int,
+    peopleWithoutOsmBuildings: Long,
     areaWithoutOsmBuildingsKm2: Float,
-    peopleWithoutOsmRoads: Int,
+    peopleWithoutOsmRoads: Long,
     areaWithoutOsmRoadsKm2: Float,
-    peopleWithoutOsmObjects: Int,
+    peopleWithoutOsmObjects: Long,
     areaWithoutOsmObjectsKm2: Float,
     osmGapsPercentage: Float
 }
