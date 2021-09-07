@@ -66,5 +66,6 @@
         <appender-ref ref="FILE-AUDIT"/>
         <appender-ref ref="FILE-ERROR"/>
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE-HTTP-TRACE"/>
     </root>
 </configuration>
