@@ -14,4 +14,6 @@ public class Analytics {
     private ThermalSpotStatistic thermalSpotStatistic;
 
     private OsmQuality osmQuality;
+
+    private UrbanCore urbanCore;
 }
