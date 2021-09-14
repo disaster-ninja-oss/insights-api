@@ -24,3 +24,9 @@ spring:
 graphql:
   servlet:
     corsEnabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: httptrace, health, info
