@@ -129,7 +129,7 @@ public class PopulationRepository {
                 "                                       ST_WrapX(ST_WrapX(ST_GeomFromGeoJSON(:polygon::json),-180, 360), 180, -360), 3857)), " +
                 "                    3), 150) as geom) " +
                 "select " + StringUtils.join(queryList, ", ") + " from stat_h3 sh3, subdivided_polygon sp " +
-                "where ST_Intersects(sh3.geom, sp.geom) and resolution = 8 and population > 0";
+                "where ST_Intersects(sh3.geom, sp.geom) and zoom = 8 and population > 0";
         return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                 OsmQuality.builder()
                         .peopleWithoutOsmBuildings(rs.getLong("peopleWithoutOsmBuildings"))
