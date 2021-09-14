@@ -155,7 +155,15 @@ public class PopulationRepository {
                             .osmGapsPercentage(rs.getBigDecimal("osmGapsPercentage"))
                             .build());
         } catch (EmptyResultDataAccessException e) {
-            return null;
+            return OsmQuality.builder()
+                    .peopleWithoutOsmBuildings(0L)
+                    .areaWithoutOsmBuildingsKm2(new BigDecimal(0))
+                    .peopleWithoutOsmRoads(0L)
+                    .areaWithoutOsmRoadsKm2(new BigDecimal(0))
+                    .peopleWithoutOsmObjects(0L)
+                    .areaWithoutOsmObjectsKm2(new BigDecimal(0))
+                    .osmGapsPercentage(new BigDecimal(0))
+                    .build();
         }
     }
 
@@ -200,7 +208,10 @@ public class PopulationRepository {
                             .urbanCoreAreaKm2(rs.getBigDecimal("urbanCoreAreaKm2"))
                             .totalPopulatedAreaKm2(rs.getBigDecimal("totalPopulatedAreaKm2")).build());
         } catch (EmptyResultDataAccessException e) {
-            return null;
+            return UrbanCore.builder()
+                    .urbanCoreAreaKm2(new BigDecimal(0))
+                    .urbanCorePopulation(new BigDecimal(0))
+                    .totalPopulatedAreaKm2(new BigDecimal(0)).build();
         }
     }
 }
