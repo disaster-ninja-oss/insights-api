@@ -4,6 +4,7 @@ import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.dto.StatisticDto;
 import io.kontur.insightsapi.model.OsmQuality;
+import io.kontur.insightsapi.model.UrbanCore;
 import io.kontur.insightsapi.repository.PopulationRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -98,5 +99,9 @@ public class PopulationService {
 
     public OsmQuality calculateOsmQuality(String geojson, List<String> osmRequestFields){
         return populationRepository.calculateOsmQuality(geojson, osmRequestFields);
+    }
+
+    public UrbanCore calculateUrbanCore(String wkt, List<String> requestFields){
+        return populationRepository.calculateUrbanCore(wkt, requestFields);
     }
 }

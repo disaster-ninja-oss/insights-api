@@ -1,0 +1,5 @@
+type UrbanCore {
+    urbanCorePopulation: Float,
+    urbanCoreAreaKm2: Float,
+    totalPopulatedAreaKm2: Float
+}
