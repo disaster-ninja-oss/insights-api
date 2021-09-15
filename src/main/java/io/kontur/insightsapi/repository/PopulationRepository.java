@@ -31,7 +31,7 @@ public class PopulationRepository {
             "areaWithoutOsmRoadsKm2", "sum(area_km2) filter (where highway_length = 0) as areaWithoutOsmRoadsKm2 ",
             "peopleWithoutOsmObjects", "sum(population) filter (where count = 0) as peopleWithoutOsmObjects ",
             "areaWithoutOsmObjectsKm2", "sum(area_km2) filter (where count = 0) as areaWithoutOsmObjectsKm2 ",
-            "osmGapsPercentage", "( (count(h3) filter (where count = 0))::float / NULLIF(count(h3),0) )*100 as osmGapsPercentage ");
+            "osmGapsPercentage", "( (count(h3_d) filter (where count = 0))::float / NULLIF(count(h3_d),0) )*100 as osmGapsPercentage ");
 
     private static final Map<String, String> urbanCoreQueryMap = Map.of(
             "urbanCorePopulation", "sum(s.population) as urbanCorePopulation ",
@@ -140,9 +140,13 @@ public class PopulationRepository {
                 "                           ST_MakeValid(" +
                 "                                   ST_Transform(" +
                 "                                       ST_WrapX(ST_WrapX(ST_GeomFromGeoJSON(:polygon::json),-180, 360), 180, -360), 3857)), " +
-                "                    3), 150) as geom) " +
-                "select " + StringUtils.join(queryList, ", ") + " from stat_h3 sh3, subdivided_polygon sp " +
-                "where ST_Intersects(sh3.geom, sp.geom) and zoom = 8 and population > 0";
+                "                    3), 150) as geom), " +
+                "           stat_area as (" +
+                "                         select distinct h3 as h3_d, sh3.* from stat_h3 sh3, subdivided_polygon sp " +
+                "                         where ST_Intersects(sh3.geom, sp.geom) " +
+                "                     )"+
+                "select " + StringUtils.join(queryList, ", ") + " from stat_area st " +
+                "where zoom = 8 and population > 0";
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     OsmQuality.builder()
