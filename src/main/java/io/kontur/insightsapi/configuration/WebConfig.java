@@ -16,11 +16,6 @@ import java.util.Collections;
 public class WebConfig {
 
     @Bean
-    public HttpTraceRepository httpTraceRepository() {
-        return new InMemoryHttpTraceRepository();
-    }
-
-    @Bean
     public Docket productApi() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()

@@ -26,7 +26,27 @@ graphql:
     corsEnabled: false
 
 management:
+  metrics:
+    export:
+      simple:
+        enabled: false
+  health:
+    ping:
+      enabled: false
+    diskspace:
+      enabled: false
+    refresh:
+      enabled: false
+  endpoint:
+    health:
+      status:
+        http-mapping:
+          down: 200
+      cache:
+        time-to-live: 10s
+      show-details: always
+      show-components: always
   endpoints:
     web:
       exposure:
-        include: httptrace, health, info
+        include: health, info
