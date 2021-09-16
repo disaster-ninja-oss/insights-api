@@ -13,12 +13,12 @@ as
         geom_area      bigint := ST_Area(geometry::geography) / 1000000;
         populated_area bigint;
     begin
-        select sum(area_km2)
+        select sum(populated_area_km2)
         into populated_area
         from stat_h3 sh
         where zoom = 4
           and population > 0
-          and st_intersects(sh.geom, ST_MakeValid(ST_UnaryUnion(st_transform(geometry, 3857))));
+          and st_intersects(sh.geom, ST_UnaryUnion(ST_MakeValid(st_transform(geometry, 3857))));
 
         select least(populated_area, geom_area)
         into geom_area;
