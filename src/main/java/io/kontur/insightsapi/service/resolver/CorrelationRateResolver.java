@@ -31,7 +31,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         if (!arguments.containsKey("polygon")) {
             return statisticRepository.getAllCorrelationRateStatistics();
         }
-        var transformedGeometry = geometryTransformer.transform((String) arguments.get("polygon"));
+        var transformedGeometry = geometryTransformer.transform(arguments.get("polygon").toString());
         if (!arguments.keySet().containsAll(List.of("xNumeratorList", "yNumeratorList"))) {
             List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
             return Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()

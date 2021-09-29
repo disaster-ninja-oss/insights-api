@@ -27,6 +27,6 @@ public class Helper {
     public String getPolygonFromRequest(DataFetchingEnvironment environment){
         var arguments = (Map<String, Object>) environment.getExecutionStepInfo()
                 .getParent().getParent().getArguments().get("polygonStatisticRequest");
-        return (String) arguments.get("polygon");
+            return arguments.get("polygon").toString();
     }
 }
