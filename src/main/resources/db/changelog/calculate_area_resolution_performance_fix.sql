@@ -14,11 +14,11 @@ $$
 declare
     area_limit bigint := 10000;
     resolution int    := 8;
-    geom_area  bigint := ST_Area(geometry::geography) / 1000000;
+    geom_area  bigint := ST_Area(ST_UnaryUnion(ST_MakeValid(geometry))::geography) / 1000000;
 begin
     select least(
                    sum(populated_area_km2),
-                   ST_Area(geometry::geography) / 1000000
+                   ST_Area(ST_UnaryUnion(ST_MakeValid(geometry))::geography) / 1000000
                )::numeric "geom_area"
     from (
              select distinct h3,
