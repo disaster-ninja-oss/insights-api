@@ -14,19 +14,18 @@ $$
 declare
     area_limit bigint := 10000;
     resolution int    := 8;
-    geom_area  bigint := ST_Area(ST_UnaryUnion(ST_MakeValid(geometry))::geography) / 1000000;
+    geom_area  bigint;
 begin
-    select least(
-                   sum(populated_area_km2),
-                   ST_Area(ST_UnaryUnion(ST_MakeValid(geometry))::geography) / 1000000
-               )::numeric "geom_area"
+    geometry = ST_UnaryUnion(ST_CollectionExtract(ST_MakeValid(geometry), 3));
+    geom_area = ST_Area(geometry::geography) / 1000000;
+    select least(sum(populated_area_km2), geom_area)::numeric "geom_area"
     from (
              select distinct h3,
                              populated_area_km2
              from stat_h3 sh,
                   ST_Subdivide(ST_MakeValid(ST_Transform(
                           ST_WrapX(ST_WrapX(
-                                           ST_UnaryUnion(ST_CollectionExtract(geometry, 3)),
+                                           geometry,
                                            180, -360), -180, 360),
                           3857))) g_geom
              where ST_Intersects(sh.geom, g_geom)
