@@ -33,12 +33,15 @@ public class ThermalSpotRepository {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = "with subdivided_polygon as (" +
                 "    select ST_Subdivide(" +
-                "                   ST_CollectionExtract(" +
-                "                           ST_MakeValid(" +
-                "                                   ST_Transform(" +
-                "                                       ST_WrapX(ST_WrapX(" +
-                "                                           ST_GeomFromGeoJSON(:polygon::json),-180, 360), 180, -360), 3857)), " +
-                "                    3), 150) as geom) " +
+                "                   ST_MakeValid(ST_Transform(" +
+                "                           ST_WrapX(ST_WrapX(" +
+                "                                            ST_UnaryUnion(" +
+                "                                                    ST_CollectionExtract(ST_GeomFromGeoJSON(:polygon::jsonb), 3)" +
+                "                                                )," +
+                "                                            180, -360), -180, 360)," +
+                "                           3857))" +
+                "               ) geom" +
+                ") " +
                 "select " + StringUtils.join(queryList, ", ") + " from stat_h3 sh3, subdivided_polygon sp " +
                 "where ST_Intersects(sh3.geom, sp.geom) and zoom = 8";
         return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
