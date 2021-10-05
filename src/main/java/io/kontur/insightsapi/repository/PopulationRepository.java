@@ -133,7 +133,7 @@ public class PopulationRepository {
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = "with subdivided_polygon as (" +
+        var query = "with subdivided_polygon as materialized (" +
                 "    select ST_Subdivide(" +
                 "                   ST_MakeValid(ST_Transform(" +
                 "                           ST_WrapX(ST_WrapX(" +
@@ -142,11 +142,12 @@ public class PopulationRepository {
                 "                                                )," +
                 "                                            180, -360), -180, 360)," +
                 "                           3857))" +
-                "               ) geom" +
+                "               , 100) geom order by 1" +
                 "), " +
                 "           stat_area as (" +
-                "                         select distinct sh3.* from stat_h3 sh3, subdivided_polygon sp " +
-                "                         where ST_Intersects(sh3.geom, sp.geom) and zoom = 8 and population > 0" +
+                "                         select distinct on (sh3.h3) sh3.h3, sh3.count, sh3.building_count, sh3.highway_length, " +
+                "sh3.population, sh3.populated_area_km2, sh3.area_km2 from stat_h3 sh3, subdivided_polygon sp " +
+                "                         where st_dwithin(sh3.geom, sp.geom, 0) and zoom = 8 and population > 0" +
                 "                     ) "+
                 "select " + StringUtils.join(queryList, ", ") + " from stat_area st";
         try {
