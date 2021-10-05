@@ -103,14 +103,17 @@ public class PopulationRepository {
                 "           when sum_pop <= t.population * 0.68 then '0-68'" +
                 "           else '68-100'" +
                 "           end                                          as percentage," +
-                "       'Kontur Settled Periphery'                       as name," +
+                "       case" +
+                "           when sum_pop <= t.population * 0.68 then 'Kontur Urban Core'" +
+                "           else 'Kontur Settled Periphery'" +
+                "           end                                          as name," +
                 "       round(sum(area_km2)::numeric, 2)                 as areaKm2," +
                 "       ST_AsGeoJSON(ST_Transform(ST_Union(geom), 4326)) as geometry," +
                 "       t.population                                     as totalPopulation," +
                 "       t.area                                           as totalAreaKm2 " +
                 "from stat_in_area s, " +
                 "     total t " +
-                "group by t.population, t.area, 2";
+                "group by t.population, t.area, 2, 3";
         try {
             return namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
