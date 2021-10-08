@@ -19,7 +19,7 @@ public class GraphQLConfig {
     @Bean
     public GraphQLScalarType jsonType(@Autowired ObjectMapper objectMapper) {
         return GraphQLScalarType.newScalar()
-                .name("GEOJSON")
+                .name("GeoJSON")
                 .description("A custom scalar that handles geojson")
                 .coercing(new JacksonJsonCoercing(objectMapper))
                 .build();
