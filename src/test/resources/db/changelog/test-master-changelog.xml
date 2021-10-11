@@ -6,6 +6,7 @@
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
     <include  file="init_test_data.sql" relativeToChangelogFile="true"/>
-    <include file="master-changelog.xml" relativeToChangelogFile="true"/>
+<!--    Will be fixed with PopulationServiceIT. Postgis h3index type should be added to image-->
+<!--    <include file="master-changelog.xml" relativeToChangelogFile="true"/>-->
 
 </databaseChangeLog>
