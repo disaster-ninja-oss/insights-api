@@ -46,8 +46,10 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
-        var query = "select type, population, urban, gdp" +
-                "        from calculate_population_and_gdp_for_wkt(:geometry)";
+        var query = """
+                        select type, population, urban, gdp
+                        from calculate_population_and_gdp_for_wkt(:geometry)
+                        """.trim();
 
         return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                 CalculatePopulationDto.builder()
@@ -67,53 +69,55 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public List<HumanitarianImpactDto> calculateHumanitarianImpact(String wkt) {
         var paramSource = new MapSqlParameterSource("wkt", wkt);
-        var query = "with resolution as (" +
-                "    select calculate_area_resolution(ST_SetSRID(:wkt::geometry, 4326)) as resolution" +
-                "), " +
-                "     subdivided_polygons as (" +
-                "         select ST_Subdivide(" +
-                "                        ST_MakeValid(ST_Transform(" +
-                "                                ST_WrapX(ST_WrapX(" +
-                "                                                 ST_UnaryUnion(" +
-                "                                                         ST_CollectionExtract(ST_SetSRID(:wkt::geometry, 4326), 3)" +
-                "                                                     )," +
-                "                                                 180, -360), -180, 360)," +
-                "                                3857))" +
-                "                    ) geom" +
-                "     )," +
-                "     stat_in_area as (" +
-                "         select s.*, sum(population) over (order by population desc) as sum_pop" +
-                "         from (" +
-                "                  select distinct h3, population, area_km2, sh.geom" +
-                "                  from stat_h3 sh," +
-                "                       subdivided_polygons p" +
-                "                  where zoom = (select resolution from resolution)" +
-                "                    and population > 0" +
-                "                    and ST_Intersects(" +
-                "                          sh.geom," +
-                "                          p.geom" +
-                "                      )" +
-                "              ) s" +
-                "     )," +
-                "     total as (" +
-                "         select sum(population) as population, round(sum(area_km2)::numeric, 2) as area from stat_in_area" +
-                "     ) " +
-                "select sum(s.population)                                as population," +
-                "       case" +
-                "           when sum_pop <= t.population * 0.68 then '0-68'" +
-                "           else '68-100'" +
-                "           end                                          as percentage," +
-                "       case" +
-                "           when sum_pop <= t.population * 0.68 then 'Kontur Urban Core'" +
-                "           else 'Kontur Settled Periphery'" +
-                "           end                                          as name," +
-                "       round(sum(area_km2)::numeric, 2)                 as areaKm2," +
-                "       ST_AsGeoJSON(ST_Transform(ST_Union(geom), 4326)) as geometry," +
-                "       t.population                                     as totalPopulation," +
-                "       t.area                                           as totalAreaKm2 " +
-                "from stat_in_area s, " +
-                "     total t " +
-                "group by t.population, t.area, 2, 3";
+        var query = """
+                with resolution as (
+                    select calculate_area_resolution(ST_SetSRID(:wkt::geometry, 4326)) as resolution
+                ),
+                     subdivided_polygons as (
+                         select ST_Subdivide(
+                                        ST_MakeValid(ST_Transform(
+                                                ST_WrapX(ST_WrapX(
+                                                                 ST_UnaryUnion(
+                                                                         ST_CollectionExtract(ST_SetSRID(:wkt::geometry, 4326), 3)
+                                                                     ),
+                                                                 180, -360), -180, 360),
+                                               3857))
+                                    ) geom
+                     ),
+                     stat_in_area as (
+                         select s.*, sum(population) over (order by population desc) as sum_pop
+                         from (
+                                  select distinct h3, population, area_km2, sh.geom
+                                  from stat_h3 sh,
+                                       subdivided_polygons p
+                                  where zoom = (select resolution from resolution)
+                                    and population > 0
+                                    and ST_Intersects(
+                                          sh.geom,
+                                          p.geom
+                                      )
+                              ) s
+                     ),
+                     total as (
+                         select sum(population) as population, round(sum(area_km2)::numeric, 2) as area from stat_in_area
+                     ) 
+                select sum(s.population)                                as population,
+                       case
+                           when sum_pop <= t.population * 0.68 then '0-68'
+                           else '68-100'
+                           end                                          as percentage,
+                       case
+                           when sum_pop <= t.population * 0.68 then 'Kontur Urban Core'
+                           else 'Kontur Settled Periphery'
+                           end                                          as name,
+                       round(sum(area_km2)::numeric, 2)                 as areaKm2,
+                       ST_AsGeoJSON(ST_Transform(ST_Union(geom), 4326)) as geometry,
+                       t.population                                     as totalPopulation,
+                       t.area                                           as totalAreaKm2 
+                from stat_in_area s, 
+                     total t 
+                group by t.population, t.area, 2, 3
+                """.trim();
         try {
             return namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
@@ -133,23 +137,25 @@ public class PopulationRepository {
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = "with subdivided_polygon as materialized (" +
-                "    select ST_Subdivide(" +
-                "                   ST_MakeValid(ST_Transform(" +
-                "                           ST_WrapX(ST_WrapX(" +
-                "                                            ST_UnaryUnion(" +
-                "                                                    ST_CollectionExtract(ST_GeomFromGeoJSON(:polygon::jsonb), 3)" +
-                "                                                )," +
-                "                                            180, -360), -180, 360)," +
-                "                           3857))" +
-                "               , 100) geom order by 1" +
-                "), " +
-                "           stat_area as (" +
-                "                         select distinct on (sh3.h3) sh3.h3, sh3.count, sh3.building_count, sh3.highway_length, " +
-                "sh3.population, sh3.populated_area_km2, sh3.area_km2 from stat_h3 sh3, subdivided_polygon sp " +
-                "                         where st_dwithin(sh3.geom, sp.geom, 0) and zoom = 8 and population > 0" +
-                "                     ) "+
-                "select " + StringUtils.join(queryList, ", ") + " from stat_area st";
+        var query = String.format("""
+                with subdivided_polygon as materialized (
+                    select ST_Subdivide(
+                                   ST_MakeValid(ST_Transform(
+                                           ST_WrapX(ST_WrapX(
+                                                            ST_UnaryUnion(
+                                                                    ST_CollectionExtract(ST_GeomFromGeoJSON(:polygon::jsonb), 3)
+                                                                ),
+                                                            180, -360), -180, 360),
+                                           3857))
+                               , 100) geom order by 1
+                ),
+                           stat_area as (
+                                         select distinct on (sh3.h3) sh3.h3, sh3.count, sh3.building_count, sh3.highway_length, 
+                sh3.population, sh3.populated_area_km2, sh3.area_km2 from stat_h3 sh3, subdivided_polygon sp 
+                                         where st_dwithin(sh3.geom, sp.geom, 0) and zoom = 8 and population > 0
+                                     ) 
+                select %s from stat_area st
+                """.trim(), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     OsmQuality.builder()
@@ -178,38 +184,40 @@ public class PopulationRepository {
     public UrbanCore calculateUrbanCore(String wkt, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
         var paramSource = new MapSqlParameterSource("wkt", wkt);
-        var query = "        with resolution as (" +
-                "            select calculate_area_resolution(ST_SetSRID(:wkt::geometry, 4326)) as resolution" +
-                "        )," +
-                "                 subdivided_input as (" +
-                "         select ST_Subdivide(" +
-                "                        ST_MakeValid(ST_Transform(" +
-                "                                ST_WrapX(ST_WrapX(" +
-                "                                                 ST_UnaryUnion(" +
-                "                                                         ST_CollectionExtract(ST_SetSRID(:wkt::geometry, 4326), 3)" +
-                "                                                     )," +
-                "                                                 180, -360), -180, 360)," +
-                "                                3857))" +
-                "                    ) geom" +
-                "     )," +
-                "            stat_in_area as (select s.*, sum(population) over (order by population desc) as sum_pop" +
-                "                             from (select distinct population, s.geom, area_km2, s.h3 as h3" +
-                "                                   from stat_h3 s," +
-                "                                       subdivided_input i," +
-                "                                       resolution r" +
-                "                                   where zoom = r.resolution" +
-                "                                     and population > 0" +
-                "                                     and ST_Intersects(" +
-                "                                           s.geom," +
-                "                                           i.geom" +
-                "                                       )" +
-                "                             ) s)," +
-                "            total as (select sum(population) as population, round(sum(area_km2)::numeric, 2) as area from stat_in_area)" +
-                "        select " + StringUtils.join(queryList, ", ") +
-                "        from stat_in_area s," +
-                "            total t" +
-                "        where sum_pop <= t.population * 0.68" +
-                "        group by t.population, t.area";
+        var query = String.format("""
+                with resolution as (
+                            select calculate_area_resolution(ST_SetSRID(:wkt::geometry, 4326)) as resolution
+                        ),
+                                 subdivided_input as (
+                         select ST_Subdivide(
+                                        ST_MakeValid(ST_Transform(
+                                                ST_WrapX(ST_WrapX(
+                                                                 ST_UnaryUnion(
+                                                                        ST_CollectionExtract(ST_SetSRID(:wkt::geometry, 4326), 3)
+                                                                     ),
+                                                                 180, -360), -180, 360),
+                                                3857))
+                                    ) geom
+                     ),
+                            stat_in_area as (select s.*, sum(population) over (order by population desc) as sum_pop
+                                             from (select distinct population, s.geom, area_km2, s.h3 as h3
+                                                   from stat_h3 s,
+                                                       subdivided_input i,
+                                                       resolution r
+                                                   where zoom = r.resolution
+                                                     and population > 0
+                                                     and ST_Intersects(
+                                                           s.geom,
+                                                           i.geom
+                                                      )
+                                             ) s),
+                            total as (select sum(population) as population, round(sum(area_km2)::numeric, 2) as area from stat_in_area)
+                        select %s
+                        from stat_in_area s,
+                            total t
+                        where sum_pop <= t.population * 0.68
+                        group by t.population, t.area
+                        """.trim(), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     UrbanCore.builder()

@@ -1,7 +1,6 @@
 spring:
   datasource:
     driverClassName: org.testcontainers.jdbc.ContainerDatabaseDriver
-    platform: postgres
     url: jdbc:tc:postgis:13-3.1-alpine:///
   liquibase:
     enabled: true
