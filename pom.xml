@@ -271,4 +271,28 @@
         </repository>
     </repositories>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>kontur</id>
+            <url>https://nexus.kontur.io/repository/common/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>kontur-releases</id>
+            <url>https://nexus.kontur.io/repository/common-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>kontur-snapshots</id>
+            <url>https://nexus.kontur.io/repository/common-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 </project>
