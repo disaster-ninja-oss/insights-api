@@ -31,23 +31,25 @@ public class ThermalSpotRepository {
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = "with subdivided_polygon as materialized (" +
-                "    select ST_Subdivide(" +
-                "                   ST_MakeValid(ST_Transform(" +
-                "                           ST_WrapX(ST_WrapX(" +
-                "                                            ST_UnaryUnion(" +
-                "                                                    ST_CollectionExtract(ST_GeomFromGeoJSON(:polygon::jsonb), 3)" +
-                "                                                )," +
-                "                                            180, -360), -180, 360)," +
-                "                           3857))" +
-                "               , 100) geom order by 1" +
-                "), " +
-                "           stat_area as (" +
-                "                         select distinct on (sh3.h3) sh3.h3, sh3.industrial_area, sh3.wildfires, sh3.volcanos_count, " +
-                "sh3.forest from stat_h3 sh3, subdivided_polygon sp " +
-                "                         where st_dwithin(sh3.geom, sp.geom, 0) and zoom = 8" +
-                "                     ) " +
-                "select " + StringUtils.join(queryList, ", ") + " from stat_area st";
+        var query = String.format("""
+                with subdivided_polygon as materialized (
+                    select ST_Subdivide(
+                                   ST_MakeValid(ST_Transform(
+                                           ST_WrapX(ST_WrapX(
+                                                            ST_UnaryUnion(
+                                                                    ST_CollectionExtract(ST_GeomFromGeoJSON(:polygon::jsonb), 3)
+                                                                ),
+                                                            180, -360), -180, 360),
+                                           3857))
+                               , 100) geom order by 1
+                ), 
+                           stat_area as (
+                                         select distinct on (sh3.h3) sh3.h3, sh3.industrial_area, sh3.wildfires, sh3.volcanos_count, 
+                sh3.forest from stat_h3 sh3, subdivided_polygon sp 
+                                         where st_dwithin(sh3.geom, sp.geom, 0) and zoom = 8
+                                    ) 
+                select %s from stat_area st
+                """.trim(), StringUtils.join(queryList, ", "));
         return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                 ThermalSpotStatistic.builder()
                         .industrialAreaKm2(rs.getBigDecimal("industrialAreaKm2"))

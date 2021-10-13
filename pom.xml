@@ -3,21 +3,40 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>io.kontur.k2</groupId>
-        <artifactId>k2parent</artifactId>
-        <version>2.1</version>
-    </parent>
-
     <groupId>io.kontur</groupId>
     <artifactId>insights-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>insights-api</name>
     <description>Kontur Insights API</description>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.5.5</version>
+    </parent>
+
     <properties>
-        <java.version>11</java.version>
+        <java.version>16</java.version>
+        <maven.compiler.release>16</maven.compiler.release>
         <project.resource.directory>src/main/resources</project.resource.directory>
+
+        <springfox-boot.version>3.0.0</springfox-boot.version>
+        <springfox-swagger-ui.version>3.0.0</springfox-swagger-ui.version>
+        <liquibase-core.version>4.5.0</liquibase-core.version>
+        <lombok.version>1.18.22</lombok.version>
+        <graphql-spring-boot.version>8.1.1</graphql-spring-boot.version>
+        <graphql-java-extended-scalars.version>15.0.0</graphql-java-extended-scalars.version>
+        <postgresql.version>42.2.24</postgresql.version>
+        <jts2geojson.version>0.16.1</jts2geojson.version>
+        <guava.version>30.1-jre</guava.version>
+        <postgresql-testcontainers.version>1.15.1</postgresql-testcontainers.version>
+
+        <maven-failsafe-plugin.version>3.0.0-M4</maven-failsafe-plugin.version>
+        <maven-jar-plugin.version>3.1.2</maven-jar-plugin.version>
+        <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
+        <maven-assembly-plugin.version>3.1.1</maven-assembly-plugin.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-assembly-plugin.release.version>3.3.0</maven-assembly-plugin.release.version>
     </properties>
 
     <dependencies>
@@ -36,7 +55,7 @@
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-boot-starter</artifactId>
-            <version>3.0.0</version>
+            <version>${springfox-boot.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -46,29 +65,31 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
+            <version>${liquibase-core.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>com.graphql-java-kickstart</groupId>
             <artifactId>graphql-spring-boot-starter</artifactId>
-            <version>8.1.1</version>
+            <version>${graphql-spring-boot.version}</version>
         </dependency>
         <dependency>
             <groupId>com.graphql-java-kickstart</groupId>
             <artifactId>graphiql-spring-boot-starter</artifactId>
-            <version>8.1.1</version>
+            <version>${graphql-spring-boot.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.graphql-java</groupId>
             <artifactId>graphql-java-extended-scalars</artifactId>
-            <version>15.0.0</version>
+            <version>${graphql-java-extended-scalars.version}</version>
         </dependency>
 
         <dependency>
@@ -78,24 +99,26 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
             <scope>runtime</scope>
         </dependency>
 
         <dependency>
             <groupId>org.wololo</groupId>
             <artifactId>jts2geojson</artifactId>
+            <version>${jts2geojson.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>30.1-jre</version>
+            <version>${guava.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger-ui</artifactId>
-            <version>3.0.0</version>
+            <version>${springfox-swagger-ui.version}</version>
         </dependency>
 
         <dependency>
@@ -107,7 +130,7 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
-            <version>1.15.1</version>
+            <version>${postgresql-testcontainers.version}</version>
         </dependency>
 
     </dependencies>
@@ -121,6 +144,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${maven-failsafe-plugin.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -137,7 +161,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>${maven-jar-plugin.version}</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -152,7 +176,7 @@
             <!-- Copy dependencies for runnable app archive packaging -->
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>${maven-dependency-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>post-integration-test</phase>
@@ -190,13 +214,22 @@
             <!-- Config assembly for runnable app archive packaging -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>${maven-assembly-plugin.version}</version>
                 <configuration>
                     <appendAssemblyId>false</appendAssemblyId>
                     <descriptors>
                         <descriptor>assembly.xml</descriptor>
                     </descriptors>
                     <tarLongFileMode>posix</tarLongFileMode>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>16</source>
+                    <target>16</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -209,6 +242,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven-assembly-plugin.release.version}</version>
                         <executions>
                             <execution>
                                 <id>assembly</id>
@@ -236,5 +270,29 @@
             </releases>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>kontur</id>
+            <url>https://nexus.kontur.io/repository/common/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>kontur-releases</id>
+            <url>https://nexus.kontur.io/repository/common-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>kontur-snapshots</id>
+            <url>https://nexus.kontur.io/repository/common-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
