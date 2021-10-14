@@ -433,20 +433,25 @@ public class StatisticRepository {
                 .distinct()
                 .collect(Collectors.toList());
         var query = String.format("""
-                with subdivided_polygon as (
-                    select ST_Subdivide(
-                                   ST_MakeValid(ST_Transform(
-                                           ST_WrapX(ST_WrapX(
-                                                            ST_UnaryUnion(
-                                                                    ST_CollectionExtract(ST_GeomFromGeoJSON(:polygon::jsonb), 3)
-                                                                ),
-                                                            180, -360), -180, 360),
-                                           3857))
-                               ) geom
-                ), 
+                with validated_input as (
+                    select ST_MakeValid(ST_Transform(
+                            ST_WrapX(ST_WrapX(
+                                             ST_Union(ST_MakeValid(
+                                                     d.geom
+                                                 )),
+                                             180, -360), -180, 360),
+                            3857)) geom
+                    from ST_Dump(ST_CollectionExtract(ST_GeomFromGeoJSON(
+                                                              :polygon::jsonb
+                                                                     ), 3)) d
+                ),
+                subdivided_polygons as (
+                         select ST_Subdivide(v.geom) geom
+                         from validated_input v
+                ),
                      stat_area as (
                          select distinct h3, %s
-                         from stat_h3 sh3, subdivided_polygon sp where
+                         from stat_h3 sh3, subdivided_polygons sp where
                              ST_Intersects(sh3.geom, sp.geom)
                      )
                  select %s

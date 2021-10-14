@@ -32,20 +32,25 @@ public class ThermalSpotRepository {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = String.format("""
-                with subdivided_polygon as materialized (
-                    select ST_Subdivide(
-                                   ST_MakeValid(ST_Transform(
-                                           ST_WrapX(ST_WrapX(
-                                                            ST_UnaryUnion(
-                                                                    ST_CollectionExtract(ST_GeomFromGeoJSON(:polygon::jsonb), 3)
-                                                                ),
-                                                            180, -360), -180, 360),
-                                           3857))
-                               , 100) geom order by 1
-                ), 
+                with validated_input as (
+                    select ST_MakeValid(ST_Transform(
+                            ST_WrapX(ST_WrapX(
+                                             ST_Union(ST_MakeValid(
+                                                     d.geom
+                                                 )),
+                                             180, -360), -180, 360),
+                            3857)) geom
+                    from ST_Dump(ST_CollectionExtract(ST_GeomFromGeoJSON(
+                                                              :polygon::jsonb
+                                                                     ), 3)) d
+                ),
+                subdivided_polygons as materialized (
+                         select ST_Subdivide(v.geom) geom
+                         from validated_input v
+                ),
                            stat_area as (
                                          select distinct on (sh3.h3) sh3.h3, sh3.industrial_area, sh3.wildfires, sh3.volcanos_count, 
-                sh3.forest from stat_h3 sh3, subdivided_polygon sp 
+                sh3.forest from stat_h3 sh3, subdivided_polygons sp 
                                          where st_dwithin(sh3.geom, sp.geom, 0) and zoom = 8
                                     ) 
                 select %s from stat_area st
