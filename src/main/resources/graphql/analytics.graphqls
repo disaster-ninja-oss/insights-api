@@ -3,5 +3,6 @@ type Analytics {
     humanitarianImpact: String,
     osmQuality: OsmQuality,
     thermalSpotStatistic: ThermalSpotStatistic,
-    urbanCore: UrbanCore
+    urbanCore: UrbanCore,
+    functions: Functions
 }

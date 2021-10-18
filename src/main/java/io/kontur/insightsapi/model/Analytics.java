@@ -16,4 +16,6 @@ public class Analytics {
     private OsmQuality osmQuality;
 
     private UrbanCore urbanCore;
+
+    private Functions functions;
 }

@@ -1,0 +1,13 @@
+type Functions {
+    population(args: FunctionArgs): Float,
+    settledArea(args: FunctionArgs): Float,
+    osmGaps(args: FunctionArgs): Float,
+    peopleWithoutOsmObjects(args: FunctionArgs): Float,
+    settledAreaWithoutOsmObjects(args: FunctionArgs): Float,
+    settledAreaWithoutOsmBuildingsPercent(args: FunctionArgs): Float,
+    peopleWithoutOsmBuildings(args: FunctionArgs): Float,
+    settledAreaWithoutOsmBuildings(args: FunctionArgs): Float,
+    settledAreaWithoutOsmRoadsPercent(args: FunctionArgs): Float,
+    peopleWithoutOsmRoads(args: FunctionArgs): Float,
+    settledAreaWithoutOsmRoads(args: FunctionArgs): Float
+}
