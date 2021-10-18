@@ -28,14 +28,15 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     public List<PolygonCorrelationRate> getCorrelationRates(BivariateStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         Map<String, Object> arguments = (Map<String, Object>) environment.getExecutionStepInfo()
                 .getParent().getParent().getArguments().get("polygonStatisticRequest");
-        if (!arguments.containsKey("polygon")) {
+        if (!arguments.containsKey("polygon") && !arguments.containsKey("polygonV2")) {
             return statisticRepository.getAllCorrelationRateStatistics();
         }
-        var transformedGeometry = geometryTransformer.transform((String) arguments.get("polygon"));
+        var transformedGeometry = getPolygon(arguments);
         if (!arguments.keySet().containsAll(List.of("xNumeratorList", "yNumeratorList"))) {
             List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
+            String finalTransformedGeometry = transformedGeometry;
             return Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
-                    .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, transformedGeometry))
+                    .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, finalTransformedGeometry))
                     .flatMap(Collection::stream)
                     .sorted(correlationRateComparator())
                     .collect(Collectors.toList());
@@ -72,5 +73,15 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
             result.add(polygonCorrelationRate);
         }
         return result;
+    }
+
+    private String getPolygon(Map<String, Object> arguments) throws JsonProcessingException {
+        if (arguments.containsKey("polygon")) {
+            return geometryTransformer.transform(arguments.get("polygon").toString());
+        }
+        if (arguments.containsKey("polygonV2")) {
+            return geometryTransformer.transform(arguments.get("polygonV2").toString());
+        }
+        return null;
     }
 }

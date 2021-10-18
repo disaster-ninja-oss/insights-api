@@ -12,7 +12,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class Helper {
 
-    public List<String> transformFieldList(List<String> fieldList, Map<String, String> queryMap){
+    public List<String> transformFieldList(List<String> fieldList, Map<String, String> queryMap) {
         var queryList = new ArrayList<String>();
         queryMap.forEach((key, value) -> {
             if (fieldList.contains(key)) {
@@ -24,9 +24,15 @@ public class Helper {
         return queryList;
     }
 
-    public String getPolygonFromRequest(DataFetchingEnvironment environment){
+    public String getPolygonFromRequest(DataFetchingEnvironment environment) {
         var arguments = (Map<String, Object>) environment.getExecutionStepInfo()
                 .getParent().getParent().getArguments().get("polygonStatisticRequest");
-        return (String) arguments.get("polygon");
+        if (arguments.containsKey("polygon")) {
+            return arguments.get("polygon").toString();
+        }
+        if (arguments.containsKey("polygonV2")) {
+            return arguments.get("polygonV2").toString();
+        }
+        return null;
     }
 }
