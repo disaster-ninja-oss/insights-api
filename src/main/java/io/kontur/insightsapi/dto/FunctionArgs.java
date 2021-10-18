@@ -9,6 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 public class FunctionArgs {
 
+    private Long id;
+
     private String name;
 
     private String x;

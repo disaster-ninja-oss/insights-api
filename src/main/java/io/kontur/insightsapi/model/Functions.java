@@ -1,8 +1,9 @@
 package io.kontur.insightsapi.model;
 
+import io.kontur.insightsapi.dto.FunctionArgs;
 import lombok.*;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -11,23 +12,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class Functions {
 
-    private BigDecimal population;
+    private List<FunctionResult> functions;
 
-    private BigDecimal settledArea;
-
-    private BigDecimal peopleWithoutOsmObjects;
-
-    private BigDecimal settledAreaWithoutOsmObjects;
-
-    private BigDecimal settledAreaWithoutOsmBuildingsPercent;
-
-    private BigDecimal peopleWithoutOsmBuildings;
-
-    private BigDecimal settledAreaWithoutOsmBuildings;
-
-    private BigDecimal settledAreaWithoutOsmRoadsPercent;
-
-    private BigDecimal peopleWithoutOsmRoads;
-
-    private BigDecimal settledAreaWithoutOsmRoads;
+    public List<FunctionResult> getFunctions(List<FunctionArgs> args) {
+        return functions;
+    }
 }
