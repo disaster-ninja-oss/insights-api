@@ -1,4 +1,4 @@
 type FunctionResult {
-    id: Long,
+    id: String,
     result: Float
 }

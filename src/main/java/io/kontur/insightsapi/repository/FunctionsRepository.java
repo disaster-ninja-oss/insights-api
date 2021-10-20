@@ -1,25 +1,37 @@
-package io.kontur.insightsapi.service;
+package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.FunctionArgs;
 import io.kontur.insightsapi.model.FunctionResult;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
-@Service
+@Repository
 @RequiredArgsConstructor
-public class FunctionsService {
+public class FunctionsRepository {
+
+    private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
+
+    private final Logger logger = LoggerFactory.getLogger(FunctionsRepository.class);
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
+    @Transactional(readOnly = true)
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
-        List<String> params = args.stream().map(this::createFunctionBody).toList();
+        List<String> params = args.stream()
+                .map(this::createFunctionsForSelect)
+                .toList();
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = String.format("""
                 with validated_input as (
@@ -47,26 +59,41 @@ public class FunctionsService {
                 """.trim(), StringUtils.join(params, ", "));
         List<FunctionResult> result = new ArrayList<>();
         namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
-            result.addAll(args.stream().map(arg-> {
-                try {
-                    return new FunctionResult(arg.getId(), rs.getBigDecimal("result"+arg.getId()));
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    return null;
-                }
-            }).toList());
+            result.addAll(createFunctionResultList(args, rs));
         }));
         return result;
     }
 
-    private String createFunctionBody(FunctionArgs functionArgs) {
+    private String createFunctionsForSelect(FunctionArgs functionArgs) {
+        String validId = checkString(functionArgs.getId());
+        String validX = checkString(functionArgs.getX());
+        String validY = checkString(functionArgs.getY());
         return switch (functionArgs.getName()) {
-            case "sumX" -> "sum(" + functionArgs.getX() + ") as result"+functionArgs.getId();
-            case "sumXWhereNoY" -> "sum(" + functionArgs.getX() + "*(1 - sign(" + functionArgs.getY() + "))) " +
-                    "as result"+functionArgs.getId();
-            case "percentageXWhereNoY" -> "sum(" + functionArgs.getX() + "*(1 - sign(" + functionArgs.getY() + ")))/sum(" +
-                    functionArgs.getX() + ")*100 as result"+functionArgs.getId();
+            case "sumX" -> "sum(" + validX + ") as " + validId;
+            case "sumXWhereNoY" -> "sum(" + validX + "*(1 - sign(" + validY + "))) " +
+                    "as " + validId;
+            case "percentageXWhereNoY" -> "sum(" + validX + "*(1 - sign(" + validY + ")))/sum(" +
+                    validX + ")*100 as " + validId;
             default -> null;
         };
+    }
+
+    private List<FunctionResult> createFunctionResultList(List<FunctionArgs> args, ResultSet rs) {
+        return args.stream().map(arg -> {
+            try {
+                return new FunctionResult(arg.getId(), rs.getBigDecimal(arg.getId()));
+            } catch (SQLException e) {
+                logger.error("Can't get BigDecimal value from result set", e);
+                return null;
+            }
+        }).toList();
+    }
+
+    private String checkString(String string) {
+        if (string != null && !VALID_STRING_PATTERN.matcher(string).matches()) {
+            logger.error("Illegal argument for request creation was found");
+            throw new IllegalArgumentException("Illegal argument for request creation was found");
+        }
+        return string;
     }
 }

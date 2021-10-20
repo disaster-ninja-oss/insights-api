@@ -1,15 +1,17 @@
 package io.kontur.insightsapi.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Setter
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class FunctionArgs {
 
-    private Long id;
+    private String id;
 
     private String name;
 

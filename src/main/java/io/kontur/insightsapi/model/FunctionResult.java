@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class FunctionResult {
 
-    private Long id;
+    private String id;
 
     private BigDecimal result;
 }

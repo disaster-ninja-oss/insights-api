@@ -6,7 +6,7 @@ import graphql.schema.DataFetchingEnvironment;
 import io.kontur.insightsapi.dto.FunctionArgs;
 import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.model.FunctionResult;
-import io.kontur.insightsapi.service.FunctionsService;
+import io.kontur.insightsapi.repository.FunctionsRepository;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FunctionsResolver implements GraphQLResolver<Analytics> {
 
-    private final FunctionsService functionsService;
+    private final FunctionsRepository functionsRepository;
 
     private final GeometryTransformer geometryTransformer;
 
@@ -27,6 +27,6 @@ public class FunctionsResolver implements GraphQLResolver<Analytics> {
     public List<FunctionResult> getFunctions(Analytics analytics, List<FunctionArgs> args, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
         var transformedGeometry = geometryTransformer.transform(polygon);
-        return functionsService.calculateFunctionsResult(transformedGeometry, args);
+        return functionsRepository.calculateFunctionsResult(transformedGeometry, args);
     }
 }

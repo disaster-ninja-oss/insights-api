@@ -3,7 +3,7 @@ package io.kontur.insightsapi.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,6 +19,6 @@ public class Analytics {
 
     private UrbanCore urbanCore;
 
-    private ArrayList<FunctionResult> functions;
+    private List<FunctionResult> functions;
 
 }

@@ -1,3 +1,0 @@
-#type Functions {
-#    functions(args: [FunctionArgs]): [FunctionResult]
-#}
