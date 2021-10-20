@@ -1,0 +1,6 @@
+input FunctionArgs {
+    id: String
+    name: String,
+    x: String,
+    y: String
+}

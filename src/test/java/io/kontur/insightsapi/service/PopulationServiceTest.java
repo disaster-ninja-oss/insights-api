@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -43,5 +44,10 @@ class PopulationServiceTest {
         dto.setType("population");
         populationMap.put(dto.getType(), dto);
         return populationMap;
+    }
+
+    @Test
+    void test(){
+        System.out.println(Pattern.matches("(\\d|\\w){1,255}", "123asdasd123-asdfadsf"));
     }
 }

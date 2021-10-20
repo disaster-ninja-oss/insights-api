@@ -1,0 +1,4 @@
+type FunctionResult {
+    id: String,
+    result: Float
+}

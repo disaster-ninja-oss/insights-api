@@ -1,4 +1,3 @@
-scalar Long
 type OsmQuality {
     peopleWithoutOsmBuildings: Long,
     areaWithoutOsmBuildingsKm2: Float,

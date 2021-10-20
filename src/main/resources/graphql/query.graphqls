@@ -1,3 +1,5 @@
+scalar Long
+
 type Query {
     allStatistic(defaultParam: Int): Statistic
 
