@@ -69,11 +69,11 @@ public class FunctionsRepository {
         String validX = checkString(functionArgs.getX());
         String validY = checkString(functionArgs.getY());
         return switch (functionArgs.getName()) {
-            case "sumX" -> "sum(" + validX + ") as " + validId;
+            case "sumX" -> "sum(" + validX + ") as result" + validId;
             case "sumXWhereNoY" -> "sum(" + validX + "*(1 - sign(" + validY + "))) " +
-                    "as " + validId;
+                    "as result" + validId;
             case "percentageXWhereNoY" -> "sum(" + validX + "*(1 - sign(" + validY + ")))/sum(" +
-                    validX + ")*100 as " + validId;
+                    validX + ")*100 as result" + validId;
             default -> null;
         };
     }
@@ -81,7 +81,7 @@ public class FunctionsRepository {
     private List<FunctionResult> createFunctionResultList(List<FunctionArgs> args, ResultSet rs) {
         return args.stream().map(arg -> {
             try {
-                return new FunctionResult(arg.getId(), rs.getBigDecimal(arg.getId()));
+                return new FunctionResult(arg.getId(), rs.getBigDecimal("result" + arg.getId()));
             } catch (SQLException e) {
                 logger.error("Can't get BigDecimal value from result set", e);
                 return null;
