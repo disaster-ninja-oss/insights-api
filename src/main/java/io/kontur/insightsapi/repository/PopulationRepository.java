@@ -74,12 +74,12 @@ public class PopulationRepository {
                     select calculate_area_resolution(ST_SetSRID(:wkt::geometry, 4326)) as resolution
                 ),
                      validated_input as (
-                         select ST_MakeValid(ST_Transform(
+                         select ST_MakeValid(ST_Transform(ST_UnaryUnion(
                                  ST_WrapX(ST_WrapX(
                                                   ST_Union(ST_MakeValid(
                                                           d.geom
                                                       )),
-                                                  180, -360), -180, 360),
+                                                  180, -360), -180, 360)),
                                  3857)) geom
                          from ST_Dump(ST_CollectionExtract(ST_SetSRID(
                                                                    :wkt::geometry, 4326
@@ -144,12 +144,12 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = String.format("""
                 with validated_input as (
-                    select ST_MakeValid(ST_Transform(
+                    select ST_MakeValid(ST_Transform(ST_UnaryUnion(
                             ST_WrapX(ST_WrapX(
                                              ST_Union(ST_MakeValid(
                                                      d.geom
                                                  )),
-                                             180, -360), -180, 360),
+                                             180, -360), -180, 360)),
                             3857)) geom
                     from ST_Dump(ST_CollectionExtract(ST_GeomFromGeoJSON(
                                                               :polygon::jsonb
@@ -199,12 +199,12 @@ public class PopulationRepository {
                             select calculate_area_resolution(ST_SetSRID(:wkt::geometry, 4326)) as resolution
                         ),
                      validated_input as (
-                         select ST_MakeValid(ST_Transform(
+                         select ST_MakeValid(ST_Transform(ST_UnaryUnion(
                                  ST_WrapX(ST_WrapX(
                                                   ST_Union(ST_MakeValid(
                                                           d.geom
                                                       )),
-                                                  180, -360), -180, 360),
+                                                  180, -360), -180, 360)),
                                  3857)) geom
                          from ST_Dump(ST_CollectionExtract(ST_SetSRID(
                                                                    :wkt::geometry, 4326

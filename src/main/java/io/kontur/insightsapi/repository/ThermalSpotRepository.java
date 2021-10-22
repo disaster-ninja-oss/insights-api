@@ -33,12 +33,12 @@ public class ThermalSpotRepository {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = String.format("""
                 with validated_input as (
-                    select ST_MakeValid(ST_Transform(
+                    select ST_MakeValid(ST_Transform(ST_UnaryUnion(
                             ST_WrapX(ST_WrapX(
                                              ST_Union(ST_MakeValid(
                                                      d.geom
                                                  )),
-                                             180, -360), -180, 360),
+                                             180, -360), -180, 360)),
                             3857)) geom
                     from ST_Dump(ST_CollectionExtract(ST_GeomFromGeoJSON(
                                                               :polygon::jsonb
