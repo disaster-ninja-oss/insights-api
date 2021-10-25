@@ -18,12 +18,12 @@ create or replace function calculate_population_and_gdp_for_wkt(wkt text)
 as
 $$
 with validated_input as (
-    select ST_MakeValid(ST_Transform(
+    select ST_MakeValid(ST_Transform(ST_UnaryUnion(
             ST_WrapX(ST_WrapX(
                              ST_Union(ST_MakeValid(
                                      d.geom
                                  )),
-                             180, -360), -180, 360),
+                             180, -360), -180, 360)),
             3857)) "geom"
     from ST_Dump(ST_CollectionExtract(ST_SetSRID(ST_GeomFromText(
                                                          wkt
