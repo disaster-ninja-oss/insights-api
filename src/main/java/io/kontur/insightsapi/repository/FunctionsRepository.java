@@ -51,8 +51,8 @@ public class FunctionsRepository {
                          from validated_input v
                 ),
                            stat_area as (
-                                         select distinct on (sh3.h3) sh3.h3, sh3.population, sh3.populated_area_km2, sh3.count, 
-                sh3.building_count, sh3.highway_length from stat_h3 sh3, subdivided_polygons sp 
+                                         select distinct on (sh3.h3) sh3.h3, sh3.population, sh3.populated_area_km2, sh3.count,
+                sh3.building_count, sh3.highway_length, sh3.industrial_area, sh3.wildfires, sh3.volcanos_count, sh3.forest from stat_h3 sh3, subdivided_polygons sp 
                                          where st_dwithin(sh3.geom, sp.geom, 0) and resolution = 8
                                     ) 
                 select %s from stat_area st
@@ -70,10 +70,11 @@ public class FunctionsRepository {
         String validY = checkString(functionArgs.getY());
         return switch (functionArgs.getName()) {
             case "sumX" -> "sum(" + validX + ") as result" + validId;
-            case "sumXWhereNoY" -> "sum(" + validX + "*(1 - sign(" + validY + "))) " +
+            case "sumXWhereNoY" -> "sum(" + validX + " * (1 - sign(" + validY + "))) " +
                     "as result" + validId;
-            case "percentageXWhereNoY" -> "sum(" + validX + "*(1 - sign(" + validY + ")))/sum(" +
-                    validX + ")*100 as result" + validId;
+            case "percentageXWhereNoY" -> "(sum(" + validX + " * (1 - sign(" + validY + ")))/sum(" +
+                    validX + ") filter (where " + validX + " != 0)) * 100 as result" + validId;
+            case "maxX" -> "max(" + validX + ") as result" + validId;
             default -> null;
         };
     }
