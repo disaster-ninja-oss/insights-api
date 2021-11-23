@@ -1,3 +1,4 @@
+#
 [Unit]
 Description=insights-api: Insights API
 
@@ -17,6 +18,7 @@ Environment=APP_HOME="%h/current"
 Environment=APP_BASE="%h"
 
 WorkingDirectory=%h/current
+ExecStartPre=/bin/bash -c 'while ! pg_isready -q -h localhost -p 5432; do sleep $((RANDOM % 5)); done'
 ExecStart=/bin/bash -c "\"%h/bin/insights-api\" start"
 ExecStop=/bin/bash  -c "\"%h/bin/insights-api\" stop"
 
