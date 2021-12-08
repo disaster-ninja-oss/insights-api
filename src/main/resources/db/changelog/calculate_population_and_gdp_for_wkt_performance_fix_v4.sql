@@ -25,7 +25,7 @@ with validated_input as (
                                          ), 3857)) "geom"
     from ST_Dump(ST_CollectionExtract(ST_SetSRID(ST_GeomFromText(
                                                          wkt
-                                                     ), 4326), 3)) d
+                                                     ), 4326))) d
 ),
      distinct_h3 as (
          select distinct on (h3) population,
