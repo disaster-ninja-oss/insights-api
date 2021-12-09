@@ -42,7 +42,7 @@ public class ThermalSpotRepository {
                                                      3857)) geom
                     from ST_Dump(ST_CollectionExtract(ST_GeomFromGeoJSON(
                                                                   :polygon::jsonb
-                                                          ), 3)) d
+                                                          ))) d
                 ),
                      stat_area as (
                          select distinct on (h.h3) h.*

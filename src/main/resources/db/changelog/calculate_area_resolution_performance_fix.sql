@@ -16,9 +16,12 @@ declare
     resolution int    := 8;
     geom_area  bigint;
 begin
-    geometry = ST_UnaryUnion(ST_CollectionExtract(ST_MakeValid(geometry), 3));
+    geometry = ST_UnaryUnion(ST_CollectionExtract(ST_MakeValid(geometry)));
     geom_area = ST_Area(geometry::geography) / 1000000;
-    select least(sum(populated_area_km2), geom_area)::numeric "geom_area"
+    select (case when geom_area = 0 then
+                     sum(populated_area_km2)
+            else least(sum(populated_area_km2), geom_area)::numeric
+            end) "geom_area"
     from (
              select distinct h3,
                              populated_area_km2
