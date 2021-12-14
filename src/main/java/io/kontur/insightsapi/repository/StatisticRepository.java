@@ -9,6 +9,8 @@ import io.kontur.insightsapi.model.PolygonCorrelationRate;
 import io.kontur.insightsapi.model.Statistic;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -36,6 +38,8 @@ public class StatisticRepository {
     private final PolygonCorrelationRateRowMapper polygonCorrelationRateRowMapper;
 
     private final CorrelationRateRowMapper correlationRateRowMapper;
+
+    private final Logger logger = LoggerFactory.getLogger(StatisticRepository.class);
 
     @Transactional(readOnly = true)
     public Statistic getAllStatistic() {
@@ -310,7 +314,12 @@ public class StatisticRepository {
                   and ycopy.param_id = y_num
                 order by abs(correlation) * quality desc nulls last, abs(correlation) desc
                 """.trim();
-        return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
+        try {
+            return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", request.getPolygon(), e.getMessage()));
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -359,7 +368,12 @@ public class StatisticRepository {
                   and ycopy.param_id = y_num 
                 order by abs(correlation) * quality desc nulls last, abs(correlation) desc
                 """.trim();
-        return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
+        try {
+            return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", request.getPolygon(), e.getMessage()));
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -459,7 +473,12 @@ public class StatisticRepository {
                 """.trim(), StringUtils.join(distinctFieldsRequests, ","), StringUtils.join(requests, ","));
         //it is important to disable jit in same stream with main request
         jitDisable();
-        return namedParameterJdbcTemplate.queryForObject(query, paramSource, correlationRateRowMapper);
+        try {
+            return namedParameterJdbcTemplate.queryForObject(query, paramSource, correlationRateRowMapper);
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", polygon, e.getMessage()));
+            return null;
+        }
     }
 
     private String createCorrelationQueryString(String xNum, String xDen, String yNum, String yDen) {
