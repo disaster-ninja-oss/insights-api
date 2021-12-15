@@ -101,7 +101,7 @@ public class PopulationService {
         return populationRepository.calculateOsmQuality(geojson, osmRequestFields);
     }
 
-    public UrbanCore calculateUrbanCore(String wkt, List<String> requestFields){
-        return populationRepository.calculateUrbanCore(wkt, requestFields);
+    public UrbanCore calculateUrbanCore(String geometry, List<String> requestFields){
+        return populationRepository.calculateUrbanCore(geometry, requestFields);
     }
 }

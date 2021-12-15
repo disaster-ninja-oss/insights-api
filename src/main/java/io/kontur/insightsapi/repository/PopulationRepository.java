@@ -48,7 +48,7 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var query = """
                 select type, population, urban, gdp
-                from calculate_population_and_gdp_for_wkt(:geometry)
+                from calculate_population_and_gdp(:geometry)
                 """.trim();
 
         return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
@@ -62,28 +62,19 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public BigDecimal getArea(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
-        var query = "select ST_Area(ST_GeomFromText(:geometry))";
+        var query = "select ST_Area(:geometry::geometry)";
         return namedParameterJdbcTemplate.queryForObject(query, paramSource, BigDecimal.class);
     }
 
     @Transactional(readOnly = true)
-    public List<HumanitarianImpactDto> calculateHumanitarianImpact(String wkt) {
-        var paramSource = new MapSqlParameterSource("wkt", wkt);
+    public List<HumanitarianImpactDto> calculateHumanitarianImpact(String geometry) {
+        var paramSource = new MapSqlParameterSource("geometry", geometry);
         var query = """
                         with resolution as (
-                            select calculate_area_resolution(ST_SetSRID(:wkt::geometry, 4326)) as resolution
+                            select calculate_area_resolution(ST_SetSRID(:geometry::geometry, 4326)) as resolution
                         ),
                              validated_input as (
-                                 select ST_MakeValid(ST_Transform(ST_UnaryUnion(
-                                         ST_WrapX(ST_WrapX(
-                                                          ST_Union(ST_MakeValid(
-                                                                  d.geom
-                                                              )),
-                                                          180, -360), -180, 360)),
-                                         3857)) geom
-                                 from ST_Dump(ST_CollectionExtract(ST_SetSRID(
-                                                                           :wkt::geometry, 4326
-                                                                                  ))) d
+                                select calculate_validated_input(:geometry) geom
                              ),
                             subdivided_polygons as (
                                       select ST_Subdivide(v.geom) geom
@@ -144,16 +135,7 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = String.format("""
                         with validated_input as (
-                            select ST_MakeValid(ST_Transform(ST_UnaryUnion(
-                                                                     ST_WrapX(ST_WrapX(
-                                                                                      ST_Union(ST_MakeValid(
-                                                                                              d.geom
-                                                                                          )),
-                                                                                      180, -360), -180, 360)),
-                                                             3857)) geom
-                            from ST_Dump(ST_CollectionExtract(ST_GeomFromGeoJSON(
-                                                                          :polygon::jsonb
-                                                                  ))) d
+                            select calculate_validated_input(:polygon) geom
                         ),
                              stat_area as (
                                  select distinct on (h.h3) h.*
@@ -204,25 +186,15 @@ public class PopulationRepository {
     }
 
     @Transactional(readOnly = true)
-    public UrbanCore calculateUrbanCore(String wkt, List<String> fieldList) {
+    public UrbanCore calculateUrbanCore(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
-        var paramSource = new MapSqlParameterSource("wkt", wkt);
+        var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = String.format("""
                 with resolution as (
-                    select calculate_area_resolution(ST_SetSRID(:wkt::geometry, 4326)) as resolution
+                    select calculate_area_resolution(ST_SetSRID(:polygon::geometry, 4326)) as resolution
                 ),
                                      validated_input as (
-                                         select ST_MakeValid(ST_Transform(ST_UnaryUnion(
-                                                                                  ST_WrapX(ST_WrapX(
-                                                                                                   ST_Union(ST_MakeValid(
-                                                                                                           d.geom
-                                                                                                       )),
-                                                                                                   180, -360), -180, 360)),
-                                                                          3857)) geom
-                                         from ST_Dump(ST_CollectionExtract(ST_SetSRID(
-                                                                                       :wkt::geometry,
-                                                                                       4326
-                                                                               ))) d
+                                        select calculate_validated_input(:polygon) geom
                                      ),
                                      stat_area as (
                                          select distinct on (h.h3) h.*
