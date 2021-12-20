@@ -6,7 +6,6 @@ create or replace function calculate_validated_input(geometry_string text)
     returns geometry
     language sql
     stable
-    strict
     parallel safe
     cost 10000
 as
