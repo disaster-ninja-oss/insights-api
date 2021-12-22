@@ -5,6 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
+    <include  file="calculate_validated_input.sql" relativeToChangelogFile="true"/>
     <include  file="polygon_correlation.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_area_resolution.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_population_and_gdp_for_wkt.sql" relativeToChangelogFile="true"/>
@@ -15,6 +16,5 @@
     <include  file="calculate_population_and_gdp_for_wkt_performance_fix_v3.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_population_and_gdp_for_wkt_performance_fix_v4.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_population_and_gdp.sql" relativeToChangelogFile="true"/>
-    <include  file="calculate_validated_input.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
