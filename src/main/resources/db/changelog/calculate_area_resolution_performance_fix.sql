@@ -6,7 +6,6 @@ create or replace function calculate_area_resolution(geometry geometry)
     returns integer
     language plpgsql
     stable
-    strict
     parallel safe
     cost 10000
 as

@@ -32,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 @Tag(name = "Population", description = "Population API")
 @RestController
 @RequestMapping("/population")
+@Deprecated
 public class PopulationController {
 
     private final Logger logger;

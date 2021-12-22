@@ -25,7 +25,7 @@ public class HumanitarianImpactResolver implements GraphQLResolver<Analytics> {
 
     public String getHumanitarianImpact(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transformToWkt(polygon);
+        var transformedGeometry = geometryTransformer.transform(polygon);
         var impactDtos = populationService.calculateHumanitarianImpact(transformedGeometry);
         var collection = populationService.convertImpactIntoFeatureCollection(transformedGeometry, impactDtos);
         return objectMapper.writeValueAsString(collection);
