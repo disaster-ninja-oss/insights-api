@@ -69,8 +69,9 @@ public class FunctionsRepository {
                 result.addAll(createFunctionResultList(args, rs));
             }));
         } catch (Exception e) {
-            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage()));
-            return null;
+            String error = String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
         }
         return result;
     }

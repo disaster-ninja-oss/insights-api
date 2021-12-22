@@ -317,8 +317,9 @@ public class StatisticRepository {
         try {
             return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
         } catch (Exception e) {
-            logger.error(String.format("Sql exception for geometry %s. Exception: %s", request.getPolygon(), e.getMessage()));
-            return null;
+            String error = String.format("Sql exception for geometry %s. Exception: %s", request.getPolygon(), e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
         }
     }
 
@@ -371,8 +372,9 @@ public class StatisticRepository {
         try {
             return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
         } catch (Exception e) {
-            logger.error(String.format("Sql exception for geometry %s. Exception: %s", request.getPolygon(), e.getMessage()));
-            return null;
+            String error = String.format("Sql exception for geometry %s. Exception: %s", request.getPolygon(), e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
         }
     }
 
@@ -467,8 +469,9 @@ public class StatisticRepository {
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, correlationRateRowMapper);
         } catch (Exception e) {
-            logger.error(String.format("Sql exception for geometry %s. Exception: %s", polygon, e.getMessage()));
-            return null;
+            String error = String.format("Sql exception for geometry %s. Exception: %s", polygon, e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
         }
     }
 

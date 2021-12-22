@@ -78,8 +78,9 @@ public class ThermalSpotRepository {
                     .forestAreaKm2(new BigDecimal(0))
                     .build();
         } catch (Exception e) {
-            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage()));
-            return null;
+            String error = String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
         }
     }
 }
