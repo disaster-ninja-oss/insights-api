@@ -140,7 +140,7 @@ public class PopulationRepository {
         } catch (EmptyResultDataAccessException e) {
             return Lists.newArrayList();
         } catch (Exception e) {
-            logger.error(String.format("Sql exception for geometry %s. Exception: %s", wkt, e.getMessage()));
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geometry, e.getMessage()));
             return null;
         }
     }
@@ -262,7 +262,7 @@ public class PopulationRepository {
                     .urbanCorePopulation(new BigDecimal(0))
                     .totalPopulatedAreaKm2(new BigDecimal(0)).build();
         } catch (Exception e) {
-            logger.error(String.format("Sql exception for geometry %s. Exception: %s", wkt, e.getMessage()));
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage()));
             return null;
         }
     }
