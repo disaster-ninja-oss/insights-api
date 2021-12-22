@@ -4,11 +4,15 @@ import io.kontur.insightsapi.model.ThermalSpotStatistic;
 import io.kontur.insightsapi.service.Helper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +27,8 @@ public class ThermalSpotRepository {
             "forestAreaKm2", "sum(forest) as forestAreaKm2"
     );
 
+    private final Logger logger = LoggerFactory.getLogger(ThermalSpotRepository.class);
+
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Helper helper;
@@ -32,45 +38,57 @@ public class ThermalSpotRepository {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = String.format("""
-                with validated_input as (
-                    select ST_MakeValid(ST_Transform(ST_UnaryUnion(
-                                                             ST_WrapX(ST_WrapX(
-                                                                              ST_Union(ST_MakeValid(
-                                                                                      d.geom
-                                                                                  )),
-                                                                              180, -360), -180, 360)),
-                                                     3857)) geom
-                    from ST_Dump(ST_CollectionExtract(ST_GeomFromGeoJSON(
-                                                                  :polygon::jsonb
-                                                          ))) d
-                ),
-                     stat_area as (
-                         select distinct on (h.h3) h.*
-                         from (
-                                  select ST_Subdivide(v.geom, 30) geom
-                                  from validated_input v
-                              ) p
-                                  cross join
-                              lateral (
-                                  select h3,
-                                         industrial_area,
-                                         wildfires,
-                                         volcanos_count,
-                                         forest
-                                  from stat_h3 sh
-                                  where ST_Intersects(sh.geom, p.geom)
-                                    and sh.zoom = 8
-                                  order by h3
-                                  ) h
-                     )
-                select %s from stat_area st
-        """.trim(), StringUtils.join(queryList, ", "));
-        return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
-                ThermalSpotStatistic.builder()
-                        .industrialAreaKm2(rs.getBigDecimal("industrialAreaKm2"))
-                        .hotspotDaysPerYearMax(rs.getLong("hotspotDaysPerYearMax"))
-                        .volcanoesCount(rs.getLong("volcanoesCount"))
-                        .forestAreaKm2(rs.getBigDecimal("forestAreaKm2"))
-                        .build());
+                        with validated_input as (
+                            select ST_MakeValid(ST_Transform(ST_UnaryUnion(
+                                                                     ST_WrapX(ST_WrapX(
+                                                                                      ST_Union(ST_MakeValid(
+                                                                                              d.geom
+                                                                                          )),
+                                                                                      180, -360), -180, 360)),
+                                                             3857)) geom
+                            from ST_Dump(ST_CollectionExtract(ST_GeomFromGeoJSON(
+                                                                          :polygon::jsonb
+                                                                  ))) d
+                        ),
+                             stat_area as (
+                                 select distinct on (h.h3) h.*
+                                 from (
+                                          select ST_Subdivide(v.geom, 30) geom
+                                          from validated_input v
+                                      ) p
+                                          cross join
+                                      lateral (
+                                          select h3,
+                                                 industrial_area,
+                                                 wildfires,
+                                                 volcanos_count,
+                                                 forest
+                                          from stat_h3 sh
+                                          where ST_Intersects(sh.geom, p.geom)
+                                            and sh.zoom = 8
+                                          order by h3
+                                          ) h
+                             )
+                        select %s from stat_area st
+                """.trim(), StringUtils.join(queryList, ", "));
+        try {
+            return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
+                    ThermalSpotStatistic.builder()
+                            .industrialAreaKm2(rs.getBigDecimal("industrialAreaKm2"))
+                            .hotspotDaysPerYearMax(rs.getLong("hotspotDaysPerYearMax"))
+                            .volcanoesCount(rs.getLong("volcanoesCount"))
+                            .forestAreaKm2(rs.getBigDecimal("forestAreaKm2"))
+                            .build());
+        } catch (EmptyResultDataAccessException e) {
+            return ThermalSpotStatistic.builder()
+                    .industrialAreaKm2(new BigDecimal(0))
+                    .hotspotDaysPerYearMax(0L)
+                    .volcanoesCount(0L)
+                    .forestAreaKm2(new BigDecimal(0))
+                    .build();
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage()));
+            return null;
+        }
     }
 }
