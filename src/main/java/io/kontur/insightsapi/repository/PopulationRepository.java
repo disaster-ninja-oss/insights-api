@@ -8,6 +8,8 @@ import io.kontur.insightsapi.model.UrbanCore;
 import io.kontur.insightsapi.service.Helper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -39,6 +41,8 @@ public class PopulationRepository {
             "totalPopulatedAreaKm2", "t.area as totalPopulatedAreaKm2 "
     );
 
+    private final Logger logger = LoggerFactory.getLogger(PopulationRepository.class);
+
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Helper helper;
@@ -50,20 +54,29 @@ public class PopulationRepository {
                 select type, population, urban, gdp
                 from calculate_population_and_gdp(:geometry)
                 """.trim();
-
-        return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
-                CalculatePopulationDto.builder()
-                        .population(rs.getBigDecimal("population"))
-                        .gdp(rs.getBigDecimal("gdp"))
-                        .type(rs.getString("type"))
-                        .urban(rs.getBigDecimal("urban")).build())));
+        try {
+            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
+                    CalculatePopulationDto.builder()
+                            .population(rs.getBigDecimal("population"))
+                            .gdp(rs.getBigDecimal("gdp"))
+                            .type(rs.getString("type"))
+                            .urban(rs.getBigDecimal("urban")).build())));
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geometry, e.getMessage()));
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)
     public BigDecimal getArea(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var query = "select ST_Area(:geometry::geometry)";
-        return namedParameterJdbcTemplate.queryForObject(query, paramSource, BigDecimal.class);
+        try {
+            return namedParameterJdbcTemplate.queryForObject(query, paramSource, BigDecimal.class);
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geometry, e.getMessage()));
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -126,6 +139,9 @@ public class PopulationRepository {
                             .totalAreaKm2(rs.getBigDecimal("totalAreaKm2")).build());
         } catch (EmptyResultDataAccessException e) {
             return Lists.newArrayList();
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", wkt, e.getMessage()));
+            return null;
         }
     }
 
@@ -182,6 +198,9 @@ public class PopulationRepository {
                     .areaWithoutOsmObjectsKm2(new BigDecimal(0))
                     .osmGapsPercentage(new BigDecimal(0))
                     .build();
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage()));
+            return null;
         }
     }
 
@@ -242,6 +261,9 @@ public class PopulationRepository {
                     .urbanCoreAreaKm2(new BigDecimal(0))
                     .urbanCorePopulation(new BigDecimal(0))
                     .totalPopulatedAreaKm2(new BigDecimal(0)).build();
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", wkt, e.getMessage()));
+            return null;
         }
     }
 }

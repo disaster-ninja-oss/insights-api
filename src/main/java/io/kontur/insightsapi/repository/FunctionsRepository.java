@@ -64,9 +64,14 @@ public class FunctionsRepository {
                 select %s from stat_area st
                 """.trim(), StringUtils.join(params, ", "));
         List<FunctionResult> result = new ArrayList<>();
-        namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
-            result.addAll(createFunctionResultList(args, rs));
-        }));
+        try {
+            namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
+                result.addAll(createFunctionResultList(args, rs));
+            }));
+        } catch (Exception e) {
+            logger.error(String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage()));
+            return null;
+        }
         return result;
     }
 
