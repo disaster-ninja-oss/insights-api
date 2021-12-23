@@ -24,6 +24,8 @@ spring:
 graphql:
   servlet:
     corsEnabled: false
+    tracing-enabled: true
+    actuator-metrics: true
 
 management:
   metrics:
