@@ -76,8 +76,13 @@ public class StatisticRepository {
                                                                  'rate', correlation,
                                                                  'correlation', correlation,
                                                                  'quality', quality
-                                                                 )
-                                                             order by abs(correlation) * quality desc nulls last , abs(correlation) desc)
+                                                                 ),
+                                                                 abs(avg(correlation) over (partition by x_num, x_den)) abs_avg_correlation_x,
+                                                                 abs(avg(correlation) over (partition by y_num, y_den)) abs_avg_correlation_y,
+                                                                 abs(avg(correlation) over (partition by x_num, x_den)) * quality abs_avg_correlation_quality_x,
+                                                                 abs(avg(correlation) over (partition by y_num, y_den)) * quality abs_avg_correlation_quality_y
+                                                             order by abs_avg_correlation_quality_x desc nulls last, abs_avg_correlation_quality_y desc nulls last,
+                                                                      abs_avg_correlation_x desc, abs_avg_correlation_y desc)
                                                from
                                                    bivariate_axis_correlation, bivariate_indicators xcopy, bivariate_indicators ycopy
                                                where xcopy.param_id = x_num and ycopy.param_id = y_num
@@ -306,68 +311,18 @@ public class StatisticRepository {
                                          'rate', correlation,
                                          'correlation', correlation,
                                          'quality', quality
-                                     )::text
+                                     )::text,
+                        abs(avg(correlation) over (partition by x_num, x_den)) abs_avg_correlation_x,
+                        abs(avg(correlation) over (partition by y_num, y_den)) abs_avg_correlation_y,
+                        abs(avg(correlation) over (partition by x_num, x_den)) * quality abs_avg_correlation_quality_x,
+                        abs(avg(correlation) over (partition by y_num, y_den)) * quality abs_avg_correlation_quality_y
                 from bivariate_axis_correlation_polygon,
                      bivariate_indicators xcopy,
                      bivariate_indicators ycopy
                 where xcopy.param_id = x_num
                   and ycopy.param_id = y_num
-                order by abs(correlation) * quality desc nulls last, abs(correlation) desc
-                """.trim();
-        try {
-            return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
-        } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", request.getPolygon(), e.getMessage());
-            logger.error(error);
-            throw new IllegalArgumentException(error, e);
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public List<PolygonCorrelationRate> getPolygonCorrelationRateStatistics(PolygonStatisticRequest request) {
-        var paramSource = new MapSqlParameterSource();
-        paramSource.addValue("polygon", request.getPolygon());
-        var query = """
-                with bivariate_axis_correlation_polygon as (
-                    select x.numerator                             as x_num,
-                           x.denominator                           as x_den,
-                           y.numerator                             as y_num,
-                           y.denominator                           as y_den,
-                           correlate_bivariate_axes(:polygon::json, x.numerator, x.denominator, y.numerator,
-                                                    y.denominator) as correlation,
-                           1 - ((1 - x.quality) * (1 - y.quality)) as quality
-                    from (bivariate_axis x
-                             join bivariate_indicators x_den_indicator
-                                  on (x.denominator = x_den_indicator.param_id)
-                             join bivariate_indicators x_num_indicator
-                                  on (x.numerator = x_num_indicator.param_id)),
-                         (bivariate_axis y
-                             join bivariate_indicators y_den_indicator
-                                  on (y.denominator = y_den_indicator.param_id))
-                    where (x.numerator != y.numerator)
-                      and x.quality > 0.5
-                      and y.quality > 0.5
-                      and x_den_indicator.is_base
-                      and y_den_indicator.is_base
-                      and not x_num_indicator.is_base
-                )
-                select jsonb_build_object(
-                                         'x', jsonb_build_object('label', xcopy.param_label,
-                                                                  'quotient',
-                                                                  jsonb_build_array(x_num, x_den)),
-                                         'y', jsonb_build_object('label', ycopy.param_label,
-                                                                   'quotient',
-                                                                   jsonb_build_array(y_num, y_den)),
-                                         'rate', correlation,
-                                         'correlation', correlation,
-                                         'quality', quality
-                                     )::text 
-                from bivariate_axis_correlation_polygon, 
-                     bivariate_indicators xcopy, 
-                     bivariate_indicators ycopy 
-                where xcopy.param_id = x_num 
-                  and ycopy.param_id = y_num 
-                order by abs(correlation) * quality desc nulls last, abs(correlation) desc
+                order by abs_avg_correlation_quality_x desc nulls last, abs_avg_correlation_quality_y desc nulls last, 
+                    abs_avg_correlation_x desc, abs_avg_correlation_y desc
                 """.trim();
         try {
             return namedParameterJdbcTemplate.query(query, paramSource, polygonCorrelationRateRowMapper);
@@ -392,11 +347,16 @@ public class StatisticRepository {
                                       'rate', correlation,
                                       'correlation', correlation,
                                       'quality', quality
-                                  ) 
+                                  ),
+                    abs(avg(correlation) over (partition by x_num, x_den)) abs_avg_correlation_x,
+                    abs(avg(correlation) over (partition by y_num, y_den)) abs_avg_correlation_y,
+                    abs(avg(correlation) over (partition by x_num, x_den)) * quality abs_avg_correlation_quality_x,
+                    abs(avg(correlation) over (partition by y_num, y_den)) * quality abs_avg_correlation_quality_y
                 from
                     bivariate_axis_correlation, bivariate_indicators xcopy, bivariate_indicators ycopy
                     where xcopy.param_id = x_num and ycopy.param_id = y_num
-                    order by abs(correlation) * quality desc nulls last, abs(correlation) desc
+                    order by abs_avg_correlation_quality_x desc nulls last, abs_avg_correlation_quality_y desc nulls last,
+                        abs_avg_correlation_x desc, abs_avg_correlation_y desc
                 """.trim();
         return jdbcTemplate.query(query, polygonCorrelationRateRowMapper);
     }
