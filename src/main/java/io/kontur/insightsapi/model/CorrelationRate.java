@@ -16,4 +16,8 @@ public class CorrelationRate {
     private Double quality;
 
     private Double correlation;
+
+    private Double avgCorrelationX;
+
+    private Double avgCorrelationY;
 }

@@ -3,5 +3,7 @@ type PolygonCorrelationRate {
     y: Axis,
     rate: Float,
     quality: Float,
-    correlation: Float
+    correlation: Float,
+    avgCorrelationX: Float,
+    avgCorrelationY: Float
 }
