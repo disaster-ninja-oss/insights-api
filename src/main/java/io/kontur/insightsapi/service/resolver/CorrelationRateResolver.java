@@ -96,7 +96,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
             result.put(numeratorDenominator, new ForAvgCorrelationDto(0.0, 0));
         }
         var forAvgCorrelationDto = result.get(numeratorDenominator);
-        forAvgCorrelationDto.setSum(forAvgCorrelationDto.getSum() + currentRate.getCorrelation());
+        forAvgCorrelationDto.setSum(forAvgCorrelationDto.getSum() + Math.abs(currentRate.getCorrelation()));
         forAvgCorrelationDto.setNumber(forAvgCorrelationDto.getNumber() + 1);
     }
 
@@ -117,11 +117,11 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
 
         Map<PureNumeratorDenominatorDto, Double> xMapResult = xMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
-                        entry -> Math.abs(entry.getValue().getSum()) / entry.getValue().getNumber()));
+                        entry -> entry.getValue().getSum() / entry.getValue().getNumber()));
 
         Map<PureNumeratorDenominatorDto, Double> yMapResult = yMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
-                        entry -> Math.abs(entry.getValue().getSum()) / entry.getValue().getNumber()));
+                        entry -> entry.getValue().getSum() / entry.getValue().getNumber()));
 
         return List.of(xMapResult, yMapResult);
     }
