@@ -28,7 +28,7 @@ build:
     paths:
       - '*.zip'
 
-deploy-sonic:
+deploy-test:
   tags:
     - kontur
     - ansible
@@ -38,13 +38,13 @@ deploy-sonic:
     path_to_dist=$(find $CI_PROJECT_DIR -maxdepth 1 -name \*.zip -print -quit)"
     --limit=sonic_insights_api ansible/deploy.yml
   environment:
-    name: TEST sonic
+    name: TEST
     url: 'https://test-apps.konturlabs.com/insights/'
   when: manual
   dependencies:
     - build
 
-deploy-zigzag:
+deploy-dev:
   tags:
     - kontur
     - ansible
@@ -54,13 +54,13 @@ deploy-zigzag:
     path_to_dist=$(find $CI_PROJECT_DIR -maxdepth 1 -name \*.zip -print -quit)"
     --limit=zigzag_insights_api ansible/deploy.yml
   environment:
-    name: TEST zigzag
+    name: DEV
     url: 'https://test-apps02.konturlabs.com/insights/'
   when: manual
   dependencies:
     - build
 
-deploy-lima:
+deploy-prod:
   tags:
     - kontur
     - ansible
@@ -70,7 +70,7 @@ deploy-lima:
     path_to_dist=$(find $CI_PROJECT_DIR -maxdepth 1 -name \*.zip -print -quit)"
     --limit=lima_insights_api ansible/deploy.yml
   environment:
-    name: PROD lima
+    name: PROD
     url: 'https://apps.kontur.io/insights/'
   only:
     - /^release-.*$/
