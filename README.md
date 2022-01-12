@@ -1,5 +1,5 @@
 # Insights Api
-GraphQL API for calculating correlation between parameters in given polygon in wkt format and lists of numerators and denominators for x and y axes
+GraphQL API for calculating correlation between parameters in given polygon in geojson format and lists of numerators and denominators for x and y axes
 
 ##Test UI
 Test UI is available on http://url/graphiql
@@ -17,4 +17,10 @@ Get correlations in polygon in GeoJSON (single polygon, feature collection or fe
     yNumeratorList: ["population", "area_km2"]
   }){fields}
 ```
-Fields description https://gist.github.com/Akiyamka/8ad19a8de3c955ac1f27f67281c12fdf#axis
+**Fields description** https://gist.github.com/Akiyamka/8ad19a8de3c955ac1f27f67281c12fdf#axis
+
+##Performance tests
+Simple performance test for calculating correlation is in scripts package. There are several geometries from dev 
+environment and python script with test. More about test framework here http://docs.locust.io/en/stable/
+
+**How to run**: locust -f PATH-TO-PROJECT\insights-api\scripts\test.py
