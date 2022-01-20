@@ -2,6 +2,7 @@ package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.model.ThermalSpotStatistic;
 import io.kontur.insightsapi.service.Helper;
+import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
-public class ThermalSpotRepository {
+public class ThermalSpotRepository implements ThermalSpotStatisticService {
 
     private static final Map<String, String> queryMap = Map.of(
             "industrialAreaKm2", "sum(industrial_area) as industrialAreaKm2 ",
