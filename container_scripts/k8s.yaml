@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: insights-api-config
+  namespace: sandbox-kstsepina
+  labels:
+    app: insights-api
+data:
+  graphql.servlet.tracing-enabled: "false"
+---  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insights-api
+  namespace: sandbox-kstsepina
+spec:
+  selector:
+    matchLabels:
+      app: insights-api
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: insights-api
+    spec:
+      containers:
+      - name: insights-api
+        image: kontur.io/insights-api
+        imagePullPolicy: Never
+        envFrom:
+         - configMapRef: 
+            name: insights-api-config
+         - secretRef:
+            name: insights-api-secrets                     
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insights-api
+  namespace: sandbox-kstsepina
+  labels:
+    app: insights-api
+spec:
+  selector:
+    app: insights-api
+  ports:
+    - name: data
+      protocol: TCP
+      port: 8625
+      targetPort: 8625
