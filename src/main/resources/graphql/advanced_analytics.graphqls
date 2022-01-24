@@ -1,0 +1,7 @@
+type AdvancedAnalytics {
+    numerator: String,
+    denominator: String,
+    numeratorLabel: String,
+    denominatorLabel: String,
+    analytics: [AdvancedAnalyticsValues]
+}
