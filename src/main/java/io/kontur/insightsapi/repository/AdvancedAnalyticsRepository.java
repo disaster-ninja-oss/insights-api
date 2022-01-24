@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.repository;
 
-import io.kontur.insightsapi.constants.AdvancedAnalyticsConstants;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.model.*;
 import lombok.RequiredArgsConstructor;
@@ -45,16 +44,22 @@ public class AdvancedAnalyticsRepository {
                 with validated_input as (
                     select calculate_validated_input(:polygon) geom
                 ),
-                subdivided_polygons as (
-                         select ST_Subdivide(v.geom) geom
-                         from validated_input v
-                ),
                      stat_area as (
-                         select distinct h3, resolution, %s
-                         from stat_h3 sh3, subdivided_polygons sp where
-                             ST_Intersects(sh3.geom, sp.geom)
+                                 select distinct on (h.h3) h.*
+                                 from (
+                                          select ST_Subdivide(v.geom, 30) geom
+                                          from validated_input v
+                                      ) p
+                                          cross join
+                                      lateral (
+                                          select h3, %s, resolution
+                                          from stat_h3 sh
+                                          where ST_Intersects(sh.geom, p.geom)
+                                          and resolution = 8
+                                            order by h3
+                                          ) h
                      )
-                """.trim(), StringUtils.join(bivariativeAxisDistincList, ","));
+                     """.trim(), StringUtils.join(bivariativeAxisDistincList, ","));
     }
 
     public String getUnionQuery(BivariativeAxisDto numDen) {
@@ -123,7 +128,8 @@ public class AdvancedAnalyticsRepository {
 
     private List<AdvancedAnalyticsValues> createValuesList(ResultSet rs) {
         //calculation list will be parametric, for now its constant
-        return AdvancedAnalyticsConstants.CALCULATION_LIST.stream().map(arg -> {
+        List<String> calculationsList = Stream.of(Calculations.values()).map(Calculations::name).toList();
+        return calculationsList.stream().map(arg -> {
             try {
                 return new AdvancedAnalyticsValues(arg, rs.getDouble(arg), rs.getDouble(arg + "_quality"));
             } catch (SQLException e) {
@@ -131,5 +137,9 @@ public class AdvancedAnalyticsRepository {
                 return null;
             }
         }).toList();
+    }
+
+    private enum Calculations {
+        sum, min, max, mean, stddev, median
     }
 }
