@@ -30,19 +30,30 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     public List<PolygonCorrelationRate> getCorrelationRates(BivariateStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         Map<String, Object> arguments = (Map<String, Object>) environment.getExecutionStepInfo()
                 .getParent().getParent().getArguments().get("polygonStatisticRequest");
+        //no polygons defined
         if (!arguments.containsKey("polygon") && !arguments.containsKey("polygonV2")) {
             return statisticRepository.getAllCorrelationRateStatistics();
         }
         var transformedGeometry = getPolygon(arguments);
         if (!arguments.keySet().containsAll(List.of("xNumeratorList", "yNumeratorList"))) {
+
+            //get numr & denm from bivariate_axis & bivariate_indicators size nearly 17k
             List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
             String finalTransformedGeometry = transformedGeometry;
+
+            //calculate correlation for every bivariate_axis in defined polygon that intersects h3
             var correlationRateList = Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
                     .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, finalTransformedGeometry))
                     .flatMap(Collection::stream)
                     .collect(Collectors.toList());
+
+            //calculate avg correlation for xy
             var avgCorrelationXY = calculateAvgCorrelationXY(correlationRateList);
+
+            //set avg correlation rate
             fillAvgCorrelation(correlationRateList, avgCorrelationXY);
+
+            //should be sorted with correlationRateComparator
             correlationRateList.sort(correlationRateComparator());
             return correlationRateList;
         }
@@ -60,9 +71,13 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     private List<PolygonCorrelationRate> calculatePolygonCorrelations(List<NumeratorsDenominatorsDto> sourceDtoList,
                                                                       String transformedGeometry) {
         List<PolygonCorrelationRate> result = new ArrayList<>();
+
+        //run for every 500 bivariative_axis sourceDtoList size = 500 & get correlationList
         List<Double> correlations = statisticRepository.getPolygonCorrelationRateStatisticsBatch(sourceDtoList, transformedGeometry);
         for (int i = 0; i < sourceDtoList.size(); i++) {
             PolygonCorrelationRate polygonCorrelationRate = new PolygonCorrelationRate();
+
+            ///combine them on Axis with quality, correlation & rate
             polygonCorrelationRate.setX(Axis.builder()
                     .label(sourceDtoList.get(i).getXLabel())
                     .quotient(List.of(sourceDtoList.get(i).getXNumerator(), sourceDtoList.get(i).getXDenominator()))
@@ -122,7 +137,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         Map<PureNumeratorDenominatorDto, Double> yMapResult = yMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
                         entry -> entry.getValue().getSum() / entry.getValue().getNumber()));
-
+        // asssume they shoud be equal in size, check it!
         return List.of(xMapResult, yMapResult);
     }
 
