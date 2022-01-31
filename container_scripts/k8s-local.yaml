@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: insights-api-config
-  namespace: sandbox-kstsepina
+  namespace: platform
   labels:
     app: insights-api
 data:
@@ -12,7 +12,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: insights-api
-  namespace: sandbox-kstsepina
+  namespace: platform
 spec:
   selector:
     matchLabels:
@@ -25,21 +25,19 @@ spec:
     spec:
       containers:
       - name: insights-api
-        image: nexus.kontur.io:8084/konturdev/insights-api:0.0.1
-        imagePullPolicy: IfNotPresent
+        image: kontur.io/insights-api
+        imagePullPolicy: Never
         envFrom:
          - configMapRef: 
             name: insights-api-config
          - secretRef:
-            name: insights-api-secrets
-      imagePullSecrets:
-        - name: kontur-nexus
+            name: insights-api-secrets                     
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: insights-api
-  namespace: sandbox-kstsepina
+  namespace: platform
   labels:
     app: insights-api
 spec:
