@@ -12,9 +12,12 @@ import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,21 +31,28 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
     private final AdvancedAnalyticsRepository advancedAnalyticsRepository;
 
+    private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsResolver.class);
+
     public List<AdvancedAnalytics> getAdvancedAnalytics(Analytics statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon);
+        if (polygon != null) {
+            var transformedGeometry = geometryTransformer.transform(polygon);
 
-        //got bivariative axis, will be parametric, not all list
-        List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getBivariativeAxis();
+            //got bivariative axis, will be parametric, not all list
+            List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getBivariativeAxis();
 
-        //query with geom and uniun of bivariative axis caculations
-        String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
-        String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
+            //query with geom and uniun of bivariative axis caculations
+            String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
+            String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
 
-        //get analytics result and match layer names
-        var advancedAnalyticsValues = advancedAnalyticsRepository.getAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, transformedGeometry);
+            //get analytics result and match layer names
+            var advancedAnalyticsValues = advancedAnalyticsRepository.getAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, transformedGeometry);
 
-        return getAdvancedAnalyticsResult(axisDtos, advancedAnalyticsValues);
+            return getAdvancedAnalyticsResult(axisDtos, advancedAnalyticsValues);
+        } else {
+            logger.warn("No geometry provided for Advanced Analytical Panel request");
+            return Collections.EMPTY_LIST;
+        }
     }
 
     private List<AdvancedAnalytics> getAdvancedAnalyticsResult(List<BivariativeAxisDto> argAxis, List<List<AdvancedAnalyticsValues>> argValues) {
