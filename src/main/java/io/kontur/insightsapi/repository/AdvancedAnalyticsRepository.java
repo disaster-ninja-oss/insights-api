@@ -55,7 +55,6 @@ public class AdvancedAnalyticsRepository {
                                           select h3, %s, resolution
                                           from stat_h3 sh
                                           where ST_Intersects(sh.geom, p.geom)
-                                          and resolution = 8
                                             order by h3
                                           ) h
                      )
