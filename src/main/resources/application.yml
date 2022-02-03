@@ -24,7 +24,7 @@ spring:
 graphql:
   servlet:
     corsEnabled: false
-    tracing-enabled: true
+    tracing-enabled: false
     actuator-metrics: true
 
 management:
@@ -52,3 +52,7 @@ management:
     web:
       exposure:
         include: health, info, prometheus
+
+retry:
+  functionRequest:
+    delay: 100
