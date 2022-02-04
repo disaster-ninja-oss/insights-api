@@ -4,7 +4,7 @@ metadata:
   name: insights-api-config
   namespace: sandbox-kstsepina
   labels:
-    app: insights-api
+    app.kubernetes.io/name: insights-api
 data:
   graphql.servlet.tracing-enabled: "false"
 ---  
@@ -16,12 +16,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: insights-api
+      app.kubernetes.io/name: insights-api
   replicas: 2
   template:
     metadata:
       labels:
-        app: insights-api
+        app.kubernetes.io/name: insights-api
     spec:
       containers:
       - name: insights-api
@@ -41,7 +41,7 @@ metadata:
   name: insights-api
   namespace: sandbox-kstsepina
   labels:
-    app: insights-api
+    app.kubernetes.io/name: insights-api
 spec:
   selector:
     app: insights-api
