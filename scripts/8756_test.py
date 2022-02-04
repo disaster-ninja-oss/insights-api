@@ -1,9 +1,10 @@
 import psycopg2
+import sys
 import time
 from contextlib import closing
 from datetime import datetime
 
-file_output = open("c:\Dev\platform\insights-api\scripts\8756_test_output.txt", "a")
+file_output = open(sys.argv[1], "a")
 with closing(psycopg2.connect(dbname='population-api', user='user',
                               password='password', host='localhost', port=5432)) as conn:
     with conn.cursor() as cursor:
