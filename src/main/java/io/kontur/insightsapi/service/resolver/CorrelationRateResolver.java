@@ -32,7 +32,9 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                 .getParent().getParent().getArguments().get("polygonStatisticRequest");
         //no polygons defined
         if (!arguments.containsKey("polygon") && !arguments.containsKey("polygonV2")) {
-            return statisticRepository.getAllCorrelationRateStatistics();
+            var correlationRateList = statisticRepository.getAllCorrelationRateStatistics();
+            fillParent(correlationRateList);
+            return correlationRateList;
         }
         var transformedGeometry = getPolygon(arguments);
         if (!arguments.keySet().containsAll(List.of("xNumeratorList", "yNumeratorList"))) {
@@ -55,6 +57,8 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
 
             //should be sorted with correlationRateComparator
             correlationRateList.sort(correlationRateComparator());
+
+            fillParent(correlationRateList);
             return correlationRateList;
         }
         return statisticRepository.getPolygonNumeratorsCorrelationRateStatistics(PolygonStatisticRequest.builder()
@@ -62,6 +66,19 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                 .xNumeratorList((List<String>) arguments.get("xNumeratorList"))
                 .yNumeratorList((List<String>) arguments.get("yNumeratorList"))
                 .build());
+    }
+
+    private void fillParent(List<PolygonCorrelationRate> correlationRateList) {
+        for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
+            if (Math.abs(polygonCorrelationRate.getCorrelation()) > 0.8) {
+                if (polygonCorrelationRate.getAvgCorrelationX() > polygonCorrelationRate.getAvgCorrelationY()) {
+                    polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
+                }
+                if (polygonCorrelationRate.getAvgCorrelationY() > polygonCorrelationRate.getAvgCorrelationX()) {
+                    polygonCorrelationRate.getY().setParent(polygonCorrelationRate.getX().getQuotient());
+                }
+            }
+        }
     }
 
     private Comparator<PolygonCorrelationRate> correlationRateComparator() {
@@ -137,7 +154,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         Map<PureNumeratorDenominatorDto, Double> yMapResult = yMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
                         entry -> entry.getValue().getSum() / entry.getValue().getNumber()));
-        // asssume they shoud be equal in size, check it!
+
         return List.of(xMapResult, yMapResult);
     }
 

@@ -1,7 +1,7 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
-import io.kontur.insightsapi.model.*;
+import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -118,8 +118,8 @@ public class AdvancedAnalyticsRepository {
                 result.add(createValuesList(rs));
             }));
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", argGeometry, e.getMessage());
-            logger.error(error);
+            String error = String.format("Sql exception for geometry %s", argGeometry);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
         return result;
