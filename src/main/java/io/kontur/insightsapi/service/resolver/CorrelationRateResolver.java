@@ -14,6 +14,7 @@ import io.kontur.insightsapi.model.PolygonCorrelationRate;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -26,6 +27,9 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     private final StatisticRepository statisticRepository;
 
     private final GeometryTransformer geometryTransformer;
+
+    @Value("${bivatiateMatrix.highCorrelationLevel}")
+    private Double highCorrelationLevel;
 
     public List<PolygonCorrelationRate> getCorrelationRates(BivariateStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         Map<String, Object> arguments = (Map<String, Object>) environment.getExecutionStepInfo()
@@ -70,7 +74,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
 
     private void fillParent(List<PolygonCorrelationRate> correlationRateList) {
         for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
-            if (Math.abs(polygonCorrelationRate.getCorrelation()) > 0.8) {
+            if (Math.abs(polygonCorrelationRate.getCorrelation()) > highCorrelationLevel) {
                 if (polygonCorrelationRate.getAvgCorrelationX() > polygonCorrelationRate.getAvgCorrelationY()) {
                     polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
                 }

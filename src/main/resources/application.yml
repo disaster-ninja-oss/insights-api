@@ -56,3 +56,6 @@ management:
 retry:
   functionRequest:
     delay: 100
+
+bivatiateMatrix:
+  highCorrelationLevel: 0.8
