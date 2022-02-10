@@ -5,3 +5,6 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/test-master-changelog.xml
+
+bivatiateMatrix:
+  highCorrelationLevel: 0.8
