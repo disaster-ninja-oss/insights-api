@@ -474,7 +474,7 @@ public class StatisticRepository {
         Map<String, Boolean> result = new HashMap<>();
         try {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
-                result.putAll(createResultMap(distinctFieldsRequests, rs));
+                result.putAll(createResultMapForNotEmptyLayers(distinctFieldsRequests, rs));
             }));
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s. Exception: %s", polygon, e.getMessage());
@@ -484,7 +484,7 @@ public class StatisticRepository {
         return result;
     }
 
-    private Map<String, Boolean> createResultMap(List<String> numerators, ResultSet rs) {
+    private Map<String, Boolean> createResultMapForNotEmptyLayers(List<String> numerators, ResultSet rs) {
         Map<String, Boolean> result = new HashMap<>();
         numerators.forEach(numerator -> {
             try {

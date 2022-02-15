@@ -170,15 +170,11 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                                                                                         String transformedGeometry) {
         Map<String, Boolean> numeratorsForNotEmptyLayers =
                 statisticRepository.getNumeratorsForNotEmptyLayersBatch(numeratorsDenominatorsDtos, transformedGeometry);
-        List<NumeratorsDenominatorsDto> result = Lists.newArrayList();
-        numeratorsDenominatorsDtos.forEach(numeratorsDenominators -> {
-            if ((numeratorsForNotEmptyLayers.containsKey(numeratorsDenominators.getXNumerator())
-                    && numeratorsForNotEmptyLayers.get(numeratorsDenominators.getXNumerator()))
-                    && (numeratorsForNotEmptyLayers.containsKey(numeratorsDenominators.getYNumerator())
-                    && numeratorsForNotEmptyLayers.get(numeratorsDenominators.getYNumerator()))){
-                result.add(numeratorsDenominators);
-            }
-        });
-        return result;
+        return numeratorsDenominatorsDtos.stream()
+                .filter(dto -> (numeratorsForNotEmptyLayers.containsKey(dto.getXNumerator())
+                        && numeratorsForNotEmptyLayers.get(dto.getXNumerator()))
+                        && (numeratorsForNotEmptyLayers.containsKey(dto.getYNumerator())
+                        && numeratorsForNotEmptyLayers.get(dto.getYNumerator())))
+                .collect(Collectors.toList());
     }
 }
