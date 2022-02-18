@@ -216,7 +216,7 @@
                                 <artifactItem>
                                     <groupId>io.kontur.common</groupId>
                                     <artifactId>systemd-service-wrapper</artifactId>
-                                    <version>1.0.7</version>
+                                    <version>1.0.8</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/unpacked</outputDirectory>
