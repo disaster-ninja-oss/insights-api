@@ -33,7 +33,8 @@ public class FunctionsRepository {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    @Retryable(value = EmptySqlQueryAnswer.class, backoff = @Backoff(delayExpression = "${retry.functionRequest.delay}"))
+    @Retryable(value = EmptySqlQueryAnswer.class, backoff = @Backoff(delayExpression = "${retry.functionRequest.delay}",
+            multiplierExpression = "${retry.functionRequest.multiplier}"))
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
         List<String> params = args.stream()
                 .map(this::createFunctionsForSelect)
