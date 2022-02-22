@@ -18,4 +18,6 @@ public class Axis {
     private Double quality;
 
     private List<String> quotient;
+
+    private List<String> parent;
 }
