@@ -43,47 +43,55 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         }
         var transformedGeometry = getPolygon(arguments);
 
-            //get numr & denm from bivariate_axis & bivariate_indicators size nearly 17k
-            List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
+        //get numr & denm from bivariate_axis & bivariate_indicators size nearly 17k
+        List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
 
-            String finalTransformedGeometry = transformedGeometry;
+        String finalTransformedGeometry = transformedGeometry;
 
-            //find numerators for not empty layers
-            List<NumeratorsDenominatorsDto> numeratorsDenominatorsForNotEmptyLayers =
-                    Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
-                            .map(sourceDtoList -> findNumeratorsDenominatorsForNotEmptyLayers(sourceDtoList, finalTransformedGeometry))
-                            .flatMap(Collection::stream)
-                            .collect(Collectors.toList());
+        //find numerators for not empty layers
+        List<NumeratorsDenominatorsDto> numeratorsDenominatorsForNotEmptyLayers =
+                Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
+                        .map(sourceDtoList -> findNumeratorsDenominatorsForNotEmptyLayers(sourceDtoList, finalTransformedGeometry))
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList());
 
-            //calculate correlation for every bivariate_axis in defined polygon that intersects h3
-            var correlationRateList = Lists.partition(numeratorsDenominatorsForNotEmptyLayers, 500).parallelStream()
-                    .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, finalTransformedGeometry))
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
+        //calculate correlation for every bivariate_axis in defined polygon that intersects h3
+        var correlationRateList = Lists.partition(numeratorsDenominatorsForNotEmptyLayers, 500).parallelStream()
+                .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, finalTransformedGeometry))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
 
-            //calculate avg correlation for xy
-            var avgCorrelationXY = calculateAvgCorrelationXY(correlationRateList);
+        //calculate avg correlation for xy
+        var avgCorrelationXY = calculateAvgCorrelationXY(correlationRateList);
 
-            //set avg correlation rate
-            fillAvgCorrelation(correlationRateList, avgCorrelationXY);
+        //set avg correlation rate
+        fillAvgCorrelation(correlationRateList, avgCorrelationXY);
 
-            //should be sorted with correlationRateComparator
-            correlationRateList.sort(correlationRateComparator());
+        //should be sorted with correlationRateComparator
+        correlationRateList.sort(correlationRateComparator());
 
-            fillParent(correlationRateList, importantLayers);
-            return correlationRateList;
+        fillParent(correlationRateList, importantLayers);
+        return correlationRateList;
     }
 
     private void fillParent(List<PolygonCorrelationRate> correlationRateList, Set<List<String>> importantLayers) {
+        Set<List<String>> xChildren = new HashSet<>();
+        Set<List<String>> yChildren = new HashSet<>();
+        List<String> baseIndicators = statisticRepository.getBaseIndicators();
         for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
             if (Math.abs(polygonCorrelationRate.getCorrelation()) > highCorrelationLevel) {
                 if (polygonCorrelationRate.getAvgCorrelationX() > polygonCorrelationRate.getAvgCorrelationY()
-                        && !importantLayers.contains(polygonCorrelationRate.getX().getQuotient())) {
+                        && !importantLayers.contains(polygonCorrelationRate.getX().getQuotient())
+                        && !xChildren.contains(polygonCorrelationRate.getX().getQuotient())
+                        && !baseIndicators.contains(polygonCorrelationRate.getY().getQuotient().get(0))) {
                     polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
+                    xChildren.add(polygonCorrelationRate.getX().getQuotient());
                 }
                 if (polygonCorrelationRate.getAvgCorrelationY() > polygonCorrelationRate.getAvgCorrelationX()
-                        && !importantLayers.contains(polygonCorrelationRate.getY().getQuotient())) {
+                        && !importantLayers.contains(polygonCorrelationRate.getY().getQuotient())
+                        && !yChildren.contains(polygonCorrelationRate.getY().getQuotient())) {
                     polygonCorrelationRate.getY().setParent(polygonCorrelationRate.getX().getQuotient());
+                    yChildren.add(polygonCorrelationRate.getY().getQuotient());
                 }
             }
         }
