@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.graphql;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
@@ -20,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+@Ignore
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = AdvancedAnalyticsTest.Config.class)
 @TestPropertySource(properties = {
