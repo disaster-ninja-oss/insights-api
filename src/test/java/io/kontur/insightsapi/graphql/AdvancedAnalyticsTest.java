@@ -21,7 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-@Ignore
+@Ignore("Just for local debugging")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = AdvancedAnalyticsTest.Config.class)
 @TestPropertySource(properties = {
