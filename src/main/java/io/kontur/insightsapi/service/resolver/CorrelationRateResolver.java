@@ -45,10 +45,18 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
 
             //get numr & denm from bivariate_axis & bivariate_indicators size nearly 17k
             List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
+
             String finalTransformedGeometry = transformedGeometry;
 
+            //find numerators for not empty layers
+            List<NumeratorsDenominatorsDto> numeratorsDenominatorsForNotEmptyLayers =
+                    Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
+                            .map(sourceDtoList -> findNumeratorsDenominatorsForNotEmptyLayers(sourceDtoList, finalTransformedGeometry))
+                            .flatMap(Collection::stream)
+                            .collect(Collectors.toList());
+
             //calculate correlation for every bivariate_axis in defined polygon that intersects h3
-            var correlationRateList = Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
+            var correlationRateList = Lists.partition(numeratorsDenominatorsForNotEmptyLayers, 500).parallelStream()
                     .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, finalTransformedGeometry))
                     .flatMap(Collection::stream)
                     .collect(Collectors.toList());
@@ -177,5 +185,17 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
             currentRate.setAvgCorrelationX(xAvgCorrelationMap.get(numeratorDenominatorX));
             currentRate.setAvgCorrelationY(yAvgCorrelationMap.get(numeratorDenominatorY));
         }
+    }
+
+    private List<NumeratorsDenominatorsDto> findNumeratorsDenominatorsForNotEmptyLayers(List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos,
+                                                                                        String transformedGeometry) {
+        Map<String, Boolean> numeratorsForNotEmptyLayers =
+                statisticRepository.getNumeratorsForNotEmptyLayersBatch(numeratorsDenominatorsDtos, transformedGeometry);
+        return numeratorsDenominatorsDtos.stream()
+                .filter(dto -> (numeratorsForNotEmptyLayers.containsKey(dto.getXNumerator())
+                        && numeratorsForNotEmptyLayers.get(dto.getXNumerator()))
+                        && (numeratorsForNotEmptyLayers.containsKey(dto.getYNumerator())
+                        && numeratorsForNotEmptyLayers.get(dto.getYNumerator())))
+                .collect(Collectors.toList());
     }
 }
