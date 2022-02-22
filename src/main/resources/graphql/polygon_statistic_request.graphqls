@@ -2,6 +2,5 @@ scalar GeoJSON
 input PolygonStatisticRequest {
     polygon: String,
     polygonV2: GeoJSON,
-    xNumeratorList: [String],
-    yNumeratorList: [String]
+    importantLayers: [[String]]
 }

@@ -2,11 +2,11 @@ package io.kontur.insightsapi.service.resolver;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import graphql.kickstart.tools.GraphQLResolver;
 import graphql.schema.DataFetchingEnvironment;
 import io.kontur.insightsapi.dto.ForAvgCorrelationDto;
 import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
-import io.kontur.insightsapi.dto.PolygonStatisticRequest;
 import io.kontur.insightsapi.dto.PureNumeratorDenominatorDto;
 import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.BivariateStatistic;
@@ -34,14 +34,14 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     public List<PolygonCorrelationRate> getCorrelationRates(BivariateStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         Map<String, Object> arguments = (Map<String, Object>) environment.getExecutionStepInfo()
                 .getParent().getParent().getArguments().get("polygonStatisticRequest");
+        var importantLayers = getImportantLayers(arguments);
         //no polygons defined
         if (!arguments.containsKey("polygon") && !arguments.containsKey("polygonV2")) {
             var correlationRateList = statisticRepository.getAllCorrelationRateStatistics();
-            fillParent(correlationRateList);
+            fillParent(correlationRateList, importantLayers);
             return correlationRateList;
         }
         var transformedGeometry = getPolygon(arguments);
-        if (!arguments.keySet().containsAll(List.of("xNumeratorList", "yNumeratorList"))) {
 
             //get numr & denm from bivariate_axis & bivariate_indicators size nearly 17k
             List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
@@ -70,23 +70,19 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
             //should be sorted with correlationRateComparator
             correlationRateList.sort(correlationRateComparator());
 
-            fillParent(correlationRateList);
+            fillParent(correlationRateList, importantLayers);
             return correlationRateList;
-        }
-        return statisticRepository.getPolygonNumeratorsCorrelationRateStatistics(PolygonStatisticRequest.builder()
-                .polygon(transformedGeometry)
-                .xNumeratorList((List<String>) arguments.get("xNumeratorList"))
-                .yNumeratorList((List<String>) arguments.get("yNumeratorList"))
-                .build());
     }
 
-    private void fillParent(List<PolygonCorrelationRate> correlationRateList) {
+    private void fillParent(List<PolygonCorrelationRate> correlationRateList, Set<List<String>> importantLayers) {
         for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
             if (Math.abs(polygonCorrelationRate.getCorrelation()) > highCorrelationLevel) {
-                if (polygonCorrelationRate.getAvgCorrelationX() > polygonCorrelationRate.getAvgCorrelationY()) {
+                if (polygonCorrelationRate.getAvgCorrelationX() > polygonCorrelationRate.getAvgCorrelationY()
+                        && !importantLayers.contains(polygonCorrelationRate.getX().getQuotient())) {
                     polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
                 }
-                if (polygonCorrelationRate.getAvgCorrelationY() > polygonCorrelationRate.getAvgCorrelationX()) {
+                if (polygonCorrelationRate.getAvgCorrelationY() > polygonCorrelationRate.getAvgCorrelationX()
+                        && !importantLayers.contains(polygonCorrelationRate.getY().getQuotient())) {
                     polygonCorrelationRate.getY().setParent(polygonCorrelationRate.getX().getQuotient());
                 }
             }
@@ -131,6 +127,13 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
             return geometryTransformer.transform(arguments.get("polygonV2").toString());
         }
         return null;
+    }
+
+    private Set<List<String>> getImportantLayers(Map<String, Object> arguments) {
+        if (arguments.containsKey("importantLayers")) {
+            return Sets.newHashSet((List<List<String>>) arguments.get("importantLayers"));
+        }
+        return new HashSet<>();
     }
 
     private void calculateDataForAvgCorrelation(PureNumeratorDenominatorDto numeratorDenominator,
