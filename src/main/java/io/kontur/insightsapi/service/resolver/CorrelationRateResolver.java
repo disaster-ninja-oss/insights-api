@@ -77,6 +77,8 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     private void fillParent(List<PolygonCorrelationRate> correlationRateList, Set<List<String>> importantLayers) {
         Set<List<String>> xChildren = new HashSet<>();
         Set<List<String>> yChildren = new HashSet<>();
+        Map<List<String>, Set<List<String>>> xParentChildren = new HashMap<>();
+        Map<List<String>, Set<List<String>>> yParentChildren = new HashMap<>();
         List<String> baseIndicators = statisticRepository.getBaseIndicators();
         for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
             if (Math.abs(polygonCorrelationRate.getCorrelation()) > highCorrelationLevel) {
@@ -84,14 +86,46 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                         && !importantLayers.contains(polygonCorrelationRate.getX().getQuotient())
                         && !xChildren.contains(polygonCorrelationRate.getX().getQuotient())
                         && !baseIndicators.contains(polygonCorrelationRate.getY().getQuotient().get(0))) {
-                    polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
-                    xChildren.add(polygonCorrelationRate.getX().getQuotient());
+                    if (!xParentChildren.containsKey(polygonCorrelationRate.getX().getQuotient())) {
+                        polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
+                        xChildren.add(polygonCorrelationRate.getX().getQuotient());
+                        if (!xParentChildren.containsKey(polygonCorrelationRate.getY().getQuotient())){
+                            xParentChildren.put(polygonCorrelationRate.getY().getQuotient(), new HashSet<>());
+                        }
+                        xParentChildren.get(polygonCorrelationRate.getY().getQuotient()).add(polygonCorrelationRate.getX().getQuotient());
+                    }
+                    else {
+                        if (!xParentChildren.get(polygonCorrelationRate.getX().getQuotient()).contains(polygonCorrelationRate.getY().getQuotient())) {
+                            polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
+                            xChildren.add(polygonCorrelationRate.getX().getQuotient());
+                            if (!xParentChildren.containsKey(polygonCorrelationRate.getY().getQuotient())){
+                                xParentChildren.put(polygonCorrelationRate.getY().getQuotient(), new HashSet<>());
+                            }
+                            xParentChildren.get(polygonCorrelationRate.getY().getQuotient()).add(polygonCorrelationRate.getX().getQuotient());
+                        }
+                    }
                 }
                 if (polygonCorrelationRate.getAvgCorrelationY() > polygonCorrelationRate.getAvgCorrelationX()
                         && !importantLayers.contains(polygonCorrelationRate.getY().getQuotient())
                         && !yChildren.contains(polygonCorrelationRate.getY().getQuotient())) {
-                    polygonCorrelationRate.getY().setParent(polygonCorrelationRate.getX().getQuotient());
-                    yChildren.add(polygonCorrelationRate.getY().getQuotient());
+                    if (!yParentChildren.containsKey(polygonCorrelationRate.getY().getQuotient())) {
+                        polygonCorrelationRate.getY().setParent(polygonCorrelationRate.getX().getQuotient());
+                        yChildren.add(polygonCorrelationRate.getY().getQuotient());
+                        if (!yParentChildren.containsKey(polygonCorrelationRate.getX().getQuotient())){
+                            yParentChildren.put(polygonCorrelationRate.getX().getQuotient(), new HashSet<>());
+                        }
+                        yParentChildren.get(polygonCorrelationRate.getX().getQuotient()).add(polygonCorrelationRate.getY().getQuotient());
+                    }
+                    else {
+                        if (!yParentChildren.get(polygonCorrelationRate.getY().getQuotient()).contains(polygonCorrelationRate.getX().getQuotient())) {
+                            polygonCorrelationRate.getY().setParent(polygonCorrelationRate.getX().getQuotient());
+                            yChildren.add(polygonCorrelationRate.getY().getQuotient());
+                            if (!yParentChildren.containsKey(polygonCorrelationRate.getX().getQuotient())){
+                                yParentChildren.put(polygonCorrelationRate.getX().getQuotient(), new HashSet<>());
+                            }
+                            yParentChildren.get(polygonCorrelationRate.getX().getQuotient()).add(polygonCorrelationRate.getY().getQuotient());
+                        }
+                    }
                 }
             }
         }
