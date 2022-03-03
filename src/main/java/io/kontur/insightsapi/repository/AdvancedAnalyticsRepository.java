@@ -127,10 +127,10 @@ public class AdvancedAnalyticsRepository {
         try {
             namedParameterJdbcTemplate.query(query, (rs -> {
                 AdvancedAnalytics advancedAnalytics = new AdvancedAnalytics();
-                advancedAnalytics.setNumerator(BivariateAxisColumns.numerator.name());
-                advancedAnalytics.setDenominator(BivariateAxisColumns.denominator.name());
-                advancedAnalytics.setNumeratorLabel(BivariateAxisColumns.numerator_label.name());
-                advancedAnalytics.setDenominatorLabel(BivariateAxisColumns.denominator_label.name());
+                advancedAnalytics.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
+                advancedAnalytics.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));
+                advancedAnalytics.setNumeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()));
+                advancedAnalytics.setDenominatorLabel(rs.getString(BivariateAxisColumns.denominator_label.name()));
                 advancedAnalytics.setAnalytics(createValuesList(rs));
                 returnList.add(advancedAnalytics);
             }));
