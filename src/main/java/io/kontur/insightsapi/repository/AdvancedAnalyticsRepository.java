@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -163,14 +162,9 @@ public class AdvancedAnalyticsRepository {
     private List<AdvancedAnalyticsValues> createValuesList(ResultSet rs) {
         //calculation list will be parametric, for now its constant
         List<String> calculationsList = Stream.of(Calculations.values()).map(Calculations::name).toList();
-        return calculationsList.stream().map(arg -> {
-            try {
-                return new AdvancedAnalyticsValues(arg, rs.getDouble(arg + "_value"), rs.getDouble(arg + "_quality"));
-            } catch (SQLException e) {
-                logger.error("Can't get value from result set", e);
-                return null;
-            }
-        }).toList();
+        return calculationsList.stream().map(arg -> new AdvancedAnalyticsValues(arg,
+                DatabaseUtil.getNullableDouble(rs, arg + "_value"),
+                DatabaseUtil.getNullableDouble(rs, arg + "_quality"))).toList();
     }
 
     private enum Calculations {
