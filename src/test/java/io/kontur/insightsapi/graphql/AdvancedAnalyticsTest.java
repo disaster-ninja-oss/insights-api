@@ -3,7 +3,6 @@ package io.kontur.insightsapi.graphql;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-@Disabled("Just for local debugging")
+@Ignore("Just for local debugging")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = AdvancedAnalyticsTest.Config.class)
 @TestPropertySource(properties = {
@@ -111,7 +110,8 @@ public class AdvancedAnalyticsTest {
         LinkedHashMap<String, Object> calculations = analyticsValues.get(0);
         Assertions.assertNotNull(calculations.get("value"));
         Assertions.assertNotNull(calculations.get("calculation"));
-        Assertions.assertNotNull(calculations.get("quality"));
+        //may be null on further versions
+        Assertions.assertTrue(calculations.get("quality") instanceof Double || calculations.get("quality") == null);
     }
 
     @Configuration
