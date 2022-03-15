@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -28,6 +31,30 @@ import java.util.stream.Stream;
 @Repository
 @RequiredArgsConstructor
 public class StatisticRepository {
+
+    @Autowired
+    QueryFactory queryFactory;
+
+    @Value("classpath:statistic_all.sql")
+    Resource statistic_all;
+
+    @Value("classpath:bivariate_statistic.sql")
+    Resource bivariate_statistic;
+
+    @Value("classpath:axis_statistic.sql")
+    Resource axis_statistic;
+
+    @Value("classpath:statistic_correlation.sql")
+    Resource statistic_correlation;
+
+    @Value("classpath:statistic_correlation_numdenom.sql")
+    Resource statistic_correlation_numdenom;
+
+    @Value("classpath:statistic_correlation_intersect.sql")
+    Resource statistic_correlation_intersect;
+
+    @Value("classpath:statistic_correlation_emptylayer_intersect.sql")
+    Resource statistic_correlation_emptylayer_intersect;
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -47,27 +74,27 @@ public class StatisticRepository {
 
     @Transactional(readOnly = true)
     public Statistic getAllStatistic() {
-        return jdbcTemplate.queryForObject(QueryFactory.getAllStatistic_query(), statisticRowMapper);
+        return jdbcTemplate.queryForObject(queryFactory.getSql(statistic_all), statisticRowMapper);
     }
 
     @Transactional(readOnly = true)
     public BivariateStatistic getBivariateStatistic() {
-        return jdbcTemplate.queryForObject(QueryFactory.getBivariateStatistic_query(), bivariateStatisticRowMapper);
+        return jdbcTemplate.queryForObject(queryFactory.getSql(bivariate_statistic), bivariateStatisticRowMapper);
     }
 
     @Transactional(readOnly = true)
     public List<Axis> getAxisStatistic() {
-        return jdbcTemplate.query(QueryFactory.getAxisStatistic_query(), axisRowMapper);
+        return jdbcTemplate.query(queryFactory.getSql(axis_statistic), axisRowMapper);
     }
 
     @Transactional(readOnly = true)
     public List<PolygonCorrelationRate> getAllCorrelationRateStatistics() {
-        return jdbcTemplate.query(QueryFactory.getAllCorrelationRateStatistics_query(), polygonCorrelationRateRowMapper);
+        return jdbcTemplate.query(queryFactory.getSql(statistic_correlation), polygonCorrelationRateRowMapper);
     }
 
     @Transactional(readOnly = true)
     public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForCorrelation() {
-        return jdbcTemplate.query(QueryFactory.getNumeratorsDenominatorsForCorrelation_query(), (rs, rowNum) ->
+        return jdbcTemplate.query(queryFactory.getSql(statistic_correlation_numdenom), (rs, rowNum) ->
                 NumeratorsDenominatorsDto.builder()
                         .xNumerator(rs.getString("x_num"))
                         .xDenominator(rs.getString("x_den"))
@@ -89,7 +116,7 @@ public class StatisticRepository {
                 .flatMap(dto -> Stream.of(dto.getXNumerator(), dto.getYNumerator(), dto.getXDenominator(), dto.getYDenominator()))
                 .distinct()
                 .toList();
-        var query = String.format(QueryFactory.getPolygonCorrelationRateStatisticsBatch_query(), StringUtils.join(distinctFieldsRequests, ","), StringUtils.join(requests, ","));
+        var query = String.format(queryFactory.getSql(statistic_correlation_intersect), StringUtils.join(distinctFieldsRequests, ","), StringUtils.join(requests, ","));
         //it is important to disable jit in same stream with main request
         jitDisable();
         try {
@@ -113,7 +140,7 @@ public class StatisticRepository {
         for (String field : distinctFieldsRequests) {
             requests.add("max(" + field + ")!=min(" + field + ") as result" + field);
         }
-        var query = String.format(QueryFactory.getNumeratorsForNotEmptyLayersBatch_query(), StringUtils.join(requests, ","), StringUtils.join(distinctFieldsRequests, ","));
+        var query = String.format(queryFactory.getSql(statistic_correlation_emptylayer_intersect), StringUtils.join(requests, ","), StringUtils.join(distinctFieldsRequests, ","));
         //it is important to disable jit in same stream with main request
         jitDisable();
         Map<String, Boolean> result = new HashMap<>();

@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.retry.annotation.Backoff;
@@ -27,6 +30,12 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class FunctionsRepository {
 
+    @Value("classpath:function_intersect.sql")
+    Resource function_intersect;
+
+    @Autowired
+    QueryFactory queryFactory;
+
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
     private final Logger logger = LoggerFactory.getLogger(FunctionsRepository.class);
@@ -40,7 +49,7 @@ public class FunctionsRepository {
                 .map(this::createFunctionsForSelect)
                 .toList();
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(QueryFactory.calculateFunctionsResult_query(), StringUtils.join(params, ", "));
+        var query = String.format(queryFactory.getSql(function_intersect), StringUtils.join(params, ", "));
         List<FunctionResult> result = new ArrayList<>();
         try {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {

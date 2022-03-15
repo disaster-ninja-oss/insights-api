@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -25,6 +28,18 @@ import java.util.Objects;
 @Repository
 @RequiredArgsConstructor
 public class PopulationRepository {
+
+    @Autowired
+    QueryFactory queryFactory;
+
+    @Value("classpath:population_humanitarian_impact.sql")
+    Resource population_humanitarian_impact;
+
+    @Value("classpath:population_osm.sql")
+    Resource population_osm;
+
+    @Value("classpath:population_urbancore.sql")
+    Resource population_urbancore;
 
     private static final Map<String, String> queryMap = Map.of(
             "peopleWithoutOsmBuildings", "sum(population * (1 - sign(building_count))) as peopleWithoutOsmBuildings ",
@@ -85,7 +100,7 @@ public class PopulationRepository {
     public List<HumanitarianImpactDto> calculateHumanitarianImpact(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         try {
-            return namedParameterJdbcTemplate.query(QueryFactory.calculateHumanitarianImpact_query(), paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.query(queryFactory.getSql(population_humanitarian_impact), paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))
@@ -107,7 +122,7 @@ public class PopulationRepository {
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(QueryFactory.calculateOsmQuality_query(), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(population_osm), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     OsmQuality.builder()
@@ -140,7 +155,7 @@ public class PopulationRepository {
     public UrbanCore calculateUrbanCore(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(QueryFactory.calculateUrbanCore_query(), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(population_urbancore), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     UrbanCore.builder()

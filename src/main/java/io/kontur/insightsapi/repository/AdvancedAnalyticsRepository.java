@@ -6,27 +6,50 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
 public class AdvancedAnalyticsRepository {
 
+    @Autowired
+    QueryFactory queryFactory;
+
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsRepository.class);
 
+    @Value("classpath:bivariate_axis.sql")
+    Resource bivariate_axis;
+
+    @Value("classpath:advanced_analytics_union.sql")
+    Resource advanced_analytics_union;
+
+    @Value("classpath:advanced_analytics_world.sql")
+    Resource advanced_analytics_world;
+
+    @Value("classpath:advanced_analytics_intersect.sql")
+    Resource advanced_analytics_intersect;
+
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
-        return namedParameterJdbcTemplate.query(QueryFactory.getBivariativeAxis_query(), (rs, rowNum) -> BivariativeAxisDto.builder()
+        return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariate_axis), (rs, rowNum) -> BivariativeAxisDto.builder()
                 .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
                 .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
                 .numeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()))
@@ -36,18 +59,18 @@ public class AdvancedAnalyticsRepository {
     public String getQueryWithGeom(List<BivariativeAxisDto> argAxisDto) {
         List<String> bivariativeAxisDistincList = argAxisDto.stream().flatMap(dto -> Stream.of(dto.getNumerator(), dto.getDenominator())).distinct().toList();
 
-        return String.format(QueryFactory.getQueryWithGeom_query(), StringUtils.join(bivariativeAxisDistincList, ","));
+        return String.format(queryFactory.getSql(advanced_analytics_intersect), StringUtils.join(bivariativeAxisDistincList, ","));
     }
 
     public String getUnionQuery(BivariativeAxisDto numDen) {
-        return String.format(QueryFactory.getUnionQuery_query(), numDen.getNumerator(), numDen.getDenominator());
+        return String.format(queryFactory.getSql(advanced_analytics_union), numDen.getNumerator(), numDen.getDenominator());
     }
 
     @Transactional(readOnly = true)
     public List<AdvancedAnalytics> getWorldData() {
         List<AdvancedAnalytics> returnList = new ArrayList<>();
         try {
-            namedParameterJdbcTemplate.query(QueryFactory.getWorldData_query(), (rs -> {
+            namedParameterJdbcTemplate.query(queryFactory.getSql(advanced_analytics_world), (rs -> {
                 AdvancedAnalytics advancedAnalytics = new AdvancedAnalytics();
                 advancedAnalytics.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
                 advancedAnalytics.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));
