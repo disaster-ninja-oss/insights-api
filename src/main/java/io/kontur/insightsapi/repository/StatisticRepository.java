@@ -119,7 +119,7 @@ public class StatisticRepository {
                               bivariate_axis )                                                                      ba,
                         ( select
                               json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
-                                                          'colors', o.colors,
+                                                          'colors', o.colors, 'order', o.ord,
                                                           'x', jsonb_build_object('label', ax.label, 'quotient',
                                                                                   jsonb_build_array(ax.numerator, ax.denominator),
                                                                                   'steps',
@@ -213,7 +213,7 @@ public class StatisticRepository {
                               bivariate_axis )                                                                      ba,
                         ( select
                               json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
-                                                          'colors', o.colors,
+                                                          'colors', o.colors, 'order', o.ord,
                                                           'x', jsonb_build_object('label', ax.label, 'quotient',
                                                                                   jsonb_build_array(ax.numerator, ax.denominator),
                                                                                   'steps',
