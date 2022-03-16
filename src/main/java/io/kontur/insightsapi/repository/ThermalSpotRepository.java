@@ -27,7 +27,7 @@ public class ThermalSpotRepository {
     QueryFactory queryFactory;
 
     @Value("classpath:thermal_statistic.sql")
-    Resource thermal_statistic;
+    Resource thermalStatistic;
 
     private static final Map<String, String> queryMap = Map.of(
             "industrialAreaKm2", "sum(industrial_area) as industrialAreaKm2 ",
@@ -46,7 +46,7 @@ public class ThermalSpotRepository {
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(thermal_statistic), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(thermalStatistic), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     ThermalSpotStatistic.builder()

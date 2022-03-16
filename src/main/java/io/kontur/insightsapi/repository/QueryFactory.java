@@ -6,11 +6,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class QueryFactory {
@@ -22,8 +20,7 @@ public class QueryFactory {
         InputStream inputStream = null;
         try {
             inputStream = argResource.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            sql = reader.lines().collect(Collectors.joining("\n"));
+            sql = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             String error = String.format("Can't read file %s - %s", argResource.getFilename(), e.getMessage());
             logger.error(error);

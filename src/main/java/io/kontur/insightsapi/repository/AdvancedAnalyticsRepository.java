@@ -14,14 +14,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Repository
@@ -36,20 +31,20 @@ public class AdvancedAnalyticsRepository {
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsRepository.class);
 
     @Value("classpath:bivariate_axis.sql")
-    Resource bivariate_axis;
+    Resource bivariateAxis;
 
     @Value("classpath:advanced_analytics_union.sql")
-    Resource advanced_analytics_union;
+    Resource advancedAnalyticsUnion;
 
     @Value("classpath:advanced_analytics_world.sql")
-    Resource advanced_analytics_world;
+    Resource advancedAnalyticsWorld;
 
     @Value("classpath:advanced_analytics_intersect.sql")
-    Resource advanced_analytics_intersect;
+    Resource advancedAnalyticsIntersect;
 
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
-        return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariate_axis), (rs, rowNum) -> BivariativeAxisDto.builder()
+        return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis), (rs, rowNum) -> BivariativeAxisDto.builder()
                 .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
                 .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
                 .numeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()))
@@ -59,18 +54,18 @@ public class AdvancedAnalyticsRepository {
     public String getQueryWithGeom(List<BivariativeAxisDto> argAxisDto) {
         List<String> bivariativeAxisDistincList = argAxisDto.stream().flatMap(dto -> Stream.of(dto.getNumerator(), dto.getDenominator())).distinct().toList();
 
-        return String.format(queryFactory.getSql(advanced_analytics_intersect), StringUtils.join(bivariativeAxisDistincList, ","));
+        return String.format(queryFactory.getSql(advancedAnalyticsIntersect), StringUtils.join(bivariativeAxisDistincList, ","));
     }
 
     public String getUnionQuery(BivariativeAxisDto numDen) {
-        return String.format(queryFactory.getSql(advanced_analytics_union), numDen.getNumerator(), numDen.getDenominator());
+        return String.format(queryFactory.getSql(advancedAnalyticsUnion), numDen.getNumerator(), numDen.getDenominator());
     }
 
     @Transactional(readOnly = true)
     public List<AdvancedAnalytics> getWorldData() {
         List<AdvancedAnalytics> returnList = new ArrayList<>();
         try {
-            namedParameterJdbcTemplate.query(queryFactory.getSql(advanced_analytics_world), (rs -> {
+            namedParameterJdbcTemplate.query(queryFactory.getSql(advancedAnalyticsWorld), (rs -> {
                 AdvancedAnalytics advancedAnalytics = new AdvancedAnalytics();
                 advancedAnalytics.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
                 advancedAnalytics.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));

@@ -33,13 +33,13 @@ public class PopulationRepository {
     QueryFactory queryFactory;
 
     @Value("classpath:population_humanitarian_impact.sql")
-    Resource population_humanitarian_impact;
+    Resource populationHumanitarianImpact;
 
     @Value("classpath:population_osm.sql")
-    Resource population_osm;
+    Resource populationOsm;
 
     @Value("classpath:population_urbancore.sql")
-    Resource population_urbancore;
+    Resource populationUrbancore;
 
     private static final Map<String, String> queryMap = Map.of(
             "peopleWithoutOsmBuildings", "sum(population * (1 - sign(building_count))) as peopleWithoutOsmBuildings ",
@@ -100,7 +100,7 @@ public class PopulationRepository {
     public List<HumanitarianImpactDto> calculateHumanitarianImpact(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         try {
-            return namedParameterJdbcTemplate.query(queryFactory.getSql(population_humanitarian_impact), paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.query(queryFactory.getSql(populationHumanitarianImpact), paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))
@@ -122,7 +122,7 @@ public class PopulationRepository {
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(population_osm), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(populationOsm), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     OsmQuality.builder()
@@ -155,7 +155,7 @@ public class PopulationRepository {
     public UrbanCore calculateUrbanCore(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(population_urbancore), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(populationUrbancore), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     UrbanCore.builder()

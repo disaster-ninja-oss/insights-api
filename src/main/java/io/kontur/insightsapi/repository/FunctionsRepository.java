@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class FunctionsRepository {
 
     @Value("classpath:function_intersect.sql")
-    Resource function_intersect;
+    Resource functionIntersect;
 
     @Autowired
     QueryFactory queryFactory;
@@ -49,7 +49,7 @@ public class FunctionsRepository {
                 .map(this::createFunctionsForSelect)
                 .toList();
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(function_intersect), StringUtils.join(params, ", "));
+        var query = String.format(queryFactory.getSql(functionIntersect), StringUtils.join(params, ", "));
         List<FunctionResult> result = new ArrayList<>();
         try {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
