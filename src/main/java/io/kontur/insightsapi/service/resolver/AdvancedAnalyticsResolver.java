@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.service.resolver;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import graphql.kickstart.tools.GraphQLResolver;
 import graphql.schema.DataFetchingEnvironment;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +32,7 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsResolver.class);
 
-    public List<AdvancedAnalytics> getAdvancedAnalytics(Analytics statistic, DataFetchingEnvironment environment) throws IOException {
+    public List<AdvancedAnalytics> getAdvancedAnalytics(Analytics statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
         if (polygon != null) {
             var transformedGeometry = geometryTransformer.transform(polygon);
