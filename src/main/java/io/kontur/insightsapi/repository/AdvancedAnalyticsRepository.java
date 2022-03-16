@@ -20,6 +20,9 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class AdvancedAnalyticsRepository {
 
+    Double MIN_QUALITY_LIMIT = -1.7;
+    Double MAX_QUALITY_LIMIT = 1.7;
+
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsRepository.class);
@@ -130,8 +133,10 @@ public class AdvancedAnalyticsRepository {
                 advancedAnalytics.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));
                 advancedAnalytics.setNumeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()));
                 advancedAnalytics.setDenominatorLabel(rs.getString(BivariateAxisColumns.denominator_label.name()));
-                advancedAnalytics.setAnalytics(createValuesList(rs));
-                returnList.add(advancedAnalytics);
+                List<AdvancedAnalyticsValues> valuesList = createValuesList(rs);
+                advancedAnalytics.setAnalytics(valuesList);
+                if(valuesInGoodQuality(valuesList)) returnList.add(0, advancedAnalytics);
+                else returnList.add(advancedAnalytics);
             }));
         } catch (Exception e) {
             String error = String.format("Can't get value from result set %s", e.getMessage());
@@ -157,6 +162,11 @@ public class AdvancedAnalyticsRepository {
             throw new IllegalArgumentException(error, e);
         }
         return result;
+    }
+
+    public Boolean valuesInGoodQuality(List<AdvancedAnalyticsValues> argValues) {
+        return argValues.stream().anyMatch(values
+                -> values.getQuality() != null && values.getQuality() > MIN_QUALITY_LIMIT && values.getQuality() < MAX_QUALITY_LIMIT);
     }
 
     private List<AdvancedAnalyticsValues> createValuesList(ResultSet rs) {
