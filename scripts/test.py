@@ -96,7 +96,8 @@ class WebsiteTestUser(HttpUser):
       	},
       	quality,
       	quotient
-      }
+      },
+      order
     },
     correlationRates{
       rate,

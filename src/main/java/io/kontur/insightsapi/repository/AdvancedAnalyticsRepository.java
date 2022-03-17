@@ -1,7 +1,7 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
-import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
+import io.kontur.insightsapi.model.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -34,7 +33,11 @@ public class AdvancedAnalyticsRepository {
                    join bivariate_indicators ind1 on ind1.param_id = ax.numerator
                    join bivariate_indicators ind2 on ind2.param_id = ax.denominator
                 """.trim();
-        return namedParameterJdbcTemplate.query(query, (rs, rowNum) -> BivariativeAxisDto.builder().numerator(rs.getString("numerator")).denominator(rs.getString("denominator")).numeratorLabel(rs.getString("numerator_label")).denominatorLabel(rs.getString("denominator_label")).build());
+        return namedParameterJdbcTemplate.query(query, (rs, rowNum) -> BivariativeAxisDto.builder()
+                .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
+                .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
+                .numeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()))
+                .denominatorLabel(rs.getString(BivariateAxisColumns.denominator_label.name())).build());
     }
 
     public String getQueryWithGeom(List<BivariativeAxisDto> argAxisDto) {
@@ -63,37 +66,37 @@ public class AdvancedAnalyticsRepository {
 
     public String getUnionQuery(BivariativeAxisDto numDen) {
         return String.format("""
-                 select avg(sum) filter (where r = 8) as sum,
+                 select avg(sum) filter (where r = 8) as sum_value,
                                        case
                                           when (nullif(max(sum),0) / nullif(min(sum), 0)) > 0
                                           then log10(nullif(max(sum), 0) / nullif(min(sum),0))
                                           else log10((nullif(max(sum), 0) - nullif(min(sum),0)) / least(abs(nullif(min(sum),0)), abs(nullif(max(sum),0))))
                                        end as sum_quality,
-                                    avg(min) filter (where r = 8) as min,
+                                    avg(min) filter (where r = 8) as min_value,
                                        case
                                           when (nullif(max(min),0) / nullif(min(min), 0)) > 0
                                           then log10(nullif(max(min), 0) / nullif(min(min),0))
                                           else log10((nullif(max(min), 0) - nullif(min(min),0)) / least(abs(nullif(min(min),0)), abs(nullif(max(min),0))))
                                        end as min_quality,
-                                    avg(max) filter (where r = 8) as max,
+                                    avg(max) filter (where r = 8) as max_value,
                                        case
                                           when (nullif(max(max),0) / nullif(min(max), 0)) > 0
                                           then log10(nullif(max(max), 0) / nullif(min(max),0))
                                           else log10((nullif(max(max), 0) - nullif(min(max),0)) / least(abs(nullif(min(max),0)), abs(nullif(max(max),0))))
                                        end as max_quality,
-                                    avg(mean) filter (where r = 8) as mean,
+                                    avg(mean) filter (where r = 8) as mean_value,
                                        case
                                           when (nullif(max(mean),0) / nullif(min(mean), 0)) > 0
                                           then log10(nullif(max(mean), 0) / nullif(min(mean),0))
                                           else log10((nullif(max(mean), 0) - nullif(min(mean),0)) / least(abs(nullif(min(mean),0)), abs(nullif(max(mean),0))))
                                        end as mean_quality,
-                                    avg(stddev) filter (where r = 8) as stddev,
+                                    avg(stddev) filter (where r = 8) as stddev_value,
                                        case
                                           when (nullif(max(stddev),0) / nullif(min(stddev), 0)) > 0
                                           then log10(nullif(max(stddev), 0) / nullif(min(stddev),0))
                                           else log10((nullif(max(stddev), 0) - nullif(min(stddev),0)) / least(abs(nullif(min(stddev),0)), abs(nullif(max(stddev),0))))
                                        end as stddev_quality,
-                                    avg(median) filter (where r = 8) as median,
+                                    avg(median) filter (where r = 8) as median_value,
                                        case
                                           when (nullif(max(median),0) / nullif(min(median), 0)) > 0
                                           then log10(nullif(max(median), 0) / nullif(min(median),0))
@@ -108,6 +111,37 @@ public class AdvancedAnalyticsRepository {
     }
 
     @Transactional(readOnly = true)
+    public List<AdvancedAnalytics> getWorldData() {
+        var query = """
+                select ax.numerator, ax.denominator, ind1.param_label numerator_label,
+                   ind2.param_label denominator_label,
+                   ax.sum_value, ax.sum_quality, ax.min_value, ax.min_quality,
+                   ax.max_value, ax.max_quality, ax.stddev_value, ax.stddev_quality,
+                   ax.median_value, ax.median_quality, ax.mean_value, ax.mean_quality
+                   from bivariate_axis ax
+                   join bivariate_indicators ind1 on ind1.param_id = ax.numerator
+                   join bivariate_indicators ind2 on ind2.param_id = ax.denominator
+                """.trim();
+        List<AdvancedAnalytics> returnList = new ArrayList<>();
+        try {
+            namedParameterJdbcTemplate.query(query, (rs -> {
+                AdvancedAnalytics advancedAnalytics = new AdvancedAnalytics();
+                advancedAnalytics.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
+                advancedAnalytics.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));
+                advancedAnalytics.setNumeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()));
+                advancedAnalytics.setDenominatorLabel(rs.getString(BivariateAxisColumns.denominator_label.name()));
+                advancedAnalytics.setAnalytics(createValuesList(rs));
+                returnList.add(advancedAnalytics);
+            }));
+        } catch (Exception e) {
+            String error = String.format("Can't get value from result set %s", e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
+        }
+        return returnList;
+    }
+
+    @Transactional(readOnly = true)
     public List<List<AdvancedAnalyticsValues>> getAdvancedAnalytics(String argQuery, String argGeometry) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", argGeometry);
@@ -118,8 +152,8 @@ public class AdvancedAnalyticsRepository {
                 result.add(createValuesList(rs));
             }));
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s", argGeometry);
-            logger.error(error, e);
+            String error = String.format("Sql exception for geometry %s. Exception: %s", argGeometry, e.getMessage());
+            logger.error(error);
             throw new IllegalArgumentException(error, e);
         }
         return result;
@@ -128,17 +162,16 @@ public class AdvancedAnalyticsRepository {
     private List<AdvancedAnalyticsValues> createValuesList(ResultSet rs) {
         //calculation list will be parametric, for now its constant
         List<String> calculationsList = Stream.of(Calculations.values()).map(Calculations::name).toList();
-        return calculationsList.stream().map(arg -> {
-            try {
-                return new AdvancedAnalyticsValues(arg, rs.getDouble(arg), rs.getDouble(arg + "_quality"));
-            } catch (SQLException e) {
-                logger.error("Can't get value from result set", e);
-                return null;
-            }
-        }).toList();
+        return calculationsList.stream().map(arg -> new AdvancedAnalyticsValues(arg,
+                DatabaseUtil.getNullableDouble(rs, arg + "_value"),
+                DatabaseUtil.getNullableDouble(rs, arg + "_quality"))).toList();
     }
 
     private enum Calculations {
         sum, min, max, mean, stddev, median
+    }
+
+    private enum BivariateAxisColumns {
+        numerator, denominator, numerator_label, denominator_label
     }
 }

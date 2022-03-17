@@ -20,4 +20,6 @@ public class Overlay {
     private Axis x;
 
     private Axis y;
+
+    private Integer order;
 }

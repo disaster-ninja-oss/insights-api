@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,8 +49,7 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
             return getAdvancedAnalyticsResult(axisDtos, advancedAnalyticsValues);
         } else {
-            logger.warn("No geometry provided for Advanced Analytical Panel request");
-            return Collections.EMPTY_LIST;
+            return advancedAnalyticsRepository.getWorldData();
         }
     }
 
