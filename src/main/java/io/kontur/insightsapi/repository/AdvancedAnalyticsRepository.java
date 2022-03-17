@@ -20,8 +20,8 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class AdvancedAnalyticsRepository {
 
-    Double MIN_QUALITY_LIMIT = -1.7;
-    Double MAX_QUALITY_LIMIT = 1.7;
+    static final Double MIN_QUALITY_LIMIT = -1.7;
+    static final Double MAX_QUALITY_LIMIT = 1.7;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -135,8 +135,11 @@ public class AdvancedAnalyticsRepository {
                 advancedAnalytics.setDenominatorLabel(rs.getString(BivariateAxisColumns.denominator_label.name()));
                 List<AdvancedAnalyticsValues> valuesList = createValuesList(rs);
                 advancedAnalytics.setAnalytics(valuesList);
-                if(valuesInGoodQuality(valuesList)) returnList.add(0, advancedAnalytics);
-                else returnList.add(advancedAnalytics);
+                if (valuesInGoodQuality(valuesList)) {
+                    returnList.add(0, advancedAnalytics);
+                } else {
+                    returnList.add(advancedAnalytics);
+                }
             }));
         } catch (Exception e) {
             String error = String.format("Can't get value from result set %s", e.getMessage());

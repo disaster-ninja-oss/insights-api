@@ -63,8 +63,11 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
             analytics.setDenominatorLabel(argAxis.get(i).getDenominatorLabel());
             List<AdvancedAnalyticsValues> advancedAnalyticsValues = argValues.get(i);
             analytics.setAnalytics(advancedAnalyticsValues);
-            if(advancedAnalyticsRepository.valuesInGoodQuality(advancedAnalyticsValues)) returnList.add(0, analytics);
-            else returnList.add(analytics);
+            if (advancedAnalyticsRepository.valuesInGoodQuality(advancedAnalyticsValues)) {
+                returnList.add(0, analytics);
+            } else {
+                returnList.add(analytics);
+            }
         }
         return returnList;
     }
