@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.retry.annotation.Backoff;
@@ -27,6 +30,12 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class FunctionsRepository {
 
+    @Value("classpath:function_intersect.sql")
+    Resource functionIntersect;
+
+    @Autowired
+    QueryFactory queryFactory;
+
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
     private final Logger logger = LoggerFactory.getLogger(FunctionsRepository.class);
@@ -40,36 +49,7 @@ public class FunctionsRepository {
                 .map(this::createFunctionsForSelect)
                 .toList();
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format("""
-                with validated_input as (
-                    select calculate_validated_input(:polygon) geom
-                ),
-                    stat_area as (
-                    select distinct on (h.h3) h.*
-                        from (
-                            select ST_Subdivide(v.geom, 30) geom
-                                from validated_input v
-                        ) p
-                            cross join
-                        lateral (
-                            select h3,
-                                   population,
-                                   populated_area_km2,
-                                   count,
-                                   building_count,
-                                   highway_length,
-                                   industrial_area,
-                                   wildfires,
-                                   volcanos_count,
-                                   forest
-                            from stat_h3 sh
-                            where ST_Intersects(sh.geom, p.geom)
-                                and sh.zoom = 8
-                                order by h3
-                        ) h
-                )
-                select %s from stat_area st
-                """.trim(), StringUtils.join(params, ", "));
+        var query = String.format(queryFactory.getSql(functionIntersect), StringUtils.join(params, ", "));
         List<FunctionResult> result = new ArrayList<>();
         try {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
