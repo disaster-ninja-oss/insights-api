@@ -5,7 +5,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import graphql.kickstart.tools.GraphQLResolver;
 import graphql.schema.DataFetchingEnvironment;
-import io.kontur.insightsapi.dto.*;
+import io.kontur.insightsapi.dto.ForAvgCorrelationDto;
+import io.kontur.insightsapi.dto.NodeDto;
+import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
+import io.kontur.insightsapi.dto.PureNumeratorDenominatorDto;
 import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.BivariateStatistic;
 import io.kontur.insightsapi.model.PolygonCorrelationRate;
@@ -36,7 +39,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         //no polygons defined
         if (!arguments.containsKey("polygon") && !arguments.containsKey("polygonV2")) {
             var correlationRateList = statisticRepository.getAllCorrelationRateStatistics();
-            fillParentV2(correlationRateList, importantLayers);
+            fillParent(correlationRateList, importantLayers);
             return correlationRateList;
         }
         var transformedGeometry = getPolygon(arguments);
@@ -68,155 +71,22 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         //should be sorted with correlationRateComparator
         correlationRateList.sort(correlationRateComparator());
 
-        fillParentV2(correlationRateList, importantLayers);
+        fillParent(correlationRateList, importantLayers);
         return correlationRateList;
     }
 
     private void fillParent(List<PolygonCorrelationRate> correlationRateList, Set<List<String>> importantLayers) {
-        //Set<List<String>> xChildren = new HashSet<>();
-        //Set<List<String>> yChildren = new HashSet<>();
-//        Map<List<String>, Set<List<String>>> xParentChildren = new HashMap<>();
-//        Map<List<String>, Set<List<String>>> yParentChildren = new HashMap<>();
-//        Map<List<String>, Set<ParentDto>> xChildParents = new HashMap<>();
-//        Map<List<String>, Set<ParentDto>> yChildParents = new HashMap<>();
-        List<String> baseIndicators = statisticRepository.getBaseIndicators();
-        for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
-            if (Math.abs(polygonCorrelationRate.getCorrelation()) > highCorrelationLevel) {
-                if (polygonCorrelationRate.getAvgCorrelationX() > polygonCorrelationRate.getAvgCorrelationY()
-                        && !importantLayers.contains(polygonCorrelationRate.getX().getQuotient())
-                        //&& !xChildren.contains(polygonCorrelationRate.getX().getQuotient())
-                        && !baseIndicators.contains(polygonCorrelationRate.getY().getQuotient().get(0))) {
+        Map<NodeDto, Set<NodeDto>> graph = createGraph(correlationRateList);
 
+        Map<List<String>, List<String>> xChildParent = new HashMap<>();
+        Map<List<String>, List<String>> yChildParent = new HashMap<>();
 
-//                    if (!xParentChildren.containsKey(polygonCorrelationRate.getX().getQuotient())) {
-////                        polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
-////                        xChildren.add(polygonCorrelationRate.getX().getQuotient());
-//                        if (!xParentChildren.containsKey(polygonCorrelationRate.getY().getQuotient())) {
-//                            xParentChildren.put(polygonCorrelationRate.getY().getQuotient(), new HashSet<>());
-//                        }
-//                        xParentChildren.get(polygonCorrelationRate.getY().getQuotient()).add(polygonCorrelationRate.getX().getQuotient());
-//
-//                        if (!xChildParents.containsKey(polygonCorrelationRate.getX().getQuotient())) {
-//                            xChildParents.put(polygonCorrelationRate.getX().getQuotient(), new HashSet<>());
-//                        }
-//                        xChildParents.get(polygonCorrelationRate.getX().getQuotient())
-//                                .add(new ParentDto(polygonCorrelationRate.getY().getQuotient(), polygonCorrelationRate.getAvgCorrelationY()));
-//                    } else {
-//                        if (!xParentChildren.get(polygonCorrelationRate.getX().getQuotient()).contains(polygonCorrelationRate.getY().getQuotient())) {
-////                            polygonCorrelationRate.getX().setParent(polygonCorrelationRate.getY().getQuotient());
-////                            xChildren.add(polygonCorrelationRate.getX().getQuotient());
-//                            if (!xParentChildren.containsKey(polygonCorrelationRate.getY().getQuotient())) {
-//                                xParentChildren.put(polygonCorrelationRate.getY().getQuotient(), new HashSet<>());
-//                            }
-//                            xParentChildren.get(polygonCorrelationRate.getY().getQuotient()).add(polygonCorrelationRate.getX().getQuotient());
-//
-//                            if (!xChildParents.containsKey(polygonCorrelationRate.getX().getQuotient())) {
-//                                xChildParents.put(polygonCorrelationRate.getX().getQuotient(), new HashSet<>());
-//                            }
-//                            xChildParents.get(polygonCorrelationRate.getX().getQuotient())
-//                                    .add(new ParentDto(polygonCorrelationRate.getY().getQuotient(), polygonCorrelationRate.getAvgCorrelationY()));
-//                        }
-//                    }
-                }
-                if (polygonCorrelationRate.getAvgCorrelationY() > polygonCorrelationRate.getAvgCorrelationX()
-                        && !importantLayers.contains(polygonCorrelationRate.getY().getQuotient())) {
-                    //&& !yChildren.contains(polygonCorrelationRate.getY().getQuotient())) {
-//                    if (!yParentChildren.containsKey(polygonCorrelationRate.getY().getQuotient())) {
-////                        polygonCorrelationRate.getY().setParent(polygonCorrelationRate.getX().getQuotient());
-////                        yChildren.add(polygonCorrelationRate.getY().getQuotient());
-//                        if (!yParentChildren.containsKey(polygonCorrelationRate.getX().getQuotient())) {
-//                            yParentChildren.put(polygonCorrelationRate.getX().getQuotient(), new HashSet<>());
-//                        }
-//                        yParentChildren.get(polygonCorrelationRate.getX().getQuotient()).add(polygonCorrelationRate.getY().getQuotient());
-//
-//                        if (!yChildParents.containsKey(polygonCorrelationRate.getY().getQuotient())) {
-//                            yChildParents.put(polygonCorrelationRate.getY().getQuotient(), new HashSet<>());
-//                        }
-//                        yChildParents.get(polygonCorrelationRate.getY().getQuotient())
-//                                .add(new ParentDto(polygonCorrelationRate.getX().getQuotient(), polygonCorrelationRate.getAvgCorrelationX()));
-//                    } else {
-//                        if (!yParentChildren.get(polygonCorrelationRate.getY().getQuotient()).contains(polygonCorrelationRate.getX().getQuotient())) {
-////                            polygonCorrelationRate.getY().setParent(polygonCorrelationRate.getX().getQuotient());
-////                            yChildren.add(polygonCorrelationRate.getY().getQuotient());
-//                            if (!yParentChildren.containsKey(polygonCorrelationRate.getX().getQuotient())) {
-//                                yParentChildren.put(polygonCorrelationRate.getX().getQuotient(), new HashSet<>());
-//                            }
-//                            yParentChildren.get(polygonCorrelationRate.getX().getQuotient()).add(polygonCorrelationRate.getY().getQuotient());
-//
-//                            if (!yChildParents.containsKey(polygonCorrelationRate.getY().getQuotient())) {
-//                                yChildParents.put(polygonCorrelationRate.getY().getQuotient(), new HashSet<>());
-//                            }
-//                            yChildParents.get(polygonCorrelationRate.getY().getQuotient())
-//                                    .add(new ParentDto(polygonCorrelationRate.getX().getQuotient(), polygonCorrelationRate.getAvgCorrelationX()));
-//                        }
-//                    }
-                }
-            }
-        }
+        bfs(graph, importantLayers, xChildParent, yChildParent);
 
-//        for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
-//            List<String> quotientX = polygonCorrelationRate.getX().getQuotient();
-//            List<String> quotientY = polygonCorrelationRate.getY().getQuotient();
-//            if (xChildParents.containsKey(quotientX)) {
-//                polygonCorrelationRate.getX()
-//                        .setParent(xChildParents.get(quotientX).stream()
-//                                .min(Comparator.comparing(ParentDto::getAvgCorrelation))
-//                                .get()
-//                                .getQuotient());
-//            }
-//            if (yChildParents.containsKey(quotientY)) {
-//                polygonCorrelationRate.getY()
-//                        .setParent(yChildParents.get(quotientY).stream()
-//                                .min(Comparator.comparing(ParentDto::getAvgCorrelation))
-//                                .get()
-//                                .getQuotient());
-//            }
-//        }
+        setParent(correlationRateList, xChildParent, yChildParent);
     }
 
-    private void fillParentV1(List<PolygonCorrelationRate> correlationRateList, Set<List<String>> importantLayers) {
-        List<String> baseIndicators = statisticRepository.getBaseIndicators();
-        Map<List<String>, Set<ParentDto>> xChildParents = new HashMap<>();
-        Map<List<String>, Set<ParentDto>> yChildParents = new HashMap<>();
-        for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
-            if (Math.abs(polygonCorrelationRate.getCorrelation()) > highCorrelationLevel) {
-                if (polygonCorrelationRate.getAvgCorrelationX() > polygonCorrelationRate.getAvgCorrelationY()
-                        && !importantLayers.contains(polygonCorrelationRate.getX().getQuotient())
-                        && !baseIndicators.contains(polygonCorrelationRate.getY().getQuotient().get(0))) {
-                    if (!xChildParents.containsKey(polygonCorrelationRate.getX().getQuotient())) {
-                        xChildParents.put(polygonCorrelationRate.getX().getQuotient(), new HashSet<>());
-                    }
-                    xChildParents.get(polygonCorrelationRate.getX().getQuotient())
-                            .add(new ParentDto(polygonCorrelationRate.getY().getQuotient(), polygonCorrelationRate.getAvgCorrelationY()));
-                }
-                if (polygonCorrelationRate.getAvgCorrelationY() > polygonCorrelationRate.getAvgCorrelationX()
-                        && !importantLayers.contains(polygonCorrelationRate.getY().getQuotient())) {
-                    if (!yChildParents.containsKey(polygonCorrelationRate.getY().getQuotient())) {
-                        yChildParents.put(polygonCorrelationRate.getY().getQuotient(), new HashSet<>());
-                    }
-                    yChildParents.get(polygonCorrelationRate.getY().getQuotient())
-                            .add(new ParentDto(polygonCorrelationRate.getX().getQuotient(), polygonCorrelationRate.getAvgCorrelationX()));
-                }
-            }
-        }
-        Map<List<String>, List<String>> xChildParent = calculateChildParentMap(xChildParents);
-        Map<List<String>, List<String>> yChildParent = calculateChildParentMap(yChildParents);
-
-        for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
-            List<String> quotientX = polygonCorrelationRate.getX().getQuotient();
-            List<String> quotientY = polygonCorrelationRate.getY().getQuotient();
-            if (xChildParent.containsKey(quotientX)) {
-                polygonCorrelationRate.getX()
-                        .setParent(xChildParent.get(quotientX));
-            }
-            if (yChildParent.containsKey(quotientY)) {
-                polygonCorrelationRate.getY()
-                        .setParent(yChildParent.get(quotientY));
-            }
-        }
-    }
-
-    private void fillParentV2(List<PolygonCorrelationRate> correlationRateList, Set<List<String>> importantLayers) {
+    private Map<NodeDto, Set<NodeDto>> createGraph(List<PolygonCorrelationRate> correlationRateList){
         Map<NodeDto, Set<NodeDto>> graph = new HashMap<>();
         for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
             if (Math.abs(polygonCorrelationRate.getCorrelation()) > highCorrelationLevel) {
@@ -234,9 +104,12 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                 graph.get(nodeDtoY).add(nodeDtoX);
             }
         }
+        return graph;
+    }
 
-        Map<List<String>, List<String>> xChildParent = new HashMap<>();
-        Map<List<String>, List<String>> yChildParent = new HashMap<>();
+    private void bfs(Map<NodeDto, Set<NodeDto>> graph, Set<List<String>> importantLayers,
+                     Map<List<String>, List<String>> xChildParent,
+                     Map<List<String>, List<String>> yChildParent){
         for (Map.Entry<NodeDto, Set<NodeDto>> entry : graph.entrySet()) {
             Set<NodeDto> viewed = new HashSet<>();
             viewed.add(entry.getKey());
@@ -250,9 +123,13 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                     }
                 }
             }
-            fillMainElement(viewed, importantLayers, xChildParent, yChildParent);
+            //find parent for all elements in connected component
+            fillParentConnectedComponent(viewed, importantLayers, xChildParent, yChildParent);
         }
+    }
 
+    private void setParent(List<PolygonCorrelationRate> correlationRateList, Map<List<String>, List<String>> xChildParent,
+                           Map<List<String>, List<String>> yChildParent){
         for (PolygonCorrelationRate polygonCorrelationRate : correlationRateList) {
             List<String> quotientX = polygonCorrelationRate.getX().getQuotient();
             List<String> quotientY = polygonCorrelationRate.getY().getQuotient();
@@ -267,92 +144,76 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         }
     }
 
-    private void fillMainElement(Set<NodeDto> viewed, Set<List<String>> importantLayers,
+    private void fillParentConnectedComponent(Set<NodeDto> viewed, Set<List<String>> importantLayers,
                                          Map<List<String>, List<String>> xChildParent,
                                          Map<List<String>, List<String>> yChildParent) {
-        List<NodeDto> foundImportantLayers = new ArrayList<>();
+        List<NodeDto> foundImportantLayers = findImportantLayers(viewed, importantLayers);
+        switch (foundImportantLayers.size()) {
+            case 0 -> fillParentWhenNoImportantLayers(viewed, xChildParent, yChildParent);
+            case 1 -> fillParentWhenOneImportantLayer(viewed, xChildParent, yChildParent, foundImportantLayers);
+            default -> fillParentWhenSeveralImportantLayers(viewed, importantLayers, xChildParent, yChildParent, foundImportantLayers);
+        }
+    }
+
+    private void fillParentWhenNoImportantLayers(Set<NodeDto> viewed, Map<List<String>, List<String>> xChildParent,
+                                                 Map<List<String>, List<String>> yChildParent){
+        List<String> parentX = viewed.stream()
+                .min(Comparator.comparing(NodeDto::getAvgCorrelationX))
+                .map(NodeDto::getQuotient)
+                .orElse(null);
+        List<String> parentY = viewed.stream()
+                .min(Comparator.comparing(NodeDto::getAvgCorrelationY))
+                .map(NodeDto::getQuotient)
+                .orElse(null);
+        for (NodeDto currentViewed : viewed) {
+            if (!currentViewed.getQuotient().equals(parentX)) {
+                xChildParent.put(currentViewed.getQuotient(), parentX);
+            }
+            if (!currentViewed.getQuotient().equals(parentY)) {
+                yChildParent.put(currentViewed.getQuotient(), parentY);
+            }
+        }
+    }
+
+    private void fillParentWhenOneImportantLayer(Set<NodeDto> viewed, Map<List<String>, List<String>> xChildParent,
+                                                 Map<List<String>, List<String>> yChildParent, List<NodeDto> foundImportantLayers){
+        List<String> parent = foundImportantLayers.get(0).getQuotient();
+        for (NodeDto currentViewed : viewed) {
+            if (!currentViewed.getQuotient().equals(parent)) {
+                xChildParent.put(currentViewed.getQuotient(), parent);
+                yChildParent.put(currentViewed.getQuotient(), parent);
+            }
+        }
+    }
+
+    private void fillParentWhenSeveralImportantLayers(Set<NodeDto> viewed, Set<List<String>> importantLayers,
+                                                      Map<List<String>, List<String>> xChildParent,
+                                                      Map<List<String>, List<String>> yChildParent,
+                                                      List<NodeDto> foundImportantLayers){
+        List<String> parentX = foundImportantLayers.stream()
+                .min(Comparator.comparing(NodeDto::getAvgCorrelationX))
+                .map(NodeDto::getQuotient)
+                .orElse(null);
+        List<String> parentY = foundImportantLayers.stream()
+                .min(Comparator.comparing(NodeDto::getAvgCorrelationY))
+                .map(NodeDto::getQuotient)
+                .orElse(null);
+        for (NodeDto currentViewed : viewed) {
+            if (!importantLayers.contains(currentViewed.getQuotient())) {
+                xChildParent.put(currentViewed.getQuotient(), parentX);
+                yChildParent.put(currentViewed.getQuotient(), parentY);
+            }
+        }
+    }
+
+    private List<NodeDto> findImportantLayers(Set<NodeDto> viewed, Set<List<String>> importantLayers){
+        List<NodeDto> result = new ArrayList<>();
         for (NodeDto currentViewed : viewed) {
             if (importantLayers.contains(currentViewed.getQuotient())) {
-                foundImportantLayers.add(currentViewed);
+                result.add(currentViewed);
             }
         }
-        List<String> parentX = new ArrayList<>();
-        List<String> parentY = new ArrayList<>();
-        switch (foundImportantLayers.size()) {
-            case 0 -> {
-                parentX = viewed.stream()
-                        .min(Comparator.comparing(NodeDto::getAvgCorrelationX))
-                        .get()
-                        .getQuotient();
-                parentY = viewed.stream()
-                        .min(Comparator.comparing(NodeDto::getAvgCorrelationY))
-                        .get()
-                        .getQuotient();
-                for (NodeDto currentViewed : viewed) {
-                    if (!currentViewed.getQuotient().equals(parentX)) {
-                        xChildParent.put(currentViewed.getQuotient(), parentX);
-                    }
-                    if (!currentViewed.getQuotient().equals(parentY)) {
-                        yChildParent.put(currentViewed.getQuotient(), parentY);
-                    }
-                }
-            }
-            case 1 -> {
-                List<String> parent = foundImportantLayers.get(0).getQuotient();
-                for (NodeDto currentViewed : viewed) {
-                    if (!currentViewed.getQuotient().equals(parent)) {
-                        xChildParent.put(currentViewed.getQuotient(), parent);
-                        yChildParent.put(currentViewed.getQuotient(), parent);
-                    }
-                }
-            }
-            default -> {
-                parentX = foundImportantLayers.stream()
-                        .min(Comparator.comparing(NodeDto::getAvgCorrelationX))
-                        .get()
-                        .getQuotient();
-                parentY = foundImportantLayers.stream()
-                        .min(Comparator.comparing(NodeDto::getAvgCorrelationY))
-                        .get()
-                        .getQuotient();
-                for (NodeDto currentViewed : viewed) {
-                    if (!importantLayers.contains(currentViewed.getQuotient())) {
-                        xChildParent.put(currentViewed.getQuotient(), parentX);
-                        yChildParent.put(currentViewed.getQuotient(), parentY);
-                    }
-                }
-            }
-        }
-    }
-
-    private Map<List<String>, List<String>> calculateChildParentMap(Map<List<String>, Set<ParentDto>> childParents) {
-        Map<List<String>, List<String>> childParent = new HashMap<>();
-        for (Map.Entry<List<String>, Set<ParentDto>> entry : childParents.entrySet()) {
-            List<String> currentChild = entry.getKey();
-            ParentDto bestParent = findBestParent(entry.getValue());
-            Queue<ParentDto> queue = new LinkedList<>();
-            queue.add(bestParent);
-            Set<List<String>> viewed = new HashSet<>();
-            viewed.add(currentChild);
-            ParentDto currentParent = null;
-            while (!queue.isEmpty()) {
-                currentParent = queue.poll();
-                if (!viewed.contains(currentParent.getQuotient())) {
-                    viewed.add(currentParent.getQuotient());
-                    if (childParents.containsKey(currentParent.getQuotient())) {
-                        queue.add(findBestParent(childParents.get(currentParent.getQuotient())));
-                    }
-                }
-            }
-            childParent.put(currentChild, currentParent.getQuotient());
-        }
-        return childParent;
-    }
-
-    private ParentDto findBestParent(Set<ParentDto> parents) {
-        return parents.stream()
-                .min(Comparator.comparing(ParentDto::getAvgCorrelation))
-                .get();
+        return result;
     }
 
     private Comparator<PolygonCorrelationRate> correlationRateComparator() {
