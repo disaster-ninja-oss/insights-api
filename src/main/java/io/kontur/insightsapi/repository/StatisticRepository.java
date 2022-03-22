@@ -156,11 +156,6 @@ public class StatisticRepository {
         return result;
     }
 
-    public List<String> getBaseIndicators(){
-        var query = "select param_id from bivariate_indicators where is_base";
-        return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
-    }
-
     private Map<String, Boolean> createResultMapForNotEmptyLayers(List<String> numerators, ResultSet rs) {
         Map<String, Boolean> result = new HashMap<>();
         numerators.forEach(numerator -> {
