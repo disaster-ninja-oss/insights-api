@@ -110,21 +110,26 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     private void bfs(Map<NodeDto, Set<NodeDto>> graph, Set<List<String>> importantLayers,
                      Map<List<String>, List<String>> xChildParent,
                      Map<List<String>, List<String>> yChildParent) {
+        Set<NodeDto> viewed = new HashSet<>();
         for (Map.Entry<NodeDto, Set<NodeDto>> entry : graph.entrySet()) {
-            Set<NodeDto> viewed = new HashSet<>();
-            viewed.add(entry.getKey());
-            Queue<NodeDto> queue = new LinkedList<>(entry.getValue());
-            while (!queue.isEmpty()) {
-                NodeDto currentNode = queue.poll();
-                if (!viewed.contains(currentNode)) {
-                    viewed.add(currentNode);
-                    if (graph.containsKey(currentNode)) {
-                        queue.addAll(graph.get(currentNode));
+            if (!viewed.contains(entry.getKey())) {
+                Set<NodeDto> connectedComponent = new HashSet<>();
+                connectedComponent.add(entry.getKey());
+                viewed.add(entry.getKey());
+                Queue<NodeDto> queue = new LinkedList<>(entry.getValue());
+                while (!queue.isEmpty()) {
+                    NodeDto currentNode = queue.poll();
+                    if (!viewed.contains(currentNode)) {
+                        viewed.add(currentNode);
+                        connectedComponent.add(currentNode);
+                        if (graph.containsKey(currentNode)) {
+                            queue.addAll(graph.get(currentNode));
+                        }
                     }
                 }
+                //find parent for all elements in connected component
+                fillParentConnectedComponent(connectedComponent, importantLayers, xChildParent, yChildParent);
             }
-            //find parent for all elements in connected component
-            fillParentConnectedComponent(viewed, importantLayers, xChildParent, yChildParent);
         }
     }
 
