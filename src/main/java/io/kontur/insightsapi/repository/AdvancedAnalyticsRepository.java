@@ -197,9 +197,9 @@ public class AdvancedAnalyticsRepository {
             for (AdvancedAnalyticsValues value : advancedAnalyticsValues) {
                 Double quality = value.getQuality();
                 if (minQuality == null && quality != null) {
-                    minQuality = quality;
+                    minQuality = Math.abs(quality);
                 } else if (minQuality != null && quality != null && quality < minQuality) {
-                    minQuality = quality;
+                    minQuality = Math.abs(quality);
                 }
             }
 
