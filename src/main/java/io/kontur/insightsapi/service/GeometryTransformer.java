@@ -34,8 +34,11 @@ public class GeometryTransformer {
         var geometries = Arrays.stream(featureCollection.getFeatures())
                 .map(Feature::getGeometry)
                 .collect(toList());
-        var resultCollection = new GeometryCollection(geometries.toArray(Geometry[]::new));
-        return objectMapper.writeValueAsString(resultCollection);
+        if (geometries.size() > 0) {
+            var resultCollection = new GeometryCollection(geometries.toArray(Geometry[]::new));
+            return objectMapper.writeValueAsString(resultCollection);
+        }
+        return null;
     }
 
     private String transformToGeometry(GeoJSON geoJSON) throws JsonProcessingException {

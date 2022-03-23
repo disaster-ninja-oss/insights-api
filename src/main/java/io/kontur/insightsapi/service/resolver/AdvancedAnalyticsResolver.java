@@ -35,20 +35,23 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
         var polygon = helper.getPolygonFromRequest(environment);
         if (polygon != null) {
             var transformedGeometry = geometryTransformer.transform(polygon);
+            if (transformedGeometry != null) {
+                //got bivariative axis, will be parametric, not all list
+                List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getBivariativeAxis();
 
-            //got bivariative axis, will be parametric, not all list
-            List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getBivariativeAxis();
+                //query with geom and uniun of bivariative axis caculations
+                String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
+                String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
 
-            //query with geom and uniun of bivariative axis caculations
-            String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
-            String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
+                //get analytics result and match layer names
+                var advancedAnalyticsValues = advancedAnalyticsRepository.getAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, transformedGeometry);
 
-            //get analytics result and match layer names
-            var advancedAnalyticsValues = advancedAnalyticsRepository.getAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, transformedGeometry);
-
-            //list need to be sorted according to any least quality value
-            List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
-            return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
+                //list need to be sorted according to any least quality value
+                List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
+                return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
+            } else {
+                return advancedAnalyticsRepository.getWorldData();
+            }
         } else {
             return advancedAnalyticsRepository.getWorldData();
         }
