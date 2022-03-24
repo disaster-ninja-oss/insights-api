@@ -34,12 +34,18 @@ public class GeometryTransformer {
         var geometries = Arrays.stream(featureCollection.getFeatures())
                 .map(Feature::getGeometry)
                 .collect(toList());
-        var resultCollection = new GeometryCollection(geometries.toArray(Geometry[]::new));
-        return objectMapper.writeValueAsString(resultCollection);
+        if (geometries.size() > 0) {
+            var resultCollection = new GeometryCollection(geometries.toArray(Geometry[]::new));
+            return objectMapper.writeValueAsString(resultCollection);
+        }
+        return null;
     }
 
     private String transformToGeometry(GeoJSON geoJSON) throws JsonProcessingException {
         var geometry = ((Feature) geoJSON).getGeometry();
-        return objectMapper.writeValueAsString(geometry);
+        if(geometry != null){
+            return objectMapper.writeValueAsString(geometry);
+        }
+        return null;
     }
 }
