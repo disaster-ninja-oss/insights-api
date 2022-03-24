@@ -43,6 +43,9 @@ public class GeometryTransformer {
 
     private String transformToGeometry(GeoJSON geoJSON) throws JsonProcessingException {
         var geometry = ((Feature) geoJSON).getGeometry();
-        return objectMapper.writeValueAsString(geometry);
+        if(geometry != null){
+            return objectMapper.writeValueAsString(geometry);
+        }
+        return null;
     }
 }
