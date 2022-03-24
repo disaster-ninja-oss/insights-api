@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.util.List;
@@ -16,9 +15,5 @@ public class PolygonStatisticRequest {
 
     private String polygonV2;
 
-    @JsonProperty("xNumeratorList")
-    private List<String> xNumeratorList;
-
-    @JsonProperty("yNumeratorList")
-    private List<String> yNumeratorList;
+    private List<List<String>> importantLayers;
 }
