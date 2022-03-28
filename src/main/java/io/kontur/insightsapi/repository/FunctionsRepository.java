@@ -3,11 +3,11 @@ package io.kontur.insightsapi.repository;
 import io.kontur.insightsapi.dto.FunctionArgs;
 import io.kontur.insightsapi.exception.EmptySqlQueryAnswer;
 import io.kontur.insightsapi.model.FunctionResult;
+import io.kontur.insightsapi.service.cacheable.FunctionsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -28,19 +28,18 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class FunctionsRepository {
+public class FunctionsRepository implements FunctionsService {
 
     @Value("classpath:function_intersect.sql")
     Resource functionIntersect;
-
-    @Autowired
-    QueryFactory queryFactory;
 
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
     private final Logger logger = LoggerFactory.getLogger(FunctionsRepository.class);
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    private final QueryFactory queryFactory;
 
     @Retryable(value = EmptySqlQueryAnswer.class, backoff = @Backoff(delayExpression = "${retry.functionRequest.delay}",
             multiplierExpression = "${retry.functionRequest.multiplier}"))

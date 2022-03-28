@@ -1,7 +1,7 @@
 package io.kontur.insightsapi.controller;
 
 import io.kontur.insightsapi.dto.*;
-import io.kontur.insightsapi.service.PopulationService;
+import io.kontur.insightsapi.service.PopulationTransformer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,12 +37,12 @@ public class PopulationController {
 
     private final Logger logger;
 
-    private final PopulationService populationService;
+    private final PopulationTransformer populationTransformer;
 
     private final WKTReader reader;
 
-    public PopulationController(PopulationService populationService) {
-        this.populationService = populationService;
+    public PopulationController(PopulationTransformer populationTransformer) {
+        this.populationTransformer = populationTransformer;
         this.logger = LoggerFactory.getLogger(PopulationController.class);
         this.reader = new WKTReader();
     }
@@ -68,7 +68,7 @@ public class PopulationController {
         try {
             ZonedDateTime start = ZonedDateTime.now(ZoneId.of("UTC"));
             logger.debug("Start time: {}", start.toString());
-            StatisticDto statistic = populationService.calculatePopulation(info.getPolygon());
+            StatisticDto statistic = populationTransformer.calculatePopulation(info.getPolygon());
             ZonedDateTime end = ZonedDateTime.now(ZoneId.of("UTC"));
             logger.debug("End time: {}. Duration: {} ms", end.toString(), (end.toInstant().toEpochMilli() - start.toInstant().toEpochMilli()));
             return statistic;
@@ -96,8 +96,8 @@ public class PopulationController {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad input geometry");
         }
-        List<HumanitarianImpactDto> impactDtos = populationService.calculateHumanitarianImpact(wkt);
-        return populationService.convertImpactIntoFeatureCollection(wkt, impactDtos);
+        List<HumanitarianImpactDto> impactDtos = populationTransformer.calculateHumanitarianImpact(wkt);
+        return populationTransformer.convertImpactIntoFeatureCollection(wkt, impactDtos);
     }
 
     @Operation(summary = "Calculate population statistic in several geometries.",
@@ -127,7 +127,7 @@ public class PopulationController {
             }
             SeveralPolygonsCalculationOutputDto outputDTO = new SeveralPolygonsCalculationOutputDto();
             outputDTO.setId(dto.getId());
-            outputDTO.setStatistic(populationService.calculatePopulation(dto.getGeometry()));
+            outputDTO.setStatistic(populationTransformer.calculatePopulation(dto.getGeometry()));
             result.add(outputDTO);
         });
         Date end = new Date();

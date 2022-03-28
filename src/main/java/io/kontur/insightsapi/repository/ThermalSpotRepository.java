@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -24,9 +23,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ThermalSpotRepository implements ThermalSpotStatisticService {
 
-    @Autowired
-    QueryFactory queryFactory;
-
     @Value("classpath:thermal_statistic.sql")
     Resource thermalStatistic;
 
@@ -42,6 +38,8 @@ public class ThermalSpotRepository implements ThermalSpotStatisticService {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Helper helper;
+
+    private final QueryFactory queryFactory;
 
     @Transactional(readOnly = true)
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {

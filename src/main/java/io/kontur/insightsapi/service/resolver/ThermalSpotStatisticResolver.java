@@ -6,7 +6,6 @@ import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.SelectedField;
 import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.model.ThermalSpotStatistic;
-import io.kontur.insightsapi.repository.ThermalSpotRepository;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
 import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
@@ -20,8 +19,6 @@ import java.util.stream.Collectors;
 public class ThermalSpotStatisticResolver implements GraphQLResolver<Analytics> {
 
     private final GeometryTransformer geometryTransformer;
-
-    private final ThermalSpotRepository thermalSpotRepository;
 
     private final Helper helper;
 

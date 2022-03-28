@@ -4,10 +4,10 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import io.kontur.insightsapi.model.ThermalSpotStatistic;
-import io.kontur.insightsapi.repository.ThermalSpotRepository;
+import io.kontur.insightsapi.model.UrbanCore;
+import io.kontur.insightsapi.service.PopulationTransformer;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
-import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
+import io.kontur.insightsapi.service.cacheable.UrbanCoreService;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,17 +20,17 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Primary
-@ConditionalOnProperty(prefix = "cache", name = "thermal-spot")
-public class ThermalSpotStatisticFacade implements ThermalSpotStatisticService, CacheEvictable {
+@ConditionalOnProperty(prefix = "cache", name = "urban-core")
+public class UrbanCoreFacade implements UrbanCoreService, CacheEvictable {
 
-    private final ThermalSpotRepository repository;
+    private final PopulationTransformer populationTransformer;
 
-    private final Cache<String, ThermalSpotStatistic> cache;
+    private final Cache<String, UrbanCore> cache;
 
     private final HashFunction hashFunction;
 
-    public ThermalSpotStatisticFacade(ThermalSpotRepository repository, @Value("${cache.maximumSize}") Integer maximumSize) {
-        this.repository = repository;
+    public UrbanCoreFacade(PopulationTransformer populationTransformer, @Value("${cache.maximumSize}") Integer maximumSize) {
+        this.populationTransformer = populationTransformer;
         this.cache = CacheBuilder.newBuilder()
                 .expireAfterWrite(1, TimeUnit.DAYS)
                 .maximumSize(maximumSize)
@@ -40,14 +40,14 @@ public class ThermalSpotStatisticFacade implements ThermalSpotStatisticService, 
 
     @SneakyThrows
     @Override
-    public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
-        return cache.get(keyGen(geojson, fieldList),
-                () -> repository.calculateThermalSpotStatistic(geojson, fieldList));
+    public UrbanCore calculateUrbanCore(String geojson, List<String> requestFields) {
+        return cache.get(keyGen(geojson, requestFields),
+                () -> populationTransformer.calculateUrbanCore(geojson, requestFields));
     }
 
-    private String keyGen(String geojson, List<String> fieldList) {
+    private String keyGen(String geojson, List<String> requestFields) {
         return hashFunction.hashString(geojson, Charset.defaultCharset()) + "_"
-                + hashFunction.hashString(fieldList.toString(), Charset.defaultCharset());
+                + hashFunction.hashString(requestFields.toString(), Charset.defaultCharset());
     }
 
     @Override

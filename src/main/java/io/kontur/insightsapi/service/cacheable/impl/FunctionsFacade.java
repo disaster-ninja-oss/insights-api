@@ -4,10 +4,11 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import io.kontur.insightsapi.model.ThermalSpotStatistic;
-import io.kontur.insightsapi.repository.ThermalSpotRepository;
+import io.kontur.insightsapi.dto.FunctionArgs;
+import io.kontur.insightsapi.model.FunctionResult;
+import io.kontur.insightsapi.repository.FunctionsRepository;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
-import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
+import io.kontur.insightsapi.service.cacheable.FunctionsService;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,16 +21,16 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @Primary
-@ConditionalOnProperty(prefix = "cache", name = "thermal-spot")
-public class ThermalSpotStatisticFacade implements ThermalSpotStatisticService, CacheEvictable {
+@ConditionalOnProperty(prefix = "cache", name = "functions")
+public class FunctionsFacade implements FunctionsService, CacheEvictable {
 
-    private final ThermalSpotRepository repository;
+    private final FunctionsRepository repository;
 
-    private final Cache<String, ThermalSpotStatistic> cache;
+    private final Cache<String, List<FunctionResult>> cache;
 
     private final HashFunction hashFunction;
 
-    public ThermalSpotStatisticFacade(ThermalSpotRepository repository, @Value("${cache.maximumSize}") Integer maximumSize) {
+    public FunctionsFacade(FunctionsRepository repository, @Value("${cache.maximumSize}") Integer maximumSize) {
         this.repository = repository;
         this.cache = CacheBuilder.newBuilder()
                 .expireAfterWrite(1, TimeUnit.DAYS)
@@ -40,14 +41,14 @@ public class ThermalSpotStatisticFacade implements ThermalSpotStatisticService, 
 
     @SneakyThrows
     @Override
-    public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
-        return cache.get(keyGen(geojson, fieldList),
-                () -> repository.calculateThermalSpotStatistic(geojson, fieldList));
+    public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
+        return cache.get(keyGen(geojson, args),
+                () -> repository.calculateFunctionsResult(geojson, args));
     }
 
-    private String keyGen(String geojson, List<String> fieldList) {
+    private String keyGen(String geojson, List<FunctionArgs> args) {
         return hashFunction.hashString(geojson, Charset.defaultCharset()) + "_"
-                + hashFunction.hashString(fieldList.toString(), Charset.defaultCharset());
+                + hashFunction.hashString(args.toString(), Charset.defaultCharset());
     }
 
     @Override

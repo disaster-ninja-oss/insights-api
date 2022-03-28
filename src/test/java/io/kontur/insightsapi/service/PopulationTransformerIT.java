@@ -12,17 +12,17 @@ import java.util.Map;
 import java.util.Optional;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class PopulationServiceIT {
+class PopulationTransformerIT {
 
     private static final String POPULATION_QUERY = "POLYGON((0 0,0 5,5 5,5 0,0 0))";
 
     @Autowired
-    private PopulationService populationService;
+    private PopulationTransformer populationTransformer;
 
     @Disabled("will be fixed after adding postgis h3index type to test image")
     @Test
     void calculatePopulationAndGdp() {
-        Optional<Map<String, CalculatePopulationDto>> population = populationService.calculatePopulationAndGdp(POPULATION_QUERY);
+        Optional<Map<String, CalculatePopulationDto>> population = populationTransformer.calculatePopulationAndGdp(POPULATION_QUERY);
         Assertions.assertTrue(population.isPresent(), "Population is not received");
         Assertions.assertTrue(population.get().size() >= 1);
         Assertions.assertEquals(BigDecimal.valueOf(700), population.get().values().iterator().next().getPopulation());
@@ -33,7 +33,7 @@ class PopulationServiceIT {
 
     @Test
     void calculateArea() {
-        BigDecimal area = populationService.calculateArea(POPULATION_QUERY);
+        BigDecimal area = populationTransformer.calculateArea(POPULATION_QUERY);
         Assertions.assertNotNull(area, "Area is not received");
         Assertions.assertTrue(area.compareTo(BigDecimal.ZERO) > 0);
     }
