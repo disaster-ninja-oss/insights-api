@@ -59,4 +59,4 @@ retry:
     multiplier: 2
 
 bivatiateMatrix:
-  highCorrelationLevel: 0.75
+  highCorrelationLevel: 0.8

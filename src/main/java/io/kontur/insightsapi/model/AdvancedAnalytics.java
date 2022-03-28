@@ -18,4 +18,6 @@ public class AdvancedAnalytics {
 
     private List<AdvancedAnalyticsValues> analytics;
 
+    private Integer order;
+
 }
