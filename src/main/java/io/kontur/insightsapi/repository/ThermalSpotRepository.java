@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -55,7 +56,7 @@ public class ThermalSpotRepository {
                             .volcanoesCount(rs.getLong("volcanoesCount"))
                             .forestAreaKm2(rs.getBigDecimal("forestAreaKm2"))
                             .build());
-        } catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException | DataAccessResourceFailureException e) {
             return ThermalSpotStatistic.builder()
                     .industrialAreaKm2(new BigDecimal(0))
                     .hotspotDaysPerYearMax(0L)
