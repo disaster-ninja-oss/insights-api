@@ -78,8 +78,18 @@ public class PopulationRepository {
                             .urban(rs.getBigDecimal("urban")).build())));
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geometry);
-            logger.error(error, e);
-            throw new IllegalArgumentException(error, e);
+            String errorMessage = e.getMessage();
+            if (errorMessage.contains("canceling statement due to user request")) {
+                return Map.of("population",
+                        CalculatePopulationDto.builder()
+                                .population(null)
+                                .gdp(null)
+                                .type(null)
+                                .urban(null).build());
+            } else {
+                logger.error(error, e);
+                throw new IllegalArgumentException(error, e);
+            }
         }
     }
 
