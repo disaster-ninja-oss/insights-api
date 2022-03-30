@@ -1,0 +1,4 @@
+input AdvancedAnalyticsRequest {
+    numerator: String
+    denominator: String
+}

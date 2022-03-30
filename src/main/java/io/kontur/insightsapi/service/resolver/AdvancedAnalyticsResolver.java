@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import graphql.kickstart.tools.GraphQLResolver;
 import graphql.schema.DataFetchingEnvironment;
 import io.kontur.insightsapi.dto.AdvancedAnalyticsQualitySortDto;
+import io.kontur.insightsapi.dto.AdvancedAnalyticsRequest;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.model.AdvancedAnalytics;
 import io.kontur.insightsapi.model.Analytics;
@@ -31,7 +32,7 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsResolver.class);
 
-    public List<AdvancedAnalytics> getAdvancedAnalytics(Analytics statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
+    public List<AdvancedAnalytics> getAdvancedAnalytics(Analytics statistic, List<AdvancedAnalyticsRequest> args, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
         if (polygon != null) {
             var transformedGeometry = geometryTransformer.transform(polygon);
