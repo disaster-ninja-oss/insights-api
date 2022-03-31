@@ -28,6 +28,10 @@ public class CacheController {
 
     private final UrbanCoreFacade urbanCoreFacade;
 
+    private final CorrelationRateFacade correlationRateFacade;
+
+    private final AdvancedAnalyticsFacade advancedAnalyticsFacade;
+
     @Operation(summary = "Clean all caches.",
             tags = {"Cache"},
             description = "Clean all caches.",
@@ -44,5 +48,7 @@ public class CacheController {
         populationFacade.evict();
         thermalSpotStatisticFacade.evict();
         urbanCoreFacade.evict();
+        correlationRateFacade.evict();
+        advancedAnalyticsFacade.evict();
     }
 }

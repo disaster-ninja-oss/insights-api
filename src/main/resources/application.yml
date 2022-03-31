@@ -69,3 +69,5 @@ cache:
   population: true
   thermal-spot: true
   urban-core: true
+  correlation-rate: true
+  advanced-analytics: true

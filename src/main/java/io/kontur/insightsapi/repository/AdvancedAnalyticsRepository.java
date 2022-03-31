@@ -1,12 +1,13 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
-import io.kontur.insightsapi.model.*;
+import io.kontur.insightsapi.model.AdvancedAnalytics;
+import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
+import io.kontur.insightsapi.service.cacheable.AdvancedAnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -21,13 +22,12 @@ import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
-public class AdvancedAnalyticsRepository {
-
-    @Autowired
-    QueryFactory queryFactory;
+public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     static final Double MIN_QUALITY_LIMIT = -1.7;
     static final Double MAX_QUALITY_LIMIT = 1.7;
+
+    private final QueryFactory queryFactory;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
