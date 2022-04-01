@@ -51,12 +51,12 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
                 //list need to be sorted according to any least quality value
                 List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
-                return advancedAnalyticsService.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
+                return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
             } else {
-                return advancedAnalyticsRepository.getWorldData();
+                return advancedAnalyticsService.getWorldData();
             }
         } else {
-            return advancedAnalyticsRepository.getWorldData();
+            return advancedAnalyticsService.getWorldData();
         }
     }
 }

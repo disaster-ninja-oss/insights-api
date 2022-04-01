@@ -28,9 +28,6 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
-    static final Double MIN_QUALITY_LIMIT = -1.7;
-    static final Double MAX_QUALITY_LIMIT = 1.7;
-
     private final QueryFactory queryFactory;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
