@@ -3,9 +3,9 @@ package io.kontur.insightsapi.service.resolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import graphql.kickstart.tools.GraphQLResolver;
 import graphql.schema.DataFetchingEnvironment;
+import io.kontur.insightsapi.dto.AdvancedAnalyticsQualitySortDto;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.model.AdvancedAnalytics;
-import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
 import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.repository.AdvancedAnalyticsRepository;
 import io.kontur.insightsapi.service.GeometryTransformer;
@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,39 +38,25 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
         var polygon = helper.getPolygonFromRequest(environment);
         if (polygon != null) {
             var transformedGeometry = geometryTransformer.transform(polygon);
+            if (transformedGeometry != null) {
+                //got bivariative axis, will be parametric, not all list
+                List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getBivariativeAxis();
 
-            //got bivariative axis, will be parametric, not all list
-            List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getBivariativeAxis();
+                //query with geom and uniun of bivariative axis caculations
+                String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
+                String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
 
-            //query with geom and uniun of bivariative axis caculations
-            String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
-            String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
+                //get analytics result and match layer names
+                var advancedAnalyticsValues = advancedAnalyticsService.getAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, transformedGeometry);
 
-            //get analytics result and match layer names
-            var advancedAnalyticsValues = advancedAnalyticsService.getAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, transformedGeometry);
-
-            return getAdvancedAnalyticsResult(axisDtos, advancedAnalyticsValues);
-        } else {
-            return advancedAnalyticsService.getWorldData();
-        }
-    }
-
-    private List<AdvancedAnalytics> getAdvancedAnalyticsResult(List<BivariativeAxisDto> argAxis, List<List<AdvancedAnalyticsValues>> argValues) {
-        List<AdvancedAnalytics> returnList = new ArrayList<>();
-        for (int i = 0; i < argAxis.size(); i++) {
-            AdvancedAnalytics analytics = new AdvancedAnalytics();
-            analytics.setNumerator(argAxis.get(i).getNumerator());
-            analytics.setDenominator(argAxis.get(i).getDenominator());
-            analytics.setNumeratorLabel(argAxis.get(i).getNumeratorLabel());
-            analytics.setDenominatorLabel(argAxis.get(i).getDenominatorLabel());
-            List<AdvancedAnalyticsValues> advancedAnalyticsValues = argValues.get(i);
-            analytics.setAnalytics(advancedAnalyticsValues);
-            if (advancedAnalyticsRepository.valuesInGoodQuality(advancedAnalyticsValues)) {
-                returnList.add(0, analytics);
+                //list need to be sorted according to any least quality value
+                List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
+                return advancedAnalyticsService.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
             } else {
-                returnList.add(analytics);
+                return advancedAnalyticsRepository.getWorldData();
             }
+        } else {
+            return advancedAnalyticsRepository.getWorldData();
         }
-        return returnList;
     }
 }
