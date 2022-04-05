@@ -2,6 +2,8 @@ package io.kontur.insightsapi.dto;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -16,5 +18,7 @@ public class BivariativeAxisDto {
     private String numeratorLabel;
 
     private String denominatorLabel;
+
+    private List<String> calculations;
 
 }

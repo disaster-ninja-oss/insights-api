@@ -1,6 +1,7 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.AdvancedAnalyticsQualitySortDto;
+import io.kontur.insightsapi.dto.AdvancedAnalyticsRequest;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.model.*;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +17,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.OptionalInt;
+import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -49,6 +47,17 @@ public class AdvancedAnalyticsRepository {
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
         return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis), (rs, rowNum) -> BivariativeAxisDto.builder()
+                .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
+                .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
+                .numeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()))
+                .denominatorLabel(rs.getString(BivariateAxisColumns.denominator_label.name())).build());
+    }
+
+    @Transactional(readOnly = true)
+    public List<BivariativeAxisDto> getFilteredBivariativeAxis(List<AdvancedAnalyticsRequest> argRequests) {
+        List<String> filterQueryList = argRequests.stream().map(r -> "numerator='" + r.getNumerator() + "' and denominator='" + r.getDenominator() + "'").toList();
+        String filterQuery = " where " + StringUtils.join(filterQueryList, " or ");
+        return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis) + filterQuery, (rs, rowNum) -> BivariativeAxisDto.builder()
                 .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
                 .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
                 .numeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()))
@@ -91,7 +100,6 @@ public class AdvancedAnalyticsRepository {
         return getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
     }
 
-
     @Transactional(readOnly = true)
     public List<List<AdvancedAnalyticsValues>> getAdvancedAnalytics(String argQuery, String argGeometry) {
         var paramSource = new MapSqlParameterSource();
@@ -108,6 +116,42 @@ public class AdvancedAnalyticsRepository {
             throw new IllegalArgumentException(error, e);
         }
         return result;
+    }
+
+    public List<List<AdvancedAnalyticsValues>> getFilteredAdvancedAnalytics(String argQuery, String argGeometry, List<BivariativeAxisDto> axisDtos) {
+        var paramSource = new MapSqlParameterSource();
+        paramSource.addValue("polygon", argGeometry);
+
+        List<List<AdvancedAnalyticsValues>> result = new ArrayList<>();
+        try {
+            namedParameterJdbcTemplate.query(argQuery, paramSource, (rs, rowNum) -> result.add(createFilteredValuesList(rs, axisDtos.get(rowNum).getCalculations())));
+        } catch (Exception e) {
+            String error = String.format("Sql exception for geometry %s. Exception: %s", argGeometry, e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
+        }
+        return result;
+    }
+
+    private List<AdvancedAnalyticsValues> createFilteredValuesList(ResultSet rs, List<String> argCalculations) {
+        //calculation list will be parametric, for now its constant
+        List<String> calculationsList = Stream.of(Calculations.values())
+                .map(Calculations::name)
+                //no calculations field or array defined
+                .filter(e -> {
+                    if (argCalculations == null) {
+                        return true;
+                    } else if (!argCalculations.isEmpty()) {
+                        return argCalculations.contains(e);
+                    } else {
+                        return true;
+                    }
+                })
+                .toList();
+        return calculationsList.stream().map(arg -> new AdvancedAnalyticsValues(arg,
+                DatabaseUtil.getNullableDouble(rs, arg + "_value"),
+                DatabaseUtil.getNullableDouble(rs, arg + "_quality"))
+        ).toList();
     }
 
     private List<AdvancedAnalyticsValues> createValuesList(ResultSet rs) {
@@ -154,19 +198,20 @@ public class AdvancedAnalyticsRepository {
 
     public List<AdvancedAnalytics> getAdvancedAnalyticsResult(List<AdvancedAnalyticsQualitySortDto> argQualitySortedList, List<BivariativeAxisDto> argAxis, List<List<AdvancedAnalyticsValues>> argValues) {
         List<AdvancedAnalytics> returnList = new ArrayList<>();
-
         for (int i = 0; i < argAxis.size(); i++) {
-            AdvancedAnalytics analytics = new AdvancedAnalytics();
-            analytics.setNumerator(argAxis.get(i).getNumerator());
-            analytics.setDenominator(argAxis.get(i).getDenominator());
-            analytics.setNumeratorLabel(argAxis.get(i).getNumeratorLabel());
-            analytics.setDenominatorLabel(argAxis.get(i).getDenominatorLabel());
-            analytics.setAnalytics(argValues.get(i));
-            //get order according to quality value
-            analytics.setOrder(getIndexOfListByQuality(argQualitySortedList, argAxis.get(i).getNumerator(), argAxis.get(i).getDenominator()));
-            returnList.add(analytics);
+            List<AdvancedAnalyticsValues> advancedAnalyticsValues = argValues.get(i);
+            if (!advancedAnalyticsValues.isEmpty()) {
+                AdvancedAnalytics analytics = new AdvancedAnalytics();
+                analytics.setNumerator(argAxis.get(i).getNumerator());
+                analytics.setDenominator(argAxis.get(i).getDenominator());
+                analytics.setNumeratorLabel(argAxis.get(i).getNumeratorLabel());
+                analytics.setDenominatorLabel(argAxis.get(i).getDenominatorLabel());
+                analytics.setAnalytics(advancedAnalyticsValues);
+                //get order according to quality value
+                analytics.setOrder(getIndexOfListByQuality(argQualitySortedList, argAxis.get(i).getNumerator(), argAxis.get(i).getDenominator()));
+                returnList.add(analytics);
+            }
         }
-
         //sort by quality order
         return returnList.stream()
                 .sorted(Comparator.comparing(AdvancedAnalytics::getOrder))

@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Setter
 @Getter
 @NoArgsConstructor
@@ -14,5 +16,7 @@ public class AdvancedAnalyticsRequest {
     private String numerator;
 
     private String denominator;
+
+    private List<String> calculations;
 
 }

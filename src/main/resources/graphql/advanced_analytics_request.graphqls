@@ -1,4 +1,5 @@
 input AdvancedAnalyticsRequest {
     numerator: String
     denominator: String
+    calculations: [String]
 }
