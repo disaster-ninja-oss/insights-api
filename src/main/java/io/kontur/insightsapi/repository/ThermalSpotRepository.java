@@ -56,12 +56,19 @@ public class ThermalSpotRepository {
                             .volcanoesCount(rs.getLong("volcanoesCount"))
                             .forestAreaKm2(rs.getBigDecimal("forestAreaKm2"))
                             .build());
-        } catch (EmptyResultDataAccessException | DataAccessResourceFailureException e) {
+        } catch (EmptyResultDataAccessException e) {
             return ThermalSpotStatistic.builder()
                     .industrialAreaKm2(new BigDecimal(0))
                     .hotspotDaysPerYearMax(0L)
                     .volcanoesCount(0L)
                     .forestAreaKm2(new BigDecimal(0))
+                    .build();
+        } catch (DataAccessResourceFailureException e) {
+            return ThermalSpotStatistic.builder()
+                    .industrialAreaKm2(null)
+                    .hotspotDaysPerYearMax(null)
+                    .volcanoesCount(null)
+                    .forestAreaKm2(null)
                     .build();
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geojson);
