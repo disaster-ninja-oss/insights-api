@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -76,6 +77,20 @@ public class PopulationRepository {
                             .gdp(rs.getBigDecimal("gdp"))
                             .type(rs.getString("type"))
                             .urban(rs.getBigDecimal("urban")).build())));
+        } catch (EmptyResultDataAccessException e) {
+            return Map.of("population",
+                    CalculatePopulationDto.builder()
+                            .population(new BigDecimal(0))
+                            .gdp(new BigDecimal(0))
+                            .type("")
+                            .urban(new BigDecimal(0)).build());
+        } catch (DataAccessResourceFailureException e) {
+            return Map.of("population",
+                    CalculatePopulationDto.builder()
+                            .population(null)
+                            .gdp(null)
+                            .type(null)
+                            .urban(null).build());
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geometry);
             logger.error(error, e);
@@ -109,7 +124,7 @@ public class PopulationRepository {
                             .name(rs.getString("name"))
                             .percentage(rs.getString("percentage"))
                             .totalAreaKm2(rs.getBigDecimal("totalAreaKm2")).build());
-        } catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException | DataAccessResourceFailureException e) {
             return Lists.newArrayList();
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geometry);
@@ -144,7 +159,17 @@ public class PopulationRepository {
                     .areaWithoutOsmObjectsKm2(new BigDecimal(0))
                     .osmGapsPercentage(new BigDecimal(0))
                     .build();
-        } catch (Exception e) {
+        } catch (DataAccessResourceFailureException e) {
+            return OsmQuality.builder()
+                    .peopleWithoutOsmBuildings(null)
+                    .areaWithoutOsmBuildingsKm2(null)
+                    .peopleWithoutOsmRoads(null)
+                    .areaWithoutOsmRoadsKm2(null)
+                    .peopleWithoutOsmObjects(null)
+                    .areaWithoutOsmObjectsKm2(null)
+                    .osmGapsPercentage(null)
+                    .build();
+        }catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geojson);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
@@ -167,6 +192,11 @@ public class PopulationRepository {
                     .urbanCoreAreaKm2(new BigDecimal(0))
                     .urbanCorePopulation(new BigDecimal(0))
                     .totalPopulatedAreaKm2(new BigDecimal(0)).build();
+        } catch (DataAccessResourceFailureException e) {
+            return UrbanCore.builder()
+                    .urbanCoreAreaKm2(null)
+                    .urbanCorePopulation(null)
+                    .totalPopulatedAreaKm2(null).build();
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geojson);
             logger.error(error, e);

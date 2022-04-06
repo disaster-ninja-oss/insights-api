@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -61,6 +62,13 @@ public class ThermalSpotRepository {
                     .hotspotDaysPerYearMax(0L)
                     .volcanoesCount(0L)
                     .forestAreaKm2(new BigDecimal(0))
+                    .build();
+        } catch (DataAccessResourceFailureException e) {
+            return ThermalSpotStatistic.builder()
+                    .industrialAreaKm2(null)
+                    .hotspotDaysPerYearMax(null)
+                    .volcanoesCount(null)
+                    .forestAreaKm2(null)
                     .build();
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geojson);
