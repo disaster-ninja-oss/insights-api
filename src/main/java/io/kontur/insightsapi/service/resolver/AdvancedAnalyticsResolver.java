@@ -69,16 +69,21 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
     public List<AdvancedAnalytics> getFilteredAdvancedAnalytics(List<AdvancedAnalyticsRequest> argRequests, String argGeometry) {
         List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getFilteredBivariativeAxis(argRequests);
-        axisDtos.forEach(a -> a.setCalculations(argRequests.stream().filter(r ->
-                r.getNumerator().equals(a.getNumerator()) && r.getDenominator().equals(a.getDenominator())).findFirst().orElse(null).getCalculations()));
+        if(!axisDtos.isEmpty()){
+            axisDtos.forEach(a -> a.setCalculations(argRequests.stream().filter(r ->
+                    r.getNumerator().equals(a.getNumerator()) && r.getDenominator().equals(a.getDenominator())).findFirst().orElse(null).getCalculations()));
 
-        String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
-        String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
+            String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
+            String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
 
-        List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = advancedAnalyticsRepository.getFilteredAdvancedAnalytics(
-                queryWithGeom + " " + queryUnionAll, argGeometry, axisDtos);
+            List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = advancedAnalyticsRepository.getFilteredAdvancedAnalytics(
+                    queryWithGeom + " " + queryUnionAll, argGeometry, axisDtos);
 
-        List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
-        return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
+            List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
+            return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
+        } else {
+            return null;
+        }
+
     }
 }
