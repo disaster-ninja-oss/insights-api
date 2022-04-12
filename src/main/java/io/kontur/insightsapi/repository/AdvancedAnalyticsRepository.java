@@ -55,8 +55,7 @@ public class AdvancedAnalyticsRepository {
 
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getFilteredBivariativeAxis(List<AdvancedAnalyticsRequest> argRequests) {
-        List<String> filterQueryList = argRequests.stream().map(r -> "numerator='" + r.getNumerator() + "' and denominator='" + r.getDenominator() + "'").toList();
-        String filterQuery = " where " + StringUtils.join(filterQueryList, " or ");
+        String filterQuery = getBivariateAxisFilter(argRequests);
         return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis) + filterQuery, (rs, rowNum) -> BivariativeAxisDto.builder()
                 .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
                 .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
@@ -98,6 +97,41 @@ public class AdvancedAnalyticsRepository {
 
         List<AdvancedAnalyticsQualitySortDto> qualitySortedList = createSortedList(axisDtos, advancedAnalyticsValues);
         return getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdvancedAnalytics> getFilteredWorldData(List<AdvancedAnalyticsRequest> argRequests) {
+        List<BivariativeAxisDto> axisDtos = new ArrayList<>();
+        List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = new ArrayList<>();
+        String filterQuery = getBivariateAxisFilter(argRequests);
+        try {
+            namedParameterJdbcTemplate.query(queryFactory.getSql(advancedAnalyticsWorld) + filterQuery, (rs -> {
+                BivariativeAxisDto bivariativeAxisDto = new BivariativeAxisDto();
+                bivariativeAxisDto.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
+                bivariativeAxisDto.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));
+                bivariativeAxisDto.setNumeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()));
+                bivariativeAxisDto.setDenominatorLabel(rs.getString(BivariateAxisColumns.denominator_label.name()));
+                axisDtos.add(bivariativeAxisDto);
+                AdvancedAnalyticsRequest requestDto = argRequests.stream().filter(r ->
+                                r.getNumerator().equals(bivariativeAxisDto.getNumerator()) && r.getDenominator().equals(bivariativeAxisDto.getDenominator()))
+                        .findFirst().orElse(null);
+                List<String> reqList = requestDto != null ? requestDto.getCalculations() : null;
+                List<AdvancedAnalyticsValues> valuesList = createFilteredValuesList(rs, reqList);
+                advancedAnalyticsValues.add(valuesList);
+            }));
+        } catch (Exception e) {
+            String error = String.format("Can't get value from result set %s", e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
+        }
+
+        List<AdvancedAnalyticsQualitySortDto> qualitySortedList = createSortedList(axisDtos, advancedAnalyticsValues);
+        return getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
+    }
+
+    private String getBivariateAxisFilter(List<AdvancedAnalyticsRequest> argRequests) {
+        List<String> filterQueryList = argRequests.stream().map(r -> "numerator='" + r.getNumerator() + "' and denominator='" + r.getDenominator() + "'").toList();
+        return " where " + StringUtils.join(filterQueryList, " or ");
     }
 
     @Transactional(readOnly = true)

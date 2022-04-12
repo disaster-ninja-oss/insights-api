@@ -44,14 +44,14 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
                     return getAdvancedAnalytics(transformedGeometry);
                 }
             } else {
-                return advancedAnalyticsRepository.getWorldData();
+                return getWorldData(argRequests);
             }
         } else {
-            return advancedAnalyticsRepository.getWorldData();
+            return getWorldData(argRequests);
         }
     }
 
-    public List<AdvancedAnalytics> getAdvancedAnalytics(String argGeometry) {
+    private List<AdvancedAnalytics> getAdvancedAnalytics(String argGeometry) {
         //got bivariative axis, will be parametric, not all list
         List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getBivariativeAxis();
 
@@ -67,22 +67,34 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
         return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
     }
 
-    public List<AdvancedAnalytics> getFilteredAdvancedAnalytics(List<AdvancedAnalyticsRequest> argRequests, String argGeometry) {
+    private List<AdvancedAnalytics> getFilteredAdvancedAnalytics(List<AdvancedAnalyticsRequest> argRequests, String argGeometry) {
         List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getFilteredBivariativeAxis(argRequests);
-        if(!axisDtos.isEmpty()){
-            axisDtos.forEach(a -> a.setCalculations(argRequests.stream().filter(r ->
-                    r.getNumerator().equals(a.getNumerator()) && r.getDenominator().equals(a.getDenominator())).findFirst().orElse(null).getCalculations()));
+        if (!axisDtos.isEmpty()) {
+            axisDtos.forEach(a -> {
+                AdvancedAnalyticsRequest request = argRequests.stream().filter(r -> r.getNumerator().equals(a.getNumerator()) && r.getDenominator().equals(a.getDenominator()))
+                        .findFirst().orElse(null);
+                if (request != null) {
+                    a.setCalculations(request.getCalculations());
+                }
+            });
 
             String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
             String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
 
-            List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = advancedAnalyticsRepository.getFilteredAdvancedAnalytics(
-                    queryWithGeom + " " + queryUnionAll, argGeometry, axisDtos);
+            List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = advancedAnalyticsRepository.getFilteredAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, argGeometry, axisDtos);
 
             List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
             return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
         } else {
             return null;
+        }
+    }
+
+    private List<AdvancedAnalytics> getWorldData(List<AdvancedAnalyticsRequest> argRequest) {
+        if (argRequest != null && !argRequest.isEmpty()) {
+            return advancedAnalyticsRepository.getFilteredWorldData(argRequest);
+        } else {
+            return advancedAnalyticsRepository.getWorldData();
         }
 
     }
