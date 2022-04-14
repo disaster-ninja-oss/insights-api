@@ -68,50 +68,10 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         correlationRateList.sort(correlationRateComparator());
 
         fillParent(correlationRateList, importantLayers);
-        check(correlationRateList);
         return correlationRateList;
     }
 
-    private void check(List<PolygonCorrelationRate> correlationRateList) {
-        Map<List<String>, Set<List<String>>> xMap = new HashMap<>();
-        Map<List<String>, Set<List<String>>> yMap = new HashMap<>();
-        for (PolygonCorrelationRate current : correlationRateList) {
-            List<String> xQuotient = current.getX().getQuotient();
-            List<String> xParent = current.getX().getParent();
-            List<String> yQuotient = current.getY().getQuotient();
-            List<String> yParent = current.getY().getParent();
-            if (!xMap.containsKey(xParent)) {
-                xMap.put(xParent, new HashSet<>());
-            }
-            xMap.get(xParent).add(xQuotient);
-            if (!yMap.containsKey(yParent)) {
-                yMap.put(yParent, new HashSet<>());
-            }
-            yMap.get(yParent).add(yQuotient);
-        }
-        for (Map.Entry<List<String>, Set<List<String>>> entry : xMap.entrySet()) {
-            if (entry.getKey() != null) {
-                for (List<String> current : entry.getValue()) {
-                    if (xMap.containsKey(current)) {
-                        System.out.println("PROBLEM X");
-                        System.out.println(" X parent has parent: " + current.get(0) + " " + current.get(1));
-                    }
-                }
-            }
-        }
-        for (Map.Entry<List<String>, Set<List<String>>> entry : yMap.entrySet()) {
-            if (entry.getKey() != null) {
-                for (List<String> current : entry.getValue()) {
-                    if (yMap.containsKey(current)) {
-                        System.out.println("PROBLEM Y");
-                        System.out.println(" Y parent has parent: " + current.get(0) + " " + current.get(1));
-                    }
-                }
-            }
-        }
-    }
-
-    private void fillParent(List<PolygonCorrelationRate> correlationRateList, Set<NodeDto> importantLayers) {
+    private void fillParent(List<PolygonCorrelationRate> correlationRateList, List<List<String>> importantLayers) {
         GraphDto graph = createGraph(correlationRateList);
 
         Map<List<String>, List<String>> xChildParent = new HashMap<>();
@@ -153,7 +113,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                 .build();
     }
 
-    private void bfs(GraphDto graphDto, Set<NodeDto> importantLayers,
+    private void bfs(GraphDto graphDto, List<List<String>> importantLayers,
                      Map<List<String>, List<String>> xChildParent,
                      Map<List<String>, List<String>> yChildParent) {
         Map<NodeDto, Set<NodeDto>> graph = graphDto.getGraph();
@@ -197,7 +157,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         }
     }
 
-    private void fillParentConnectedComponent(Set<NodeDto> viewed, Set<NodeDto> importantLayers,
+    private void fillParentConnectedComponent(Set<NodeDto> viewed, List<List<String>> importantLayers,
                                               Map<NodeDto, Double> xAvgCorrelation,
                                               Map<NodeDto, Double> yAvgCorrelation,
                                               Map<List<String>, List<String>> xChildParent,
@@ -255,7 +215,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
 
     private void fillParentWhenSeveralImportantLayers(Set<NodeDto> viewed, Map<NodeDto, Double> xAvgCorrelation,
                                                       Map<NodeDto, Double> yAvgCorrelation,
-                                                      Set<NodeDto> importantLayers,
+                                                      List<List<String>> importantLayers,
                                                       Map<List<String>, List<String>> xChildParent,
                                                       Map<List<String>, List<String>> yChildParent,
                                                       Set<NodeDto> foundImportantLayers) {
@@ -263,21 +223,25 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         NodeDto parentY = findLayerWithMinAvgCorrelation(foundImportantLayers, yAvgCorrelation, "y");
         for (NodeDto currentViewed : viewed) {
             if (!currentViewed.equals(parentX) && currentViewed.getAxis().equals("x")
-                    && !importantLayers.contains(currentViewed)) {
+                    && !importantLayers.contains(currentViewed.getQuotient())) {
                 xChildParent.put(currentViewed.getQuotient(), parentX.getQuotient());
             }
             if (!currentViewed.equals(parentY) && currentViewed.getAxis().equals("y")
-                    && !importantLayers.contains(currentViewed)) {
+                    && !importantLayers.contains(currentViewed.getQuotient())) {
                 yChildParent.put(currentViewed.getQuotient(), parentY.getQuotient());
             }
         }
     }
 
-    private Set<NodeDto> findImportantLayers(Set<NodeDto> viewed, Set<NodeDto> importantLayers) {
+    private Set<NodeDto> findImportantLayers(Set<NodeDto> viewed, List<List<String>> importantLayers) {
         Set<NodeDto> result = new HashSet<>();
-        for (NodeDto currentViewed : viewed) {
+        Set<List<String>> viewedQuotient = viewed.stream()
+                .map(NodeDto::getQuotient)
+                .collect(Collectors.toSet());
+        for (List<String> currentViewed : viewedQuotient) {
             if (importantLayers.contains(currentViewed)) {
-                result.add(currentViewed);
+                result.add(new NodeDto(currentViewed, "x"));
+                result.add(new NodeDto(currentViewed, "y"));
             }
         }
         return result;
@@ -331,16 +295,11 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         return null;
     }
 
-    private Set<NodeDto> getImportantLayers(Map<String, Object> arguments) {
-        Set<NodeDto> result = new HashSet<>();
+    private List<List<String>> getImportantLayers(Map<String, Object> arguments) {
         if (arguments.containsKey("importantLayers")) {
-            List<List<String>> importantLayers = (List<List<String>>) arguments.get("importantLayers");
-            for (List<String> current : importantLayers) {
-                result.add(new NodeDto(current, "x"));
-                result.add(new NodeDto(current, "y"));
-            }
+            return (List<List<String>>) arguments.get("importantLayers");
         }
-        return result;
+        return new ArrayList<>();
     }
 
     private void calculateDataForAvgCorrelation(PureNumeratorDenominatorDto numeratorDenominator,
