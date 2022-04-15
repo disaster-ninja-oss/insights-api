@@ -252,7 +252,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         return viewed.stream()
                 .filter(v -> avgCorrelation.containsKey(v) && v.getAxis().equals(axis))
                 .min(Comparator.comparing(avgCorrelation::get))
-                .get();
+                .orElse(new NodeDto(null, axis));
     }
 
     private Comparator<PolygonCorrelationRate> correlationRateComparator() {
