@@ -198,11 +198,11 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         NodeDto parentX = foundImportantLayers.stream()
                 .filter(l -> l.getAxis().equals("x"))
                 .findFirst()
-                .orElse(null);
+                .orElse(new NodeDto(null, "x"));
         NodeDto parentY = foundImportantLayers.stream()
                 .filter(l -> l.getAxis().equals("y"))
                 .findFirst()
-                .orElse(null);
+                .orElse(new NodeDto(null, "y"));
         for (NodeDto currentViewed : viewed) {
             if (!currentViewed.equals(parentX) && currentViewed.getAxis().equals("x")) {
                 xChildParent.put(currentViewed.getQuotient(), parentX.getQuotient());
