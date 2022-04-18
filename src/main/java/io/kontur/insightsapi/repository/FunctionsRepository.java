@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -68,16 +67,17 @@ public class FunctionsRepository {
 
     @Recover
     public List<FunctionResult> calculateFunctionsResultFallback(Exception exception, String geojson, List<FunctionArgs> args) {
-        return args.stream()
-                .map(arg -> new FunctionResult(arg.getId(), null))
-                .collect(Collectors.toList());
+        String error = "Sql query answer is empty after several attempts";
+        logger.error(error);
+        throw new EmptySqlQueryAnswer(error);
     }
 
     private void checkResultForNull(List<FunctionResult> result) {
         boolean isResultNull = result.stream().allMatch(r -> r.getResult() == null);
         if (isResultNull) {
-            logger.warn("Sql query answer is empty");
-            throw new EmptySqlQueryAnswer();
+            String message = "Sql query answer is empty";
+            logger.warn(message);
+            throw new EmptySqlQueryAnswer(message);
         }
     }
 
