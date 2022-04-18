@@ -1,0 +1,5 @@
+type AdvancedAnalyticsValues {
+    calculation: String,
+    value: Float,
+    quality: Float
+}

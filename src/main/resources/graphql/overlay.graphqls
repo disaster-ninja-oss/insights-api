@@ -4,5 +4,6 @@ type Overlay {
     active: Boolean,
     colors: [OverlayColor],
     x: Axis,
-    y: Axis
+    y: Axis,
+    order: Int
 }

@@ -4,5 +4,6 @@ type Analytics {
     osmQuality: OsmQuality,
     thermalSpotStatistic: ThermalSpotStatistic,
     urbanCore: UrbanCore,
-    functions(args: [FunctionArgs]): [FunctionResult]
+    functions(args: [FunctionArgs]): [FunctionResult],
+    advancedAnalytics: [AdvancedAnalytics]
 }

@@ -21,4 +21,6 @@ public class Analytics {
 
     private List<FunctionResult> functions;
 
+    private List<AdvancedAnalytics> advancedAnalytics;
+
 }

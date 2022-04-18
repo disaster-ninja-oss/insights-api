@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -25,6 +28,18 @@ import java.util.Objects;
 @Repository
 @RequiredArgsConstructor
 public class PopulationRepository {
+
+    @Autowired
+    QueryFactory queryFactory;
+
+    @Value("classpath:population_humanitarian_impact.sql")
+    Resource populationHumanitarianImpact;
+
+    @Value("classpath:population_osm.sql")
+    Resource populationOsm;
+
+    @Value("classpath:population_urbancore.sql")
+    Resource populationUrbancore;
 
     private static final Map<String, String> queryMap = Map.of(
             "peopleWithoutOsmBuildings", "sum(population * (1 - sign(building_count))) as peopleWithoutOsmBuildings ",
@@ -62,8 +77,8 @@ public class PopulationRepository {
                             .type(rs.getString("type"))
                             .urban(rs.getBigDecimal("urban")).build())));
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", geometry, e.getMessage());
-            logger.error(error);
+            String error = String.format("Sql exception for geometry %s", geometry);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
     }
@@ -75,8 +90,8 @@ public class PopulationRepository {
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, BigDecimal.class);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", geometry, e.getMessage());
-            logger.error(error);
+            String error = String.format("Sql exception for geometry %s", geometry);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
     }
@@ -84,53 +99,8 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public List<HumanitarianImpactDto> calculateHumanitarianImpact(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
-        var query = """
-                        with resolution as (
-                            select calculate_area_resolution(ST_SetSRID(:geometry::geometry, 4326)) as resolution
-                        ),
-                             validated_input as (
-                                select calculate_validated_input(:geometry) geom
-                             ),
-                            subdivided_polygons as (
-                                      select ST_Subdivide(v.geom) geom
-                                      from validated_input v
-                                  ),
-                             stat_in_area as (
-                                 select s.*, sum(population) over (order by population desc) as sum_pop
-                                 from (
-                                          select distinct h3, population, area_km2, sh.geom
-                                          from stat_h3 sh,
-                                               subdivided_polygons p
-                                          where zoom = (select resolution from resolution)
-                                            and population > 0
-                                            and ST_Intersects(
-                                                  sh.geom,
-                                                  p.geom
-                                              )
-                                      ) s
-                             ),
-                             total as (
-                                 select sum(population) as population, round(sum(area_km2)::numeric, 2) as area from stat_in_area
-                             ) 
-                        select sum(s.population)                                as population,
-                               case
-                                   when sum_pop <= t.population * 0.68 then '0-68'
-                                   else '68-100'
-                                   end                                          as percentage,
-                               case
-                                   when sum_pop <= t.population * 0.68 then 'Kontur Urban Core'
-                                   else 'Kontur Settled Periphery'
-                                   end                                          as name,
-                               round(sum(area_km2)::numeric, 2)                 as areaKm2,
-                               ST_AsGeoJSON(ST_Transform(ST_Union(geom), 4326)) as geometry,
-                               t.population                                     as totalPopulation,
-                               t.area                                           as totalAreaKm2 
-                        from stat_in_area s, 
-                             total t 
-                        group by t.population, t.area, 2, 3
-                """.trim();
         try {
-            return namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.query(queryFactory.getSql(populationHumanitarianImpact), paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))
@@ -142,8 +112,8 @@ public class PopulationRepository {
         } catch (EmptyResultDataAccessException e) {
             return Lists.newArrayList();
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", geometry, e.getMessage());
-            logger.error(error);
+            String error = String.format("Sql exception for geometry %s", geometry);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
     }
@@ -152,34 +122,7 @@ public class PopulationRepository {
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format("""
-                        with validated_input as (
-                            select calculate_validated_input(:polygon) geom
-                        ),
-                             stat_area as (
-                                 select distinct on (h.h3) h.*
-                                 from (
-                                          select ST_Subdivide(v.geom, 30) geom
-                                          from validated_input v
-                                      ) p
-                                          cross join
-                                      lateral (
-                                          select h3,
-                                                 count,
-                                                 building_count,
-                                                 highway_length,
-                                                 population,
-                                                 populated_area_km2,
-                                                 area_km2
-                                          from stat_h3 sh
-                                          where ST_Intersects(sh.geom, p.geom)
-                                            and sh.zoom = 8
-                                            and sh.population > 0
-                                          order by h3
-                                          ) h
-                             )
-                        select %s from stat_area st
-                """.trim(), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(populationOsm), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     OsmQuality.builder()
@@ -202,8 +145,8 @@ public class PopulationRepository {
                     .osmGapsPercentage(new BigDecimal(0))
                     .build();
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage());
-            logger.error(error);
+            String error = String.format("Sql exception for geometry %s", geojson);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
     }
@@ -212,48 +155,7 @@ public class PopulationRepository {
     public UrbanCore calculateUrbanCore(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format("""
-                with resolution as (
-                    select calculate_area_resolution(ST_SetSRID(:polygon::geometry, 4326)) as resolution
-                ),
-                                     validated_input as (
-                                        select calculate_validated_input(:polygon) geom
-                                     ),
-                                     stat_area as (
-                                         select distinct on (h.h3) h.*
-                                         from (
-                                                  select ST_Subdivide(v.geom, 30) geom
-                                                  from validated_input v
-                                              ) p
-                                                  cross join
-                                              lateral (
-                                                  select h3,
-                                                         population,
-                                                         area_km2
-                                                  from stat_h3 sh
-                                                  where ST_Intersects(sh.geom, p.geom)
-                                                    and sh.zoom = (select resolution from resolution)
-                                                    and sh.population > 0
-                                                  order by h3
-                                                  ) h
-                                     ),
-                                     stat_pop as (
-                                         select s.*, sum(population) over (order by population desc) as sum_pop
-                                         from stat_area s
-                                     ),
-                                     total as (
-                                         select sum(population)                  as population,
-                                                round(sum(area_km2)::numeric, 2) as area
-                                         from stat_pop
-                                     )
-                                select sum(s.population)                as urbanCorePopulation,
-                                       round(sum(area_km2)::numeric, 2) as urbanCoreAreaKm2,
-                                       t.area                           as totalPopulatedAreaKm2
-                                from stat_pop s,
-                                     total t
-                                where sum_pop <= t.population * 0.68
-                                group by t.population, t.area;
-                        """.trim(), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(populationUrbancore), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     UrbanCore.builder()
@@ -266,8 +168,8 @@ public class PopulationRepository {
                     .urbanCorePopulation(new BigDecimal(0))
                     .totalPopulatedAreaKm2(new BigDecimal(0)).build();
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage());
-            logger.error(error);
+            String error = String.format("Sql exception for geometry %s", geojson);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
     }

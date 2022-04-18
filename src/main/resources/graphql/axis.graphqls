@@ -2,5 +2,6 @@ type Axis {
     label: String,
     steps: [Step],
     quality: Float,
-    quotient: [String]
+    quotient: [String],
+    parent: [String]
 }

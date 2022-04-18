@@ -1,13 +1,20 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.FunctionArgs;
+import io.kontur.insightsapi.exception.EmptySqlQueryAnswer;
 import io.kontur.insightsapi.model.FunctionResult;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +23,18 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class FunctionsRepository {
+
+    @Value("classpath:function_intersect.sql")
+    Resource functionIntersect;
+
+    @Autowired
+    QueryFactory queryFactory;
 
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
@@ -27,53 +42,43 @@ public class FunctionsRepository {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    @Transactional(readOnly = true)
+    @Retryable(value = EmptySqlQueryAnswer.class, backoff = @Backoff(delayExpression = "${retry.functionRequest.delay}",
+            multiplierExpression = "${retry.functionRequest.multiplier}"))
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
         List<String> params = args.stream()
                 .map(this::createFunctionsForSelect)
                 .toList();
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format("""
-                with validated_input as (
-                    select calculate_validated_input(:polygon) geom
-                ),
-                    stat_area as (
-                    select distinct on (h.h3) h.*
-                        from (
-                            select ST_Subdivide(v.geom, 30) geom
-                                from validated_input v
-                        ) p
-                            cross join
-                        lateral (
-                            select h3,
-                                   population,
-                                   populated_area_km2,
-                                   count,
-                                   building_count,
-                                   highway_length,
-                                   industrial_area,
-                                   wildfires,
-                                   volcanos_count,
-                                   forest
-                            from stat_h3 sh
-                            where ST_Intersects(sh.geom, p.geom)
-                                and sh.zoom = 8
-                                order by h3
-                        ) h
-                )
-                select %s from stat_area st
-                """.trim(), StringUtils.join(params, ", "));
+        var query = String.format(queryFactory.getSql(functionIntersect), StringUtils.join(params, ", "));
         List<FunctionResult> result = new ArrayList<>();
         try {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.addAll(createFunctionResultList(args, rs));
             }));
+            checkResultForNull(result);
+        } catch (EmptySqlQueryAnswer e) {
+            throw e;
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", geojson, e.getMessage());
-            logger.error(error);
+            String error = String.format("Sql exception for geometry %s", geojson);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
         return result;
+    }
+
+    @Recover
+    public List<FunctionResult> calculateFunctionsResultFallback(Exception exception, String geojson, List<FunctionArgs> args) {
+        return args.stream()
+                .map(arg -> new FunctionResult(arg.getId(), null))
+                .collect(Collectors.toList());
+    }
+
+    private void checkResultForNull(List<FunctionResult> result) {
+        boolean isResultNull = result.stream().allMatch(r -> r.getResult() == null);
+        if (isResultNull) {
+            logger.warn("Sql query answer is empty");
+            throw new EmptySqlQueryAnswer();
+        }
     }
 
     private String createFunctionsForSelect(FunctionArgs functionArgs) {
