@@ -15,6 +15,7 @@ cache:
 
 stages:
   - build
+  - build-docker
   - deploy
 
 build:
@@ -22,6 +23,18 @@ build:
   stage: build
   script:
     - mvn $MAVEN_CLI_OPTS clean install -U -Prelease
+    - mv target/*.zip .
+  artifacts:
+    name: insights-api-$CI_COMMIT_REF_SLUG
+    paths:
+      - '*.zip'
+
+build-docker:
+  when: manual
+  extends: .default-job-settings
+  stage: build-docker
+  script:
+    - mvn $MAVEN_CLI_OPTS clean install jib:build -U -Prelease
     - mv target/*.zip .
   artifacts:
     name: insights-api-$CI_COMMIT_REF_SLUG

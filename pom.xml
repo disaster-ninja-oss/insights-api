@@ -249,6 +249,20 @@
                     <target>16</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>3.2.1</version>
+                <configuration>
+                    <from>
+                        <image>nexus.kontur.io:8084/library/openjdk:16-alpine</image>
+                    </from>
+                    <to>
+                        <image>nexus.kontur.io:8085/konturdev/${project.name}:${project.version}</image>
+                    </to>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
