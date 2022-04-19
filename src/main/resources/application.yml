@@ -2,6 +2,7 @@ server:
   servlet:
     contextPath: /insights-api
   port: 8625
+  shutdown: graceful
 
 spring:
   datasource:
@@ -20,6 +21,8 @@ spring:
       query-timeout: 300
   liquibase:
     change-log: classpath:db/changelog/master-changelog.xml
+  lifecycle:
+    timeout-per-shutdown-phase: 310s
 
 graphql:
   servlet:
