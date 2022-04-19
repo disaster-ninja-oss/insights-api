@@ -10,6 +10,10 @@ import java.util.Optional;
 
 public class DatabaseUtil {
 
+    public static final String ERROR_EMPTY_RESULT = "Empty result error for geometry %s";
+    public static final String ERROR_TIMEOUT = "Query timeout error for geometry %s";
+    public static final String ERROR_SQL = "Sql exception for geometry %s";
+
     private static final Logger logger = LoggerFactory.getLogger(DatabaseUtil.class);
 
     public static Double getNullableDouble(ResultSet argRs, String argColumnName) {

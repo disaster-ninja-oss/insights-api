@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -102,9 +104,17 @@ public class AdvancedAnalyticsRepository {
             namedParameterJdbcTemplate.query(argQuery, paramSource, (rs -> {
                 result.add(createValuesList(rs));
             }));
+        } catch (DataAccessResourceFailureException e) {
+            String error = String.format(DatabaseUtil.ERROR_TIMEOUT, argGeometry);
+            logger.error(error, e);
+            throw new DataAccessResourceFailureException(error, e);
+        } catch (EmptyResultDataAccessException e) {
+            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, argGeometry);
+            logger.error(error, e);
+            throw new EmptyResultDataAccessException(error, 1);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", argGeometry, e.getMessage());
-            logger.error(error);
+            String error = String.format(DatabaseUtil.ERROR_SQL, argGeometry);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
         return result;

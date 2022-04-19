@@ -16,7 +16,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -56,22 +55,16 @@ public class ThermalSpotRepository {
                             .volcanoesCount(rs.getLong("volcanoesCount"))
                             .forestAreaKm2(rs.getBigDecimal("forestAreaKm2"))
                             .build());
-        } catch (EmptyResultDataAccessException e) {
-            return ThermalSpotStatistic.builder()
-                    .industrialAreaKm2(new BigDecimal(0))
-                    .hotspotDaysPerYearMax(0L)
-                    .volcanoesCount(0L)
-                    .forestAreaKm2(new BigDecimal(0))
-                    .build();
         } catch (DataAccessResourceFailureException e) {
-            return ThermalSpotStatistic.builder()
-                    .industrialAreaKm2(null)
-                    .hotspotDaysPerYearMax(null)
-                    .volcanoesCount(null)
-                    .forestAreaKm2(null)
-                    .build();
+            String error = String.format(DatabaseUtil.ERROR_TIMEOUT, geojson);
+            logger.error(error, e);
+            throw new DataAccessResourceFailureException(error, e);
+        } catch (EmptyResultDataAccessException e) {
+            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geojson);
+            logger.error(error, e);
+            throw new EmptyResultDataAccessException(error, 1);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s", geojson);
+            String error = String.format(DatabaseUtil.ERROR_SQL, geojson);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
