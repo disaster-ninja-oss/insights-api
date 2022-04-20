@@ -38,6 +38,8 @@
         <maven-assembly-plugin.version>3.1.1</maven-assembly-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-assembly-plugin.release.version>3.3.0</maven-assembly-plugin.release.version>
+
+        <jib.source.image>openjdk:16-alpine</jib.source.image>
     </properties>
 
     <dependencies>
@@ -267,7 +269,7 @@
                 <version>3.2.1</version>
                 <configuration>
                     <from>
-                        <image>nexus.kontur.io:8084/library/openjdk:16-alpine</image>
+                        <image>nexus.kontur.io:8084/library/${jib.source.image}</image>
                     </from>
                     <to>
                         <image>nexus.kontur.io:8085/konturdev/${project.name}:${project.version}</image>
@@ -278,6 +280,34 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>local-minikube</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-maven-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <configuration>
+                            <dockerClient>
+                                <environment>
+                                    <DOCKER_TLS_VERIFY>1</DOCKER_TLS_VERIFY>
+                                    <DOCKER_HOST>${DOCKER_HOST}</DOCKER_HOST>
+                                    <DOCKER_CERT_PATH>${DOCKER_CERT_PATH}</DOCKER_CERT_PATH>
+                                    <MINIKUBE_ACTIVE_DOCKERD>minikube</MINIKUBE_ACTIVE_DOCKERD>
+                                </environment>
+                            </dockerClient>
+                            <from>
+                                <image>nexus.kontur.io:8084/library/${jib.source.image}</image>
+                            </from>
+                            <to>
+                                <image>nexus.kontur.io:8085/konturdev/${project.name}:${project.version}</image>
+                            </to>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>release</id>
             <build>

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: insights-api-dev
+  namespace: sandbox-isemichastnov
+  labels:
+    app.kubernetes.io/name: insights-api
+    app.kubernetes.io/instance: insights-api-dev
+    stage: dev
+data:
+  spring.datasource.url: 'jdbc:postgresql://insights-api-dev-database:5432/insights-api'
+  spring.datasource.username: insights-api
+  spring.datasource.hikari.connection-timeout: '600000'
+  spring.datasource.hikari.maximum-pool-size: '20'
+  spring.jdbc.template.query-timeout: '600'
+---
+#TODO: create manually
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: insights-api-dev
+#  namespace: sandbox-isemichastnov
+#  labels:
+#    app.kubernetes.io/name: insights-api
+#    app.kubernetes.io/instance: insights-api-dev
+#    app.kubernetes.io/version: insights-api-dev
+#data:
+#  spring.datasource.password: base64 encoded password
+---
