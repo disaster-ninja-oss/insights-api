@@ -8,8 +8,8 @@ import io.kontur.insightsapi.dto.*;
 import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.BivariateStatistic;
 import io.kontur.insightsapi.model.PolygonCorrelationRate;
-import io.kontur.insightsapi.repository.StatisticRepository;
 import io.kontur.insightsapi.service.GeometryTransformer;
+import io.kontur.insightsapi.service.cacheable.CorrelationRateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CorrelationRateResolver implements GraphQLResolver<BivariateStatistic> {
 
-    private final StatisticRepository statisticRepository;
+    private final CorrelationRateService correlationRateService;
 
     private final GeometryTransformer geometryTransformer;
 
@@ -34,14 +34,14 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         var importantLayers = getImportantLayers(arguments);
         //no polygons defined
         if (!arguments.containsKey("polygon") && !arguments.containsKey("polygonV2")) {
-            var correlationRateList = statisticRepository.getAllCorrelationRateStatistics();
+            var correlationRateList = correlationRateService.getAllCorrelationRateStatistics();
             fillParent(correlationRateList, importantLayers);
             return correlationRateList;
         }
         var transformedGeometry = getPolygon(arguments);
 
         //get numr & denm from bivariate_axis & bivariate_indicators size nearly 17k
-        List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = statisticRepository.getNumeratorsDenominatorsForCorrelation();
+        List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = correlationRateService.getNumeratorsDenominatorsForCorrelation();
 
         String finalTransformedGeometry = transformedGeometry;
 
@@ -264,7 +264,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         List<PolygonCorrelationRate> result = new ArrayList<>();
 
         //run for every 500 bivariative_axis sourceDtoList size = 500 & get correlationList
-        List<Double> correlations = statisticRepository.getPolygonCorrelationRateStatisticsBatch(sourceDtoList, transformedGeometry);
+        List<Double> correlations = correlationRateService.getPolygonCorrelationRateStatisticsBatch(sourceDtoList, transformedGeometry);
         for (int i = 0; i < sourceDtoList.size(); i++) {
             PolygonCorrelationRate polygonCorrelationRate = new PolygonCorrelationRate();
 
@@ -359,7 +359,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     private List<NumeratorsDenominatorsDto> findNumeratorsDenominatorsForNotEmptyLayers(List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos,
                                                                                         String transformedGeometry) {
         Map<String, Boolean> numeratorsForNotEmptyLayers =
-                statisticRepository.getNumeratorsForNotEmptyLayersBatch(numeratorsDenominatorsDtos, transformedGeometry);
+                correlationRateService.getNumeratorsForNotEmptyLayersBatch(numeratorsDenominatorsDtos, transformedGeometry);
         return numeratorsDenominatorsDtos.stream()
                 .filter(dto -> (numeratorsForNotEmptyLayers.containsKey(dto.getXNumerator())
                         && numeratorsForNotEmptyLayers.get(dto.getXNumerator()))

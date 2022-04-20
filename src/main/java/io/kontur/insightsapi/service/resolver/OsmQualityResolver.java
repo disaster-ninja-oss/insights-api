@@ -8,7 +8,7 @@ import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.model.OsmQuality;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
-import io.kontur.insightsapi.service.PopulationService;
+import io.kontur.insightsapi.service.cacheable.OsmQualityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +18,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OsmQualityResolver implements GraphQLResolver<Analytics> {
 
-    private final PopulationService populationService;
-
     private final GeometryTransformer geometryTransformer;
 
     private final Helper helper;
+
+    private final OsmQualityService osmQualityService;
 
     public OsmQuality getOsmQuality(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
@@ -30,6 +30,6 @@ public class OsmQualityResolver implements GraphQLResolver<Analytics> {
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());
-        return populationService.calculateOsmQuality(transformedGeometry, fieldList);
+        return osmQualityService.calculateOsmQuality(transformedGeometry, fieldList);
     }
 }

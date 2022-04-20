@@ -2,11 +2,11 @@ package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.model.ThermalSpotStatistic;
 import io.kontur.insightsapi.service.Helper;
+import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -21,10 +21,7 @@ import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
-public class ThermalSpotRepository {
-
-    @Autowired
-    QueryFactory queryFactory;
+public class ThermalSpotRepository implements ThermalSpotStatisticService {
 
     @Value("classpath:thermal_statistic.sql")
     Resource thermalStatistic;
@@ -41,6 +38,8 @@ public class ThermalSpotRepository {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Helper helper;
+
+    private final QueryFactory queryFactory;
 
     @Transactional(readOnly = true)
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {

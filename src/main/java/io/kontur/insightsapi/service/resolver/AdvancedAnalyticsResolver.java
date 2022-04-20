@@ -10,6 +10,7 @@ import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.repository.AdvancedAnalyticsRepository;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
+import io.kontur.insightsapi.service.cacheable.AdvancedAnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,6 +30,8 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
     private final AdvancedAnalyticsRepository advancedAnalyticsRepository;
 
+    private final AdvancedAnalyticsService advancedAnalyticsService;
+
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsResolver.class);
 
     public List<AdvancedAnalytics> getAdvancedAnalytics(Analytics statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
@@ -44,16 +47,16 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
                 String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
 
                 //get analytics result and match layer names
-                var advancedAnalyticsValues = advancedAnalyticsRepository.getAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, transformedGeometry);
+                var advancedAnalyticsValues = advancedAnalyticsService.getAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, transformedGeometry);
 
                 //list need to be sorted according to any least quality value
                 List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
                 return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
             } else {
-                return advancedAnalyticsRepository.getWorldData();
+                return advancedAnalyticsService.getWorldData();
             }
         } else {
-            return advancedAnalyticsRepository.getWorldData();
+            return advancedAnalyticsService.getWorldData();
         }
     }
 }

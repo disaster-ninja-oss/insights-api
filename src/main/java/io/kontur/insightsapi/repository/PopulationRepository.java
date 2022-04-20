@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -30,17 +29,13 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class PopulationRepository {
 
-    @Autowired
-    QueryFactory queryFactory;
-
     @Value("classpath:population_humanitarian_impact.sql")
     Resource populationHumanitarianImpact;
 
     @Value("classpath:population_osm.sql")
     Resource populationOsm;
 
-    @Value("classpath:population_urbancore.sql")
-    Resource populationUrbancore;
+    private final QueryFactory queryFactory;
 
     private static final Map<String, String> queryMap = Map.of(
             "peopleWithoutOsmBuildings", "sum(population * (1 - sign(building_count))) as peopleWithoutOsmBuildings ",
@@ -62,6 +57,8 @@ public class PopulationRepository {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Helper helper;
+    @Value("classpath:population_urbancore.sql")
+    Resource populationUrbanCore;
 
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
@@ -168,7 +165,7 @@ public class PopulationRepository {
     public UrbanCore calculateUrbanCore(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(populationUrbancore), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(populationUrbanCore), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     UrbanCore.builder()

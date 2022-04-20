@@ -7,11 +7,11 @@ import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.BivariateStatistic;
 import io.kontur.insightsapi.model.PolygonCorrelationRate;
 import io.kontur.insightsapi.model.Statistic;
+import io.kontur.insightsapi.service.cacheable.CorrelationRateService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,10 +30,7 @@ import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
-public class StatisticRepository {
-
-    @Autowired
-    QueryFactory queryFactory;
+public class StatisticRepository implements CorrelationRateService {
 
     @Value("classpath:statistic_all.sql")
     Resource statisticAll;
@@ -69,6 +66,8 @@ public class StatisticRepository {
     private final PolygonCorrelationRateRowMapper polygonCorrelationRateRowMapper;
 
     private final CorrelationRateRowMapper correlationRateRowMapper;
+
+    private final QueryFactory queryFactory;
 
     private final Logger logger = LoggerFactory.getLogger(StatisticRepository.class);
 
