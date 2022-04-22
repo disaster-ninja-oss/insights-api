@@ -51,6 +51,8 @@ management:
         time-to-live: 10s
       show-details: always
       show-components: always
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:
