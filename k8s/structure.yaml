@@ -28,6 +28,10 @@ spec:
         app.kubernetes.io/name: insights-api
         app.kubernetes.io/instance: insights-api-dev
         #TODO app.kubernetes.io/version?
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8625'
+        prometheus.io/path: /insights-api/actuator/prometheus
     spec:
       containers:
         - name: insights-api
