@@ -5,19 +5,22 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class PolygonCorrelationRate extends CorrelationRate {
+public class PolygonCorrelationRate extends CorrelationRate implements Cloneable {
 
-    public PolygonCorrelationRate duplicate() {
+    @Override
+    public PolygonCorrelationRate clone() {
         PolygonCorrelationRate result = new PolygonCorrelationRate();
-        result.setCorrelation(getCorrelation());
-        result.setAvgCorrelationX(getAvgCorrelationX());
-        result.setAvgCorrelationY(getAvgCorrelationY());
-        result.setRate(getRate());
-        result.setQuality(getQuality());
-        Axis x = getX().duplicate();
-        result.setX(x);
-        Axis y = getY().duplicate();
-        result.setY(y);
+        try {
+            result = (PolygonCorrelationRate) super.clone();
+        } catch (CloneNotSupportedException e) {
+            result.setCorrelation(getCorrelation());
+            result.setAvgCorrelationX(getAvgCorrelationX());
+            result.setAvgCorrelationY(getAvgCorrelationY());
+            result.setRate(getRate());
+            result.setQuality(getQuality());
+        }
+        result.setX(getX().clone());
+        result.setY(getY().clone());
         return result;
     }
 }

@@ -35,7 +35,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         //no polygons defined
         if (!arguments.containsKey("polygon") && !arguments.containsKey("polygonV2")) {
             var correlationRateList = correlationRateService.getAllCorrelationRateStatistics().stream()
-                    .map(PolygonCorrelationRate::duplicate)
+                    .map(PolygonCorrelationRate::clone)
                     .collect(Collectors.toList());
             fillParent(correlationRateList, importantLayers);
             return correlationRateList;

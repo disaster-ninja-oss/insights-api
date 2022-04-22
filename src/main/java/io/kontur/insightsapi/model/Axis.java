@@ -9,7 +9,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Axis {
+public class Axis implements Cloneable {
 
     private String label;
 
@@ -21,13 +21,18 @@ public class Axis {
 
     private List<String> parent;
 
-    public Axis duplicate(){
+    @Override
+    public Axis clone() {
         Axis result = new Axis();
-        result.setQuality(this.quality);
-        result.setSteps(this.steps);
-        result.setQuotient(this.quotient);
-        result.setLabel(this.label);
-        result.setParent(this.parent);
+        try {
+            result = (Axis) super.clone();
+        } catch (CloneNotSupportedException e) {
+            result.setQuality(this.quality);
+            result.setSteps(this.steps);
+            result.setQuotient(this.quotient);
+            result.setLabel(this.label);
+            result.setParent(this.parent);
+        }
         return result;
     }
 }
