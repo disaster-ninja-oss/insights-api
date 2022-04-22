@@ -20,4 +20,14 @@ public class Axis {
     private List<String> quotient;
 
     private List<String> parent;
+
+    public Axis duplicate(){
+        Axis result = new Axis();
+        result.setQuality(this.quality);
+        result.setSteps(this.steps);
+        result.setQuotient(this.quotient);
+        result.setLabel(this.label);
+        result.setParent(this.parent);
+        return result;
+    }
 }
