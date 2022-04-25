@@ -6,10 +6,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @Tag(name = "Tiles", description = "Tiles API")
 @RestController
@@ -28,7 +30,10 @@ public class TileController {
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @GetMapping("/{z}/{x}/{y}")
-    public byte[] getTile(@PathVariable Integer z, @PathVariable Integer x, @PathVariable Integer y){
+    public byte[] getTile(@PathVariable Integer z, @PathVariable Integer x, @PathVariable Integer y) {
+        if (z > 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Zoom value shouldn't be more than 8");
+        }
         return tileRepository.getTile(z, x, y);
     }
 }
