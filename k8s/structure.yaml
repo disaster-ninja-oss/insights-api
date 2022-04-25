@@ -85,7 +85,7 @@ metadata:
     stage: dev
 spec:
   type: ExternalName
-  externalName: milan.kontur.io
+  externalName: milan.k8s-01.kontur.io.
 #  externalName: docker.for.mac.host.internal #todo for local dev
   ports:
     - port: 5432

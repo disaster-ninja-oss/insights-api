@@ -2,6 +2,9 @@
 variables:
   MAVEN_CLI_OPTS: '--batch-mode'
   MAVEN_OPTS: '-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository'
+  CERT_AUTH: $K8S_CERT_AUTH
+  CLIENT_CERT: $K8S_CLIENT_CERT
+  CLIENT_KEY: $K8S_CLIENT_KEY
 
 cache:
   paths:
@@ -15,8 +18,9 @@ cache:
 
 stages:
   - build
-  - build-docker
+  - build-container
   - deploy
+  - deploy-k8s
 
 build:
   extends: .default-job-settings
@@ -29,17 +33,18 @@ build:
     paths:
       - '*.zip'
 
-build-docker:
+build-container:
   when: manual
   extends: .default-job-settings
-  stage: build-docker
+  stage: build-container
   script:
-    - mvn $MAVEN_CLI_OPTS clean install jib:build -U -Prelease
-    - mv target/*.zip .
+    - mvn $MAVEN_CLI_OPTS clean install -DskipTests jib:build -U -Prelease
+  dependencies:
+    - build
   artifacts:
-    name: insights-api-$CI_COMMIT_REF_SLUG
+    name: generated-k8s-manifests
     paths:
-      - '*.zip'
+      - 'k8s/rendered/*'
 
 deploy-test:
   tags:
@@ -56,6 +61,35 @@ deploy-test:
   when: manual
   dependencies:
     - build
+
+deploy-k8s-dev:
+  tags:
+    - kontur
+    - docker
+  stage: deploy-k8s
+  script:
+    - echo $CERT_AUTH | base64 --decode > ca.crt
+    - echo $CLIENT_CERT | base64 --decode > client.cert
+    - echo $CLIENT_KEY | base64 --decode > client.key
+    - ls -l
+    - kubectl apply -f k8s/configs.yaml
+      --server https://api01.k8s-01.kontur.io:6443
+      --namespace sandbox-isemichastnov
+      --certificate-authority ca.crt
+      --client-certificate client.cert
+      --client-key client.key
+    - kubectl apply -f k8s/structure.yaml
+      --server https://api01.k8s-01.kontur.io:6443
+      --namespace sandbox-isemichastnov
+      --certificate-authority ca.crt
+      --client-certificate client.cert
+      --client-key client.key
+  environment:
+    name: K8S-DEV
+    url: 'https://dev-ilya.k8s-01.kontur.io'
+  when: manual
+  dependencies:
+    - build-container
 
 deploy-dev:
   tags:
