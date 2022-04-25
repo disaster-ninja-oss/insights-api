@@ -1,6 +1,6 @@
 package io.kontur.insightsapi.controller;
 
-import io.kontur.insightsapi.service.cacheable.impl.*;
+import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,27 +10,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @Tag(name = "Cache", description = "Cache API")
 @RestController
 @RequestMapping("/cache")
 @RequiredArgsConstructor
 public class CacheController {
 
-    private final FunctionsFacade functionsFacade;
-
-    private final HumanitarianImpactFacade humanitarianImpactFacade;
-
-    private final OsmQualityFacade osmQualityFacade;
-
-    private final PopulationFacade populationFacade;
-
-    private final ThermalSpotStatisticFacade thermalSpotStatisticFacade;
-
-    private final UrbanCoreFacade urbanCoreFacade;
-
-    private final CorrelationRateFacade correlationRateFacade;
-
-    private final AdvancedAnalyticsFacade advancedAnalyticsFacade;
+    private final List<CacheEvictable> cacheEvictables;
 
     @Operation(summary = "Clean all caches.",
             tags = {"Cache"},
@@ -42,13 +30,6 @@ public class CacheController {
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @GetMapping("/cleanUp")
     public void cleanCaches(){
-        functionsFacade.evict();
-        humanitarianImpactFacade.evict();
-        osmQualityFacade.evict();
-        populationFacade.evict();
-        thermalSpotStatisticFacade.evict();
-        urbanCoreFacade.evict();
-        correlationRateFacade.evict();
-        advancedAnalyticsFacade.evict();
+        cacheEvictables.forEach(CacheEvictable::evict);
     }
 }
