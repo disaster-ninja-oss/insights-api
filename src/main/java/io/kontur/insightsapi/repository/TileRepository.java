@@ -15,14 +15,14 @@ public class TileRepository {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final QueryFactory queryFactory;
-    @Value("classpath:get_tile.sql")
-    private Resource getTileResource;
+    @Value("classpath:get_tile_mvt.sql")
+    private Resource getTileMvtResource;
 
-    public byte[] getTile(Integer z, Integer x, Integer y){
+    public byte[] getTileMvt(Integer z, Integer x, Integer y){
         var paramSource = new MapSqlParameterSource("z", z);
         paramSource.addValue("x", x);
         paramSource.addValue("y", y);
-        return namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(getTileResource), paramSource,
+        return namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(getTileMvtResource), paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
     }
 }
