@@ -8,7 +8,7 @@ import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.model.UrbanCore;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
-import io.kontur.insightsapi.service.PopulationService;
+import io.kontur.insightsapi.service.cacheable.UrbanCoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +18,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UrbanCoreResolver implements GraphQLResolver<Analytics> {
 
-    private final PopulationService populationService;
-
     private final GeometryTransformer geometryTransformer;
 
     private final Helper helper;
+
+    private final UrbanCoreService urbanCoreService;
 
     public UrbanCore getUrbanCore(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
@@ -30,6 +30,6 @@ public class UrbanCoreResolver implements GraphQLResolver<Analytics> {
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());
-        return populationService.calculateUrbanCore(transformedGeometry, fieldList);
+        return urbanCoreService.calculateUrbanCore(transformedGeometry, fieldList);
     }
 }

@@ -8,3 +8,14 @@ spring:
 
 bivatiateMatrix:
   highCorrelationLevel: 0.8
+
+cache:
+  maximumSize: 10000
+  functions: true
+  humanitarian-impact: true
+  osm-quality: true
+  population: true
+  thermal-spot: true
+  urban-core: true
+  correlation-rate: true
+  advanced-analytics: true

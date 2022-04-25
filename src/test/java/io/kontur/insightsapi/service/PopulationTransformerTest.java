@@ -14,18 +14,18 @@ import java.util.regex.Pattern;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class PopulationServiceTest {
+class PopulationTransformerTest {
 
     private static final String POPULATION_QUERY = "POLYGON((0 0,0 5,5 5,5 0,0 0))";
 
     @Test
     void calculatePopulation() {
         PopulationRepository populationRepository = mock(PopulationRepository.class);
-        PopulationService populationService = new PopulationService(populationRepository);
+        PopulationTransformer populationTransformer = new PopulationTransformer(populationRepository);
         when(populationRepository.getPopulationAndGdp(POPULATION_QUERY)).thenReturn(getPopulation());
         when(populationRepository.getArea(POPULATION_QUERY)).thenReturn(BigDecimal.ONE);
 
-        StatisticDto statistic = populationService.calculatePopulation(POPULATION_QUERY);
+        StatisticDto statistic = populationTransformer.calculatePopulation(POPULATION_QUERY);
         Assertions.assertNotNull(statistic, "Population statistic is not received");
         Map<String, CalculatePopulationDto> population = getPopulation();
 

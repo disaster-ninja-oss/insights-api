@@ -6,6 +6,10 @@ import io.kontur.insightsapi.dto.StatisticDto;
 import io.kontur.insightsapi.model.OsmQuality;
 import io.kontur.insightsapi.model.UrbanCore;
 import io.kontur.insightsapi.repository.PopulationRepository;
+import io.kontur.insightsapi.service.cacheable.HumanitarianImpactService;
+import io.kontur.insightsapi.service.cacheable.OsmQualityService;
+import io.kontur.insightsapi.service.cacheable.PopulationService;
+import io.kontur.insightsapi.service.cacheable.UrbanCoreService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -25,11 +29,12 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class PopulationService {
+public class PopulationTransformer implements HumanitarianImpactService, OsmQualityService, PopulationService,
+        UrbanCoreService {
 
     private final PopulationRepository populationRepository;
 
-    private final Logger logger = LoggerFactory.getLogger(PopulationService.class);
+    private final Logger logger = LoggerFactory.getLogger(PopulationTransformer.class);
 
     public Optional<Map<String, CalculatePopulationDto>> calculatePopulationAndGdp(String geometry) {
         Map<String, CalculatePopulationDto> population = populationRepository.getPopulationAndGdp(geometry);

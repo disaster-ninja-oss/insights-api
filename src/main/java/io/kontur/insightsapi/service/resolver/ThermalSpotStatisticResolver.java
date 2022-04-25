@@ -6,9 +6,9 @@ import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.SelectedField;
 import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.model.ThermalSpotStatistic;
-import io.kontur.insightsapi.repository.ThermalSpotRepository;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
+import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,9 +20,9 @@ public class ThermalSpotStatisticResolver implements GraphQLResolver<Analytics> 
 
     private final GeometryTransformer geometryTransformer;
 
-    private final ThermalSpotRepository thermalSpotRepository;
-
     private final Helper helper;
+
+    private final ThermalSpotStatisticService thermalSpotStatisticService;
 
     public ThermalSpotStatistic getThermalSpotStatistic(Analytics analytics, DataFetchingEnvironment environment)
             throws JsonProcessingException {
@@ -31,6 +31,6 @@ public class ThermalSpotStatisticResolver implements GraphQLResolver<Analytics> 
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());
-        return thermalSpotRepository.calculateThermalSpotStatistic(transformedGeometry, fieldList);
+        return thermalSpotStatisticService.calculateThermalSpotStatistic(transformedGeometry, fieldList);
     }
 }

@@ -3,14 +3,17 @@ package io.kontur.insightsapi.repository;
 import io.kontur.insightsapi.dto.AdvancedAnalyticsQualitySortDto;
 import io.kontur.insightsapi.dto.AdvancedAnalyticsRequest;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
-import io.kontur.insightsapi.model.*;
+import io.kontur.insightsapi.model.AdvancedAnalytics;
+import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
+import io.kontur.insightsapi.service.cacheable.AdvancedAnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -23,10 +26,9 @@ import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
-public class AdvancedAnalyticsRepository {
+public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
-    @Autowired
-    QueryFactory queryFactory;
+    private final QueryFactory queryFactory;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -144,9 +146,17 @@ public class AdvancedAnalyticsRepository {
             namedParameterJdbcTemplate.query(argQuery, paramSource, (rs -> {
                 result.add(createValuesList(rs));
             }));
+        } catch (DataAccessResourceFailureException e) {
+            String error = String.format(DatabaseUtil.ERROR_TIMEOUT, argGeometry);
+            logger.error(error, e);
+            throw new DataAccessResourceFailureException(error, e);
+        } catch (EmptyResultDataAccessException e) {
+            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, argGeometry);
+            logger.error(error, e);
+            throw new EmptyResultDataAccessException(error, 1);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s. Exception: %s", argGeometry, e.getMessage());
-            logger.error(error);
+            String error = String.format(DatabaseUtil.ERROR_SQL, argGeometry);
+            logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
         return result;
