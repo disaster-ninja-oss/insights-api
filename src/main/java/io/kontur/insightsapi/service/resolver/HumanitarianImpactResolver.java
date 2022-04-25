@@ -27,9 +27,8 @@ public class HumanitarianImpactResolver implements GraphQLResolver<Analytics> {
     private final HumanitarianImpactService humanitarianImpactService;
 
     public String getHumanitarianImpact(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
-        final Boolean GEOMETRY_CAN_BE_NULL = false;
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon, GEOMETRY_CAN_BE_NULL);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
         var impactDtos = humanitarianImpactService.calculateHumanitarianImpact(transformedGeometry);
         var collection = populationTransformer.convertImpactIntoFeatureCollection(transformedGeometry, impactDtos);
         return objectMapper.writeValueAsString(collection);

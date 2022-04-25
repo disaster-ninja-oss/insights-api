@@ -37,7 +37,7 @@ public class GeometryTransformer {
             var resultCollection = new GeometryCollection(geometries.toArray(Geometry[]::new));
             return objectMapper.writeValueAsString(resultCollection);
         }
-        if(argNullCheck){
+        if (argNullCheck) {
             return null;
         } else {
             throw new NullPointerException(ERROR_MESSAGE);
@@ -46,10 +46,10 @@ public class GeometryTransformer {
 
     private String transformToGeometry(GeoJSON geoJSON, Boolean argNullCheck) throws JsonProcessingException {
         var geometry = ((Feature) geoJSON).getGeometry();
-        if(geometry != null){
+        if (geometry != null) {
             return objectMapper.writeValueAsString(geometry);
         }
-        if(argNullCheck){
+        if (argNullCheck) {
             return null;
         } else {
             throw new NullPointerException(ERROR_MESSAGE);

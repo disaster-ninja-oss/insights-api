@@ -25,9 +25,8 @@ public class UrbanCoreResolver implements GraphQLResolver<Analytics> {
     private final UrbanCoreService urbanCoreService;
 
     public UrbanCore getUrbanCore(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
-        final Boolean GEOMETRY_CAN_BE_NULL = false;
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon, GEOMETRY_CAN_BE_NULL);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());

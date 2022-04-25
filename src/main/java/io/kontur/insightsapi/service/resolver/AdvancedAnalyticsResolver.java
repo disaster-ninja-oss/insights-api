@@ -35,10 +35,9 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsResolver.class);
 
     public List<AdvancedAnalytics> getAdvancedAnalytics(Analytics statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
-        final Boolean GEOMETRY_CAN_BE_NULL = true;
         var polygon = helper.getPolygonFromRequest(environment);
         if (polygon != null) {
-            var transformedGeometry = geometryTransformer.transform(polygon, GEOMETRY_CAN_BE_NULL);
+            var transformedGeometry = geometryTransformer.transform(polygon, true);
             if (transformedGeometry != null) {
                 //got bivariative axis, will be parametric, not all list
                 List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getBivariativeAxis();

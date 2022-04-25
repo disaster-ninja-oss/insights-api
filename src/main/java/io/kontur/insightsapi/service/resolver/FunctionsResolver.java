@@ -25,9 +25,8 @@ public class FunctionsResolver implements GraphQLResolver<Analytics> {
     private final FunctionsService functionsService;
 
     public List<FunctionResult> getFunctions(Analytics analytics, List<FunctionArgs> args, DataFetchingEnvironment environment) throws JsonProcessingException {
-        final Boolean GEOMETRY_CAN_BE_NULL = false;
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon, GEOMETRY_CAN_BE_NULL);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
         return functionsService.calculateFunctionsResult(transformedGeometry, args);
     }
 }
