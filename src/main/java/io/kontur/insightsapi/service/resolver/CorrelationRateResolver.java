@@ -289,10 +289,10 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
 
     private String getPolygon(Map<String, Object> arguments) throws JsonProcessingException {
         if (arguments.containsKey("polygon")) {
-            return geometryTransformer.transform(arguments.get("polygon").toString());
+            return geometryTransformer.transform(arguments.get("polygon").toString(), false);
         }
         if (arguments.containsKey("polygonV2")) {
-            return geometryTransformer.transform(arguments.get("polygonV2").toString());
+            return geometryTransformer.transform(arguments.get("polygonV2").toString(), false);
         }
         return null;
     }

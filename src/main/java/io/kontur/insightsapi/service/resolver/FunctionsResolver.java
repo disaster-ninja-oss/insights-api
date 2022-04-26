@@ -26,7 +26,7 @@ public class FunctionsResolver implements GraphQLResolver<Analytics> {
 
     public List<FunctionResult> getFunctions(Analytics analytics, List<FunctionArgs> args, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
         return functionsService.calculateFunctionsResult(transformedGeometry, args);
     }
 }

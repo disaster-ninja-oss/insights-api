@@ -27,7 +27,7 @@ public class ThermalSpotStatisticResolver implements GraphQLResolver<Analytics> 
     public ThermalSpotStatistic getThermalSpotStatistic(Analytics analytics, DataFetchingEnvironment environment)
             throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());

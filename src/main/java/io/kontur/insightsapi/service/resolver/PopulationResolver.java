@@ -24,7 +24,7 @@ public class PopulationResolver implements GraphQLResolver<Analytics> {
 
     public Population getPopulation(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
         StatisticDto populationStatistic = populationService.calculatePopulation(transformedGeometry);
         return Population.builder()
                 .population(populationStatistic.getPopulation())

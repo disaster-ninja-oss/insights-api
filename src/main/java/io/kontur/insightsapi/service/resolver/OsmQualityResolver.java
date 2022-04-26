@@ -26,7 +26,7 @@ public class OsmQualityResolver implements GraphQLResolver<Analytics> {
 
     public OsmQuality getOsmQuality(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());
