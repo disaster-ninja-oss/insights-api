@@ -14,8 +14,9 @@
                 <timestampFormatTimezoneId>Etc/UTC</timestampFormatTimezoneId>
 
                 <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
-                    <prettyPrint>true</prettyPrint>
+                    <prettyPrint>false</prettyPrint><!--avoid unnecessary line breaks-->
                 </jsonFormatter>
+                <appendLineSeparator>true</appendLineSeparator><!--add line breaks after each log message-->
             </layout>
         </encoder>
     </appender>

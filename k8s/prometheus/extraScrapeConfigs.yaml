@@ -1,4 +1,4 @@
-#TODO apply this to k8s cluster's prometheus
+#TODO apply this for local minikube testing
 #helm upgrade --install my-prometheus --set-file extraScrapeConfigs=extraScrapeConfigs.yaml prometheus-community/prometheus
 extraScrapeConfigs: |
   - job_name: 'insights-api-metrics'
