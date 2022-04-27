@@ -6,14 +6,14 @@ metadata:
   labels:
     app.kubernetes.io/name: insights-api
     app.kubernetes.io/instance: insights-api-dev
-    #TODO app.kubernetes.io/version?
+    app.kubernetes.io/version: @project.version@
     stage: dev
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: insights-api
       app.kubernetes.io/instance: insights-api-dev
-      #TODO app.kubernetes.io/version?
+      app.kubernetes.io/version: @project.version@
       #TODO other labels (stage)?
   replicas: 2
   #TODO affinity/antiAffinity?
@@ -27,7 +27,7 @@ spec:
       labels:
         app.kubernetes.io/name: insights-api
         app.kubernetes.io/instance: insights-api-dev
-        #TODO app.kubernetes.io/version?
+        app.kubernetes.io/version: @project.version@
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/port: '8625'
@@ -35,17 +35,13 @@ spec:
     spec:
       containers:
         - name: insights-api
-          #todo version and imagePullPolicy
-          image: nexus.kontur.io:8085/konturdev/insights-api:0.0.1-SNAPSHOT #todo check if 8085 is ok
-          imagePullPolicy: IfNotPresent #don't use Always for local minikube - otherwise it tries reloading from remote
-          env:
-            - name: SPRING_PROFILES_ACTIVE
-              value: dev
+          image: nexus.kontur.io:8085/konturdev/insights-api:@project.version@ #replaced with actual version by maven
+          imagePullPolicy: Always #don't use Always for local minikube - otherwise it tries reloading from remote
           envFrom:
             - configMapRef:
                 name: insights-api-dev
             - secretRef:
-                name: insights-api-dev #TODO must contain data:spring.datasource.password
+                name: insights-api-dev #TODO must contain SPRING_DATASOURCE_PASSWORD
           readinessProbe:
             httpGet:
               path: /insights-api/actuator/health/readiness

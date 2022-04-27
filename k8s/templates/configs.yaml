@@ -8,6 +8,7 @@ metadata:
     app.kubernetes.io/instance: insights-api-dev
     stage: dev
 data:
+  SPRING_PROFILES_ACTIVE: dev
   SPRING_DATASOURCE_URL: 'jdbc:postgresql://insights-api-dev-database:5432/insights-api'
   SPRING_DATASOURCE_USERNAME: insights-api
   #TODO do not use uppercase var names for hikari properties otherwise startup fails with smth like 'The configuration of the pool is sealed once started.'

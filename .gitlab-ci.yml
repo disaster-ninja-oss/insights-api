@@ -72,13 +72,13 @@ deploy-k8s-dev:
     - echo $CLIENT_CERT | base64 --decode > client.cert
     - echo $CLIENT_KEY | base64 --decode > client.key
     - ls -l
-    - kubectl apply -f k8s/configs.yaml
+    - kubectl apply -f k8s/rendered/configs.yaml
       --server https://api01.k8s-01.kontur.io:6443
       --namespace sandbox-isemichastnov
       --certificate-authority ca.crt
       --client-certificate client.cert
       --client-key client.key
-    - kubectl apply -f k8s/structure.yaml
+    - kubectl apply -f k8s/rendered/structure.yaml
       --server https://api01.k8s-01.kontur.io:6443
       --namespace sandbox-isemichastnov
       --certificate-authority ca.crt
