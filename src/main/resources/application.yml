@@ -36,6 +36,8 @@ management:
       simple:
         enabled: false
   health:
+    db:
+      enabled: true
     ping:
       enabled: false
     diskspace:
