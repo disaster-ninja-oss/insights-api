@@ -17,19 +17,15 @@ public class GeometryTransformer {
     private final String ERROR_MESSAGE = "No geometry provided";
 
     public String transform(String geoJsonString, Boolean argNullCheck) throws JsonProcessingException {
-        try {
-            var geoJSON = GeoJSONFactory.create(geoJsonString);
-            var type = geoJSON.getType();
-            switch (type) {
-                case ("FeatureCollection"):
-                    return transformToGeometryCollection(geoJSON, argNullCheck);
-                case ("Feature"):
-                    return transformToGeometry(geoJSON, argNullCheck);
-                default:
-                    return geoJsonString;
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException("provided geojson is not valid");
+        var geoJSON = GeoJSONFactory.create(geoJsonString);
+        var type = geoJSON.getType();
+        switch (type) {
+            case ("FeatureCollection"):
+                return transformToGeometryCollection(geoJSON, argNullCheck);
+            case ("Feature"):
+                return transformToGeometry(geoJSON, argNullCheck);
+            default:
+                return geoJsonString;
         }
     }
 
