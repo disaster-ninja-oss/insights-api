@@ -10,9 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -29,17 +29,13 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class PopulationRepository {
 
-    @Autowired
-    QueryFactory queryFactory;
-
     @Value("classpath:population_humanitarian_impact.sql")
     Resource populationHumanitarianImpact;
 
     @Value("classpath:population_osm.sql")
     Resource populationOsm;
 
-    @Value("classpath:population_urbancore.sql")
-    Resource populationUrbancore;
+    private final QueryFactory queryFactory;
 
     private static final Map<String, String> queryMap = Map.of(
             "peopleWithoutOsmBuildings", "sum(population * (1 - sign(building_count))) as peopleWithoutOsmBuildings ",
@@ -61,6 +57,8 @@ public class PopulationRepository {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Helper helper;
+    @Value("classpath:population_urbancore.sql")
+    Resource populationUrbanCore;
 
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
@@ -76,8 +74,16 @@ public class PopulationRepository {
                             .gdp(rs.getBigDecimal("gdp"))
                             .type(rs.getString("type"))
                             .urban(rs.getBigDecimal("urban")).build())));
+        } catch (DataAccessResourceFailureException e) {
+            String error = String.format(DatabaseUtil.ERROR_TIMEOUT, geometry);
+            logger.error(error, e);
+            throw new DataAccessResourceFailureException(error, e);
+        } catch (EmptyResultDataAccessException e) {
+            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geometry);
+            logger.error(error, e);
+            throw new EmptyResultDataAccessException(error, 1);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s", geometry);
+            String error = String.format(DatabaseUtil.ERROR_SQL, geometry);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
@@ -90,7 +96,7 @@ public class PopulationRepository {
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, BigDecimal.class);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s", geometry);
+            String error = String.format(DatabaseUtil.ERROR_SQL, geometry);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
@@ -109,10 +115,16 @@ public class PopulationRepository {
                             .name(rs.getString("name"))
                             .percentage(rs.getString("percentage"))
                             .totalAreaKm2(rs.getBigDecimal("totalAreaKm2")).build());
+        }  catch (DataAccessResourceFailureException e) {
+            String error = String.format(DatabaseUtil.ERROR_TIMEOUT, geometry);
+            logger.error(error, e);
+            throw new DataAccessResourceFailureException(error, e);
         } catch (EmptyResultDataAccessException e) {
-            return Lists.newArrayList();
+            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geometry);
+            logger.error(error, e);
+            throw new EmptyResultDataAccessException(error, 1);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s", geometry);
+            String error = String.format(DatabaseUtil.ERROR_SQL, geometry);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
@@ -134,18 +146,16 @@ public class PopulationRepository {
                             .areaWithoutOsmObjectsKm2(rs.getBigDecimal("areaWithoutOsmObjectsKm2"))
                             .osmGapsPercentage(rs.getBigDecimal("osmGapsPercentage"))
                             .build());
+        } catch (DataAccessResourceFailureException e) {
+            String error = String.format(DatabaseUtil.ERROR_TIMEOUT, geojson);
+            logger.error(error, e);
+            throw new DataAccessResourceFailureException(error, e);
         } catch (EmptyResultDataAccessException e) {
-            return OsmQuality.builder()
-                    .peopleWithoutOsmBuildings(0L)
-                    .areaWithoutOsmBuildingsKm2(new BigDecimal(0))
-                    .peopleWithoutOsmRoads(0L)
-                    .areaWithoutOsmRoadsKm2(new BigDecimal(0))
-                    .peopleWithoutOsmObjects(0L)
-                    .areaWithoutOsmObjectsKm2(new BigDecimal(0))
-                    .osmGapsPercentage(new BigDecimal(0))
-                    .build();
+            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geojson);
+            logger.error(error, e);
+            throw new EmptyResultDataAccessException(error, 1);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s", geojson);
+            String error = String.format(DatabaseUtil.ERROR_SQL, geojson);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
@@ -155,20 +165,23 @@ public class PopulationRepository {
     public UrbanCore calculateUrbanCore(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(populationUrbancore), StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(populationUrbanCore), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     UrbanCore.builder()
                             .urbanCorePopulation(rs.getBigDecimal("urbanCorePopulation"))
                             .urbanCoreAreaKm2(rs.getBigDecimal("urbanCoreAreaKm2"))
                             .totalPopulatedAreaKm2(rs.getBigDecimal("totalPopulatedAreaKm2")).build());
+        } catch (DataAccessResourceFailureException e) {
+            String error = String.format(DatabaseUtil.ERROR_TIMEOUT, geojson);
+            logger.error(error, e);
+            throw new DataAccessResourceFailureException(error, e);
         } catch (EmptyResultDataAccessException e) {
-            return UrbanCore.builder()
-                    .urbanCoreAreaKm2(new BigDecimal(0))
-                    .urbanCorePopulation(new BigDecimal(0))
-                    .totalPopulatedAreaKm2(new BigDecimal(0)).build();
+            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geojson);
+            logger.error(error, e);
+            throw new EmptyResultDataAccessException(error, 1);
         } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s", geojson);
+            String error = String.format(DatabaseUtil.ERROR_SQL, geojson);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }

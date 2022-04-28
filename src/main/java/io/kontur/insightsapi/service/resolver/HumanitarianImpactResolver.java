@@ -7,7 +7,8 @@ import graphql.schema.DataFetchingEnvironment;
 import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
-import io.kontur.insightsapi.service.PopulationService;
+import io.kontur.insightsapi.service.PopulationTransformer;
+import io.kontur.insightsapi.service.cacheable.HumanitarianImpactService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class HumanitarianImpactResolver implements GraphQLResolver<Analytics> {
 
-    private final PopulationService populationService;
+    private final PopulationTransformer populationTransformer;
 
     private final GeometryTransformer geometryTransformer;
 
@@ -23,11 +24,13 @@ public class HumanitarianImpactResolver implements GraphQLResolver<Analytics> {
 
     private final Helper helper;
 
+    private final HumanitarianImpactService humanitarianImpactService;
+
     public String getHumanitarianImpact(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon);
-        var impactDtos = populationService.calculateHumanitarianImpact(transformedGeometry);
-        var collection = populationService.convertImpactIntoFeatureCollection(transformedGeometry, impactDtos);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
+        var impactDtos = humanitarianImpactService.calculateHumanitarianImpact(transformedGeometry);
+        var collection = populationTransformer.convertImpactIntoFeatureCollection(transformedGeometry, impactDtos);
         return objectMapper.writeValueAsString(collection);
     }
 }

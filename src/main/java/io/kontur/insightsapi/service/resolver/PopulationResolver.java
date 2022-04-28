@@ -8,7 +8,7 @@ import io.kontur.insightsapi.model.Analytics;
 import io.kontur.insightsapi.model.Population;
 import io.kontur.insightsapi.service.GeometryTransformer;
 import io.kontur.insightsapi.service.Helper;
-import io.kontur.insightsapi.service.PopulationService;
+import io.kontur.insightsapi.service.cacheable.PopulationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,15 +16,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PopulationResolver implements GraphQLResolver<Analytics> {
 
-    private final PopulationService populationService;
-
     private final GeometryTransformer geometryTransformer;
 
     private final Helper helper;
 
+    private final PopulationService populationService;
+
     public Population getPopulation(Analytics analytics, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
-        var transformedGeometry = geometryTransformer.transform(polygon);
+        var transformedGeometry = geometryTransformer.transform(polygon, false);
         StatisticDto populationStatistic = populationService.calculatePopulation(transformedGeometry);
         return Population.builder()
                 .population(populationStatistic.getPopulation())

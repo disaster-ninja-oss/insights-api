@@ -8,44 +8,55 @@ import org.wololo.geojson.*;
 
 import java.util.Arrays;
 
-import static java.util.stream.Collectors.toList;
-
 @Service
 @RequiredArgsConstructor
 public class GeometryTransformer {
 
     private final ObjectMapper objectMapper;
 
-    public String transform(String geoJsonString) throws JsonProcessingException {
-        var geoJSON = GeoJSONFactory.create(geoJsonString);
-        var type = geoJSON.getType();
-        switch (type) {
-            case ("FeatureCollection"):
-                return transformToGeometryCollection(geoJSON);
-            case ("Feature"):
-                return transformToGeometry(geoJSON);
-            default:
-                return geoJsonString;
+    private final String ERROR_MESSAGE = "No geometry provided";
+
+    public String transform(String geoJsonString, Boolean argNullCheck) throws JsonProcessingException {
+        try {
+            var geoJSON = GeoJSONFactory.create(geoJsonString);
+            var type = geoJSON.getType();
+            switch (type) {
+                case ("FeatureCollection"):
+                    return transformToGeometryCollection(geoJSON, argNullCheck);
+                case ("Feature"):
+                    return transformToGeometry(geoJSON, argNullCheck);
+                default:
+                    return geoJsonString;
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("provided geojson is not valid");
         }
     }
 
-    private String transformToGeometryCollection(GeoJSON geoJSON) throws JsonProcessingException {
+    private String transformToGeometryCollection(GeoJSON geoJSON, Boolean argNullCheck) throws JsonProcessingException {
         var featureCollection = (FeatureCollection) geoJSON;
         var geometries = Arrays.stream(featureCollection.getFeatures())
-                .map(Feature::getGeometry)
-                .collect(toList());
+                .map(Feature::getGeometry).toList();
         if (geometries.size() > 0) {
             var resultCollection = new GeometryCollection(geometries.toArray(Geometry[]::new));
             return objectMapper.writeValueAsString(resultCollection);
         }
-        return null;
+        if (argNullCheck) {
+            return null;
+        } else {
+            throw new NullPointerException(ERROR_MESSAGE);
+        }
     }
 
-    private String transformToGeometry(GeoJSON geoJSON) throws JsonProcessingException {
+    private String transformToGeometry(GeoJSON geoJSON, Boolean argNullCheck) throws JsonProcessingException {
         var geometry = ((Feature) geoJSON).getGeometry();
-        if(geometry != null){
+        if (geometry != null) {
             return objectMapper.writeValueAsString(geometry);
         }
-        return null;
+        if (argNullCheck) {
+            return null;
+        } else {
+            throw new NullPointerException(ERROR_MESSAGE);
+        }
     }
 }
