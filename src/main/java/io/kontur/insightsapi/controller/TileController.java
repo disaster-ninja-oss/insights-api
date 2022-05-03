@@ -26,7 +26,7 @@ public class TileController {
             description = "Get tile using z, x, y.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful operation",
-                            content = @Content(mediaType = "application/json")),
+                            content = @Content(mediaType = "application/vnd.mapbox-vector-tile")),
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @GetMapping(value = "/{z}/{x}/{y}.mvt", produces = "application/vnd.mapbox-vector-tile")
