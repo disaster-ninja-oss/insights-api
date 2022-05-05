@@ -1,7 +1,7 @@
 package io.kontur.insightsapi.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import graphql.Scalars;
+import graphql.scalars.ExtendedScalars;
 import graphql.schema.GraphQLScalarType;
 import io.kontur.insightsapi.model.JacksonJsonCoercing;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ public class GraphQLConfig {
 
     @Bean
     public GraphQLScalarType longType() {
-        return Scalars.GraphQLLong;
+        return ExtendedScalars.GraphQLLong;
     }
 
     @Bean
