@@ -12,9 +12,7 @@ public class WebConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
-        return new OpenAPI().info(new Info()
-                .title("Insights API")
-                .description("Technical API for Insights service. Deprecated HTTP API for population provided by Kontur"))
+        return new OpenAPI()
                 .info(apiInfo());
     }
 
@@ -23,8 +21,8 @@ public class WebConfig {
                 .title("Insights API")
                 .description("Technical API for Insights service. Deprecated HTTP API for population provided by Kontur")
                 .version("0.1")
-                .termsOfService("https://www.kontur.io/about/#contact")
+                .termsOfService("https://www.kontur.io/about/#footer")
                 .contact(new Contact().name("Kontur").url("http://kontur.io").email("hello@kontur.io"))
-                .license(new License().name("License of API").url("https://www.kontur.io/about/#contact"));
+                .license(new License().name("License of API").url("https://www.kontur.io/about/#footer"));
     }
 }
