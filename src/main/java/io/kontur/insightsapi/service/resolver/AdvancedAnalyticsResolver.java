@@ -84,7 +84,7 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
             String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
             String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
 
-            List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = advancedAnalyticsRepository.getFilteredAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, argGeometry, axisDtos);
+            List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = advancedAnalyticsService.getFilteredAdvancedAnalytics(queryWithGeom + " " + queryUnionAll, argGeometry, axisDtos);
 
             List<AdvancedAnalyticsQualitySortDto> qualitySortedList = advancedAnalyticsRepository.createSortedList(axisDtos, advancedAnalyticsValues);
             return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
@@ -95,7 +95,7 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
     private List<AdvancedAnalytics> getWorldData(List<AdvancedAnalyticsRequest> argRequest) {
         if (argRequest != null && !argRequest.isEmpty()) {
-            return advancedAnalyticsRepository.getFilteredWorldData(argRequest);
+            return advancedAnalyticsService.getFilteredWorldData(argRequest);
         } else {
             return advancedAnalyticsService.getWorldData();
         }
