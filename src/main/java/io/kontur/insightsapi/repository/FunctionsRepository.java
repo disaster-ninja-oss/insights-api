@@ -53,10 +53,10 @@ public class FunctionsRepository implements FunctionsService {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.addAll(createFunctionResultList(args, rs));
             }));
-            //null values may exist
+            //null values may exist, how to handle here?
             //checkResultForNull(result);
         } catch (EmptySqlQueryAnswer e) {
-            throw e;
+            //throw e;
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geojson);
             logger.error(error, e);

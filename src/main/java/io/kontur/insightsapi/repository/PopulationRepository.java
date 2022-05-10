@@ -78,6 +78,7 @@ public class PopulationRepository {
             logger.error(error, e);
             throw new DataAccessResourceFailureException(error, e);
         } catch (EmptyResultDataAccessException e) {
+            //returns result with all nulls, never empty result. Let it stay like this?
             String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geometry);
             logger.error(error, e);
             throw new EmptyResultDataAccessException(error, 1);
@@ -119,6 +120,7 @@ public class PopulationRepository {
             logger.error(error, e);
             throw new DataAccessResourceFailureException(error, e);
         } catch (EmptyResultDataAccessException e) {
+            //returns result with all nulls, never empty result. Let it stay like this?
             String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geometry);
             logger.error(error, e);
             throw new EmptyResultDataAccessException(error, 1);
@@ -150,6 +152,7 @@ public class PopulationRepository {
             logger.error(error, e);
             throw new DataAccessResourceFailureException(error, e);
         } catch (EmptyResultDataAccessException e) {
+            //returns result with all nulls, never empty result. Let it stay like this?
             String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geojson);
             logger.error(error, e);
             throw new EmptyResultDataAccessException(error, 1);
