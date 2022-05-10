@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.repository;
 
-import com.google.common.collect.Lists;
 import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.model.OsmQuality;
@@ -177,9 +176,12 @@ public class PopulationRepository {
             logger.error(error, e);
             throw new DataAccessResourceFailureException(error, e);
         } catch (EmptyResultDataAccessException e) {
-            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geojson);
-            logger.error(error, e);
-            throw new EmptyResultDataAccessException(error, 1);
+            //result may be empty here
+            logger.error("empty result for geometry -> " + geojson);
+            return UrbanCore.builder()
+                    .urbanCoreAreaKm2(new BigDecimal(0))
+                    .urbanCorePopulation(new BigDecimal(0))
+                    .totalPopulatedAreaKm2(new BigDecimal(0)).build();
         } catch (Exception e) {
             String error = String.format(DatabaseUtil.ERROR_SQL, geojson);
             logger.error(error, e);
