@@ -16,5 +16,6 @@
     <include  file="calculate_population_and_gdp_for_wkt_performance_fix_v3.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_population_and_gdp_for_wkt_performance_fix_v4.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_population_and_gdp.sql" relativeToChangelogFile="true"/>
+    <include  file="calculate_population_and_gdp_10214.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
