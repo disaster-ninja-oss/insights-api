@@ -53,7 +53,8 @@ public class FunctionsRepository implements FunctionsService {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.addAll(createFunctionResultList(args, rs));
             }));
-            checkResultForNull(result);
+            //null values may exist
+            //checkResultForNull(result);
         } catch (EmptySqlQueryAnswer e) {
             throw e;
         } catch (Exception e) {
