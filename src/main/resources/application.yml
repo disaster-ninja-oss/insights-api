@@ -71,3 +71,7 @@ cache:
   urban-core: true
   correlation-rate: true
   advanced-analytics: true
+
+graphql-request:
+  parser-options:
+    max-tokens: 0x7fffffff #Integer.MAX_VALUE
