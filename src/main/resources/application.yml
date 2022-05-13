@@ -26,6 +26,8 @@ graphql:
     corsEnabled: false
     tracing-enabled: false
     actuator-metrics: true
+    async:
+      timeout: 600s
 
 management:
   metrics:
