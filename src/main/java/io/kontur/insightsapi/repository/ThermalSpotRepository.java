@@ -23,8 +23,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ThermalSpotRepository implements ThermalSpotStatisticService {
 
-    @Value("classpath:thermal_statistic.sql")
-    Resource thermalStatistic;
+    @Value("classpath:/sql.queries/thermal_statistic.sql")
+    private Resource thermalStatistic;
 
     private static final Map<String, String> queryMap = Map.of(
             "industrialAreaKm2", "sum(industrial_area) as industrialAreaKm2 ",

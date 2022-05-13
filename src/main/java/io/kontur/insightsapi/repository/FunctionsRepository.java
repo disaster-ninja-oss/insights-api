@@ -29,8 +29,8 @@ import java.util.regex.Pattern;
 @Transactional(readOnly = true)
 public class FunctionsRepository implements FunctionsService {
 
-    @Value("classpath:function_intersect.sql")
-    Resource functionIntersect;
+    @Value("classpath:/sql.queries/function_intersect.sql")
+    private Resource functionIntersect;
 
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 

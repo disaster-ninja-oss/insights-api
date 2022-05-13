@@ -32,26 +32,26 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class StatisticRepository implements CorrelationRateService {
 
-    @Value("classpath:statistic_all.sql")
-    Resource statisticAll;
+    @Value("classpath:/sql.queries/statistic_all.sql")
+    private Resource statisticAll;
 
-    @Value("classpath:bivariate_statistic.sql")
-    Resource bivariateStatistic;
+    @Value("classpath:/sql.queries/bivariate_statistic.sql")
+    private Resource bivariateStatistic;
 
-    @Value("classpath:axis_statistic.sql")
-    Resource axisStatistic;
+    @Value("classpath:/sql.queries/axis_statistic.sql")
+    private Resource axisStatistic;
 
-    @Value("classpath:statistic_correlation.sql")
-    Resource statisticCorrelation;
+    @Value("classpath:/sql.queries/statistic_correlation.sql")
+    private Resource statisticCorrelation;
 
-    @Value("classpath:statistic_correlation_numdenom.sql")
-    Resource statisticCorrelationNumdenom;
+    @Value("classpath:/sql.queries/statistic_correlation_numdenom.sql")
+    private Resource statisticCorrelationNumdenom;
 
-    @Value("classpath:statistic_correlation_intersect.sql")
-    Resource statisticCorrelationIntersect;
+    @Value("classpath:/sql.queries/statistic_correlation_intersect.sql")
+    private Resource statisticCorrelationIntersect;
 
-    @Value("classpath:statistic_correlation_emptylayer_intersect.sql")
-    Resource statisticCorrelationEmptylayerIntersect;
+    @Value("classpath:/sql.queries/statistic_correlation_emptylayer_intersect.sql")
+    private Resource statisticCorrelationEmptylayerIntersect;
 
     private final JdbcTemplate jdbcTemplate;
 

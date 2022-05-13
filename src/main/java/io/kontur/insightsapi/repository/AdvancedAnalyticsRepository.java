@@ -36,17 +36,17 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsRepository.class);
 
-    @Value("classpath:bivariate_axis.sql")
-    Resource bivariateAxis;
+    @Value("classpath:/sql.queries/bivariate_axis.sql")
+    private Resource bivariateAxis;
 
-    @Value("classpath:advanced_analytics_union.sql")
-    Resource advancedAnalyticsUnion;
+    @Value("classpath:/sql.queries/advanced_analytics_union.sql")
+    private Resource advancedAnalyticsUnion;
 
-    @Value("classpath:advanced_analytics_world.sql")
-    Resource advancedAnalyticsWorld;
+    @Value("classpath:/sql.queries/advanced_analytics_world.sql")
+    private Resource advancedAnalyticsWorld;
 
-    @Value("classpath:advanced_analytics_intersect.sql")
-    Resource advancedAnalyticsIntersect;
+    @Value("classpath:/sql.queries/advanced_analytics_intersect.sql")
+    private Resource advancedAnalyticsIntersect;
 
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
