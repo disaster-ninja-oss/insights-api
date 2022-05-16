@@ -264,10 +264,37 @@
             </plugin>
 
             <plugin>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <executions>
+                    <execution>
+                        <id>download-opentelemetry-agent</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <url>https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v1.13.1/opentelemetry-javaagent.jar</url>
+                    <unpack>false</unpack>
+                    <outputDirectory>${project.build.sourceDirectory}/../jib/opentelemetry/</outputDirectory>
+                    <md5>72a2f5977750a811d9d34aae58cd9b8a</md5>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>3.2.1</version>
                 <configuration>
+                    <container>
+                        <mainClass>io.kontur.insightsapi.InsightsApiApplication</mainClass>
+                        <jvmFlags>
+                            <jvmFlag>-javaagent:/opentelemetry/opentelemetry-javaagent.jar</jvmFlag>
+                        </jvmFlags>
+                    </container>
                     <from>
                         <image>nexus.kontur.io:8084/library/${jib.source.image}</image>
                     </from>
@@ -317,15 +344,13 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.basedir}/k8s/rendered/</outputDirectory>
+                            <outputDirectory>${project.basedir}/external/helm/insights-api/</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}/k8s/templates</directory>
+                                    <directory>${project.basedir}/external/helm/insights-api/</directory>
                                     <filtering>true</filtering>
                                     <includes>
-                                        <include>structure.yaml</include>
-                                        <include>configs.yaml</include>
-                                        <include>ingress.yaml</include>
+                                        <include>Chart.yaml</include>
                                     </includes>
                                 </resource>
                             </resources>

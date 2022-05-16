@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.envName }}-insights-api-k8s-01-konturlabs-com
+  namespace: sandbox-isemichastnov
+  labels:
+    app.kubernetes.io/name: insights-api
+    app.kubernetes.io/instance: insights-api-{{ .Values.envName }}
+    app.kubernetes.io/version: {{ .Chart.Version }}
+    app.kubernetes.io/managed-by: "Helm"
+    stage: {{ .Values.envName }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+    cert-manager.io/issuer: letsencrypt-production #use letsencrypt-staging for testing
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.envName }}-insights-api.k8s-01.konturlabs.com
+      secretName: {{ .Values.envName }}-insights-api-k8s-01-konturlabs-com-tls
+  ingressClassName: nginx
+  rules:
+    - host: {{ .Values.envName }}-insights-api.k8s-01.konturlabs.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: insights-api-{{ .Values.envName }}
+                port:
+                  number: 8625
+---
