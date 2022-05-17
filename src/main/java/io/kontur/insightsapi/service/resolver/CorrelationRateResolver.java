@@ -137,8 +137,12 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                     }
                 }
                 //find parent for all elements in connected component
+                //x
                 fillParentConnectedComponent(connectedComponent, importantLayers, graphDto.getXAvgCorrelation(),
-                        graphDto.getYAvgCorrelation(), xChildParent, yChildParent);
+                        xChildParent, "x");
+                //y
+                fillParentConnectedComponent(connectedComponent, importantLayers, graphDto.getYAvgCorrelation(),
+                        yChildParent, "y");
             }
         }
     }
@@ -160,90 +164,73 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     }
 
     private void fillParentConnectedComponent(Set<NodeDto> viewed, List<List<String>> importantLayers,
-                                              Map<NodeDto, Double> xAvgCorrelation,
-                                              Map<NodeDto, Double> yAvgCorrelation,
-                                              Map<List<String>, List<String>> xChildParent,
-                                              Map<List<String>, List<String>> yChildParent) {
-        Set<NodeDto> foundImportantLayers = findImportantLayers(viewed, importantLayers);
+                                                 Map<NodeDto, Double> avgCorrelation,
+                                                 Map<List<String>, List<String>> childParent,
+                                                 String axis) {
+        Set<NodeDto> viewedAxis = viewed.stream()
+                .filter(v -> v.getAxis().equals(axis))
+                .collect(Collectors.toSet());
+        Set<NodeDto> foundImportantLayers = findImportantLayers(viewedAxis, importantLayers, axis);
         switch (foundImportantLayers.size()) {
             case 0:
-                fillParentWhenNoImportantLayers(viewed, xAvgCorrelation, yAvgCorrelation, xChildParent, yChildParent);
+                fillParentWhenNoImportantLayers(viewedAxis, avgCorrelation, childParent, axis);
                 break;
             case 1:
-                fillParentWhenOneImportantLayer(viewed, xChildParent, yChildParent, foundImportantLayers);
+                fillParentWhenOneImportantLayer(viewedAxis, childParent, foundImportantLayers, axis);
                 break;
             default:
-                fillParentWhenSeveralImportantLayers(viewed, xAvgCorrelation, yAvgCorrelation, importantLayers,
-                        xChildParent, yChildParent, foundImportantLayers);
+                fillParentWhenSeveralImportantLayers(viewedAxis, avgCorrelation, importantLayers,
+                        childParent, foundImportantLayers, axis);
         }
     }
 
-    private void fillParentWhenNoImportantLayers(Set<NodeDto> viewed, Map<NodeDto, Double> xAvgCorrelation,
-                                                 Map<NodeDto, Double> yAvgCorrelation,
-                                                 Map<List<String>, List<String>> xChildParent,
-                                                 Map<List<String>, List<String>> yChildParent) {
-        NodeDto parentX = findLayerWithMinAvgCorrelation(viewed, xAvgCorrelation, "x");
-        NodeDto parentY = findLayerWithMinAvgCorrelation(viewed, yAvgCorrelation, "y");
+    private void fillParentWhenNoImportantLayers(Set<NodeDto> viewed, Map<NodeDto, Double> avgCorrelation,
+                                                 Map<List<String>, List<String>> childParent,
+                                                 String axis) {
+        NodeDto parent = findLayerWithMinAvgCorrelation(viewed, avgCorrelation, axis);
         for (NodeDto currentViewed : viewed) {
-            if (!currentViewed.equals(parentX) && currentViewed.getAxis().equals("x")) {
-                xChildParent.put(currentViewed.getQuotient(), parentX.getQuotient());
-            }
-            if (!currentViewed.equals(parentY) && currentViewed.getAxis().equals("y")) {
-                yChildParent.put(currentViewed.getQuotient(), parentY.getQuotient());
+            if (!currentViewed.equals(parent) && currentViewed.getAxis().equals(axis)) {
+                childParent.put(currentViewed.getQuotient(), parent.getQuotient());
             }
         }
     }
 
-    private void fillParentWhenOneImportantLayer(Set<NodeDto> viewed, Map<List<String>, List<String>> xChildParent,
-                                                 Map<List<String>, List<String>> yChildParent,
-                                                 Set<NodeDto> foundImportantLayers) {
-        NodeDto parentX = foundImportantLayers.stream()
-                .filter(l -> l.getAxis().equals("x"))
+    private void fillParentWhenOneImportantLayer(Set<NodeDto> viewed, Map<List<String>, List<String>> childParent,
+                                                 Set<NodeDto> foundImportantLayers,
+                                                 String axis) {
+        NodeDto parent = foundImportantLayers.stream()
+                .filter(l -> l.getAxis().equals(axis))
                 .findFirst()
-                .orElse(new NodeDto(null, "x"));
-        NodeDto parentY = foundImportantLayers.stream()
-                .filter(l -> l.getAxis().equals("y"))
-                .findFirst()
-                .orElse(new NodeDto(null, "y"));
+                .orElse(new NodeDto(null, axis));
         for (NodeDto currentViewed : viewed) {
-            if (!currentViewed.equals(parentX) && currentViewed.getAxis().equals("x")) {
-                xChildParent.put(currentViewed.getQuotient(), parentX.getQuotient());
-            }
-            if (!currentViewed.equals(parentY) && currentViewed.getAxis().equals("y")) {
-                yChildParent.put(currentViewed.getQuotient(), parentY.getQuotient());
+            if (!currentViewed.equals(parent) && currentViewed.getAxis().equals(axis)) {
+                childParent.put(currentViewed.getQuotient(), parent.getQuotient());
             }
         }
     }
 
-    private void fillParentWhenSeveralImportantLayers(Set<NodeDto> viewed, Map<NodeDto, Double> xAvgCorrelation,
-                                                      Map<NodeDto, Double> yAvgCorrelation,
+    private void fillParentWhenSeveralImportantLayers(Set<NodeDto> viewed, Map<NodeDto, Double> avgCorrelation,
                                                       List<List<String>> importantLayers,
-                                                      Map<List<String>, List<String>> xChildParent,
-                                                      Map<List<String>, List<String>> yChildParent,
-                                                      Set<NodeDto> foundImportantLayers) {
-        NodeDto parentX = findLayerWithMinAvgCorrelation(foundImportantLayers, xAvgCorrelation, "x");
-        NodeDto parentY = findLayerWithMinAvgCorrelation(foundImportantLayers, yAvgCorrelation, "y");
+                                                      Map<List<String>, List<String>> childParent,
+                                                      Set<NodeDto> foundImportantLayers,
+                                                      String axis) {
+        NodeDto parent = findLayerWithMinAvgCorrelation(foundImportantLayers, avgCorrelation, axis);
         for (NodeDto currentViewed : viewed) {
-            if (!currentViewed.equals(parentX) && currentViewed.getAxis().equals("x")
+            if (!currentViewed.equals(parent) && currentViewed.getAxis().equals(axis)
                     && !importantLayers.contains(currentViewed.getQuotient())) {
-                xChildParent.put(currentViewed.getQuotient(), parentX.getQuotient());
-            }
-            if (!currentViewed.equals(parentY) && currentViewed.getAxis().equals("y")
-                    && !importantLayers.contains(currentViewed.getQuotient())) {
-                yChildParent.put(currentViewed.getQuotient(), parentY.getQuotient());
+                childParent.put(currentViewed.getQuotient(), parent.getQuotient());
             }
         }
     }
 
-    private Set<NodeDto> findImportantLayers(Set<NodeDto> viewed, List<List<String>> importantLayers) {
+    private Set<NodeDto> findImportantLayers(Set<NodeDto> viewed, List<List<String>> importantLayers, String axis) {
         Set<NodeDto> result = new HashSet<>();
         Set<List<String>> viewedQuotient = viewed.stream()
                 .map(NodeDto::getQuotient)
                 .collect(Collectors.toSet());
         for (List<String> currentViewed : viewedQuotient) {
             if (importantLayers.contains(currentViewed)) {
-                result.add(new NodeDto(currentViewed, "x"));
-                result.add(new NodeDto(currentViewed, "y"));
+                result.add(new NodeDto(currentViewed, axis));
             }
         }
         return result;
