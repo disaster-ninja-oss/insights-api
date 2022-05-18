@@ -1,23 +1,21 @@
 package io.kontur.insightsapi.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
-@Getter
 @Setter
-@Builder
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BivariativeAxisDto {
+public class AdvancedAnalyticsRequest {
 
     private String numerator;
 
     private String denominator;
-
-    private String numeratorLabel;
-
-    private String denominatorLabel;
 
     private List<String> calculations;
 

@@ -1,5 +1,7 @@
 package io.kontur.insightsapi.service.cacheable;
 
+import io.kontur.insightsapi.dto.AdvancedAnalyticsRequest;
+import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.model.AdvancedAnalytics;
 import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
 
@@ -9,5 +11,9 @@ public interface AdvancedAnalyticsService {
 
     List<AdvancedAnalytics> getWorldData();
 
+    List<AdvancedAnalytics> getFilteredWorldData(List<AdvancedAnalyticsRequest> argRequests);
+
     List<List<AdvancedAnalyticsValues>> getAdvancedAnalytics(String argQuery, String argGeometry);
+
+    List<List<AdvancedAnalyticsValues>> getFilteredAdvancedAnalytics(String argQuery, String argGeometry, List<BivariativeAxisDto> axisDtos);
 }
