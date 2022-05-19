@@ -15,29 +15,4 @@ kubectl $KUBECTL_OPTS config set users.isemichastnov@kontur.io.client-certificat
 helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > manifests.yaml
 
 #Check if specified release exists
-helm $HELM_OPTS status $RELEASE
-
-#Either update it if exists
-if [ $? = 0 ]
-  then
-    echo '[status] release exists, upgrading'
-    helm $HELM_OPTS upgrade $RELEASE $CHART_PATH -f $VALUES
-    if [ $? = 0 ]
-      then
-        echo '[status] upgrade successful'
-      else
-        echo '[status] upgrade failed'
-        exit 1
-    fi
-#Install otherwise
-  else
-    echo '[status] release does not exist, installing'
-    helm $HELM_OPTS install $RELEASE $CHART_PATH -f $VALUES
-    if [ $? = 0 ]
-      then
-        echo '[status] install successful'
-      else
-        echo '[status] install failed'
-        exit 1
-    fi
-fi
+helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES
