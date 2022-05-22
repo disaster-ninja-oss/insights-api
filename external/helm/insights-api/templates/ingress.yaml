@@ -2,10 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.envName }}-insights-api-k8s-01-konturlabs-com
-  namespace: sandbox-isemichastnov
+  namespace: {{ .Values.envName }}-insights-api
   labels:
     app.kubernetes.io/name: insights-api
-    app.kubernetes.io/instance: insights-api-{{ .Values.envName }}
+    app.kubernetes.io/instance: {{ .Values.envName }}-insights-api
     app.kubernetes.io/version: {{ .Chart.Version }}
     app.kubernetes.io/managed-by: "Helm"
     stage: {{ .Values.envName }}
@@ -27,7 +27,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: insights-api-{{ .Values.envName }}
+                name: {{ .Values.envName }}-insights-api
                 port:
                   number: 8625
 ---

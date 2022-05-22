@@ -2,10 +2,10 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ .Values.envName }}-insights-api-konturlabs-com
-  namespace: sandbox-isemichastnov
+  namespace: {{ .Values.envName }}-insights-api
   labels:
     app.kubernetes.io/name: insights-api
-    app.kubernetes.io/instance: insights-api-{{ .Values.envName }}
+    app.kubernetes.io/instance: {{ .Values.envName }}-insights-api
     app.kubernetes.io/version: {{ .Chart.Version }}
     app.kubernetes.io/managed-by: "Helm"
     stage: {{ .Values.envName }}

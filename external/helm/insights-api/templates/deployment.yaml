@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: insights-api-{{ .Values.envName }}
-  namespace: sandbox-isemichastnov
+  name: {{ .Values.envName }}-insights-api
+  namespace: {{ .Values.envName }}-insights-api
   labels:
     app.kubernetes.io/name: insights-api
-    app.kubernetes.io/instance: insights-api-{{ .Values.envName }}
+    app.kubernetes.io/instance: {{ .Values.envName }}-insights-api
     app.kubernetes.io/version: {{ .Chart.Version }}
     app.kubernetes.io/managed-by: "Helm"
     stage: {{ .Values.envName }}
@@ -16,7 +16,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: insights-api
-      app.kubernetes.io/instance: insights-api-{{ .Values.envName }}
+      app.kubernetes.io/instance: {{ .Values.envName }}-insights-api
       app.kubernetes.io/version: {{ .Chart.Version }}
       app.kubernetes.io/managed-by: "Helm"
       stage: {{ .Values.envName }}
@@ -31,7 +31,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: insights-api
-        app.kubernetes.io/instance: insights-api-{{ .Values.envName }}
+        app.kubernetes.io/instance: {{ .Values.envName }}-insights-api
         app.kubernetes.io/version: {{ .Chart.Version }}
         app.kubernetes.io/managed-by: "Helm"
         stage: {{ .Values.envName }}
@@ -59,9 +59,9 @@ spec:
               value: http://$(MY_NODE_NAME):4317
           envFrom:
             - configMapRef:
-                name: insights-api-{{ .Values.envName }}
+                name: {{ .Values.envName }}-insights-api
             - secretRef:
-                name: insights-api-{{ .Values.envName }} #TODO must contain SPRING_DATASOURCE_PASSWORD
+                name: {{ .Values.envName }}-insights-api #TODO must contain SPRING_DATASOURCE_PASSWORD
           readinessProbe:
             httpGet:
               path: /insights-api/actuator/health/readiness
