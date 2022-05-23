@@ -17,7 +17,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: insights-api
       app.kubernetes.io/instance: {{ .Values.envName }}-insights-api
-      app.kubernetes.io/version: {{ .Chart.Version }}
+      #don't add app.kubernetes.io/version
       app.kubernetes.io/managed-by: "Helm"
       stage: {{ .Values.envName }}
   replicas: 2
@@ -38,9 +38,6 @@ spec:
       annotations:
         meta.helm.sh/release-name: {{ .Release.Name }}
         meta.helm.sh/release-namespace: {{ .Release.Namespace }}
-        prometheus.io/scrape: 'true'
-        prometheus.io/port: '8625'
-        prometheus.io/path: /insights-api/actuator/prometheus
     spec:
       containers:
         - name: insights-api
@@ -64,9 +61,9 @@ spec:
                 name: {{ .Values.envName }}-insights-api #TODO must contain SPRING_DATASOURCE_PASSWORD
           readinessProbe:
             httpGet:
-              path: /insights-api/actuator/health/readiness
+              path: /health/readiness
               port: 8625
-            failureThreshold: 1 #todo test
-            periodSeconds: 60 #todo longer?
+            failureThreshold: 1
+            periodSeconds: 60
             initialDelaySeconds: 30
 ---

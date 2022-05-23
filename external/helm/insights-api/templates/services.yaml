@@ -18,11 +18,12 @@ spec:
   selector:
     app.kubernetes.io/name: insights-api
     app.kubernetes.io/instance: {{ .Values.envName }}-insights-api
-    app.kubernetes.io/version: {{ .Chart.Version }}
+    #don't add app.kubernetes.io/version
     app.kubernetes.io/managed-by: "Helm"
     stage: {{ .Values.envName }}
   ports:
-    - port: 8625
+    - name: main
+      port: 8625
       targetPort: 8625
       protocol: TCP
 ---
@@ -43,7 +44,6 @@ metadata:
 spec:
   type: ExternalName
   externalName: {{ .Values.databaseHost }}
-  #  externalName: docker.for.mac.host.internal #todo for local dev
   ports:
     - port: 5432
 ---

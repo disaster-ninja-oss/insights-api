@@ -1,6 +1,6 @@
 server:
   servlet:
-    contextPath: /insights-api
+    contextPath: /
   port: 8625
   shutdown: graceful
 
@@ -59,6 +59,9 @@ management:
     web:
       exposure:
         include: health, info, prometheus
+      base-path: /
+      path-mapping:
+        prometheus: metrics
 
 retry:
   functionRequest:
