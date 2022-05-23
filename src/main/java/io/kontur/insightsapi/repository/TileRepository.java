@@ -14,8 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class TileRepository {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
     private final QueryFactory queryFactory;
-    @Value("classpath:get_tile_mvt.sql")
+
+    @Value("classpath:/sql.queries/get_tile_mvt.sql")
     private Resource getTileMvtResource;
 
     public byte[] getTileMvt(Integer z, Integer x, Integer y){
