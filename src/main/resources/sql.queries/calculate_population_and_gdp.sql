@@ -1,24 +1,5 @@
---liquibase formatted sql
---changeset insights-api:calculate_population_and_gdp_for_wkt splitStatements:false stripComments:false endDelimiter:; runOnChange:true
-drop function if exists calculate_population_and_gdp(text);
-
-create or replace function calculate_population_and_gdp(geometry_string text)
-    returns table
-            (
-                population double precision,
-                urban      double precision,
-                gdp        double precision,
-                type       text
-            )
-    language sql
-    stable
-    strict
-    parallel safe
-    cost 10000
-as
-$$
 with validated_input as materialized (
-    select calculate_validated_input(geometry_string) as geom
+    select calculate_validated_input(:geometry) as geom
 ),
      distinct_h3 as (
          select distinct on (h3) population,
@@ -52,4 +33,3 @@ select sum(dh.population * dh.area)                  as population,
        sum(dh.gdp * dh.area)                         as gdp,
        'population'                                  as type
 from distinct_h3_with_area dh;
-$$;

@@ -55,11 +55,6 @@ management:
       exposure:
         include: health, info, prometheus
 
-retry:
-  functionRequest:
-    delay: 1000
-    multiplier: 2
-
 bivatiateMatrix:
   highCorrelationLevel: 0.75
 
