@@ -1,8 +1,0 @@
-#TODO apply this for local minikube testing
-#helm upgrade --install my-prometheus --set-file extraScrapeConfigs=extraScrapeConfigs.yaml prometheus-community/prometheus
-extraScrapeConfigs: |
-  - job_name: 'insights-api-metrics'
-    scrape_interval: 120s
-    metrics_path: /insights-api/actuator/prometheus
-    kubernetes_sd_configs:
-      - role: endpoints
