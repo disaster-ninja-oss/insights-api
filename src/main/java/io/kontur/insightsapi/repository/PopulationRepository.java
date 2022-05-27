@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.repository;
 
-import com.google.common.collect.Lists;
 import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.model.OsmQuality;
@@ -29,11 +28,14 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class PopulationRepository {
 
-    @Value("classpath:population_humanitarian_impact.sql")
-    Resource populationHumanitarianImpact;
+    @Value("classpath:/sql.queries/population_humanitarian_impact.sql")
+    private Resource populationHumanitarianImpact;
 
-    @Value("classpath:population_osm.sql")
-    Resource populationOsm;
+    @Value("classpath:/sql.queries/population_osm.sql")
+    private Resource populationOsm;
+
+    @Value("classpath:/sql.queries/population_urbancore.sql")
+    private Resource populationUrbanCore;
 
     private final QueryFactory queryFactory;
 
@@ -57,8 +59,6 @@ public class PopulationRepository {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Helper helper;
-    @Value("classpath:population_urbancore.sql")
-    Resource populationUrbanCore;
 
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
@@ -177,9 +177,12 @@ public class PopulationRepository {
             logger.error(error, e);
             throw new DataAccessResourceFailureException(error, e);
         } catch (EmptyResultDataAccessException e) {
-            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, geojson);
-            logger.error(error, e);
-            throw new EmptyResultDataAccessException(error, 1);
+            //result may be empty here
+            logger.error("empty result for geometry -> " + geojson);
+            return UrbanCore.builder()
+                    .urbanCoreAreaKm2(new BigDecimal(0))
+                    .urbanCorePopulation(new BigDecimal(0))
+                    .totalPopulatedAreaKm2(new BigDecimal(0)).build();
         } catch (Exception e) {
             String error = String.format(DatabaseUtil.ERROR_SQL, geojson);
             logger.error(error, e);

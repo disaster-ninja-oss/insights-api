@@ -1,36 +1,28 @@
 package io.kontur.insightsapi.configuration;
 
-import org.springframework.boot.actuate.trace.http.HttpTraceRepository;
-import org.springframework.boot.actuate.trace.http.InMemoryHttpTraceRepository;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-
-import java.util.Collections;
 
 @Configuration
 public class WebConfig {
 
     @Bean
-    public Docket productApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("io.kontur.insightsapi.controller"))
-                .build()
-                .apiInfo(apiInfo());
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(apiInfo());
     }
 
-    private ApiInfo apiInfo() {
-        return new ApiInfo(
-                "Population API",
-                "HTTP API for population provided by Kontur",
-                "0.1",
-                "https://www.kontur.io/about/#contact",
-                new Contact("Kontur", "http://kontur.io", "hello@kontur.io"),
-                "License of API", "https://www.kontur.io/about/#contact", Collections.emptyList());
+    private Info apiInfo() {
+        return new Info()
+                .title("Insights API")
+                .description("Technical API for Insights service. Deprecated HTTP API for population provided by Kontur")
+                .version("0.1")
+                .termsOfService("https://www.kontur.io/about/#footer")
+                .contact(new Contact().name("Kontur").url("http://kontur.io").email("hello@kontur.io"))
+                .license(new License().name("License of API").url("https://www.kontur.io/about/#footer"));
     }
 }
