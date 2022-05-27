@@ -45,5 +45,6 @@ spec:
   type: ExternalName
   externalName: {{ .Values.databaseHost }}
   ports:
-    - port: 5432
+    - port: {{ .Values.databasePort }}
+      protocol: TCP
 ---

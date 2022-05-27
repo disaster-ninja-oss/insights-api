@@ -290,6 +290,7 @@
                         <mainClass>io.kontur.insightsapi.InsightsApiApplication</mainClass>
                         <jvmFlags>
                             <jvmFlag>-javaagent:/opentelemetry/opentelemetry-javaagent.jar</jvmFlag>
+                            <jvmFlag>-Dlogging.config=classpath:logback-stdout-json.xml</jvmFlag>
                         </jvmFlags>
                     </container>
                     <from>

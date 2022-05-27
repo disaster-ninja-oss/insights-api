@@ -3,3 +3,4 @@
 # Declare variables to be passed into your templates.
 envName: dev
 databaseHost: docker.for.mac.host.internal
+databasePort: 8900
