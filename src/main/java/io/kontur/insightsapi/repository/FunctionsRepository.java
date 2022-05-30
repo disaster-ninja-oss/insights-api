@@ -1,7 +1,6 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.FunctionArgs;
-import io.kontur.insightsapi.exception.EmptySqlQueryAnswer;
 import io.kontur.insightsapi.model.FunctionResult;
 import io.kontur.insightsapi.service.cacheable.FunctionsService;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +36,6 @@ public class FunctionsRepository implements FunctionsService {
 
     private final QueryFactory queryFactory;
 
-    @Transactional(readOnly = true)
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
         List<String> params = args.stream()
                 .map(this::createFunctionsForSelect)
@@ -49,8 +47,6 @@ public class FunctionsRepository implements FunctionsService {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.addAll(createFunctionResultList(args, rs));
             }));
-        } catch (EmptySqlQueryAnswer e) {
-            throw e;
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geojson);
             logger.error(error, e);

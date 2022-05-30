@@ -6,8 +6,6 @@
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
     <include  file="calculate_validated_input.sql" relativeToChangelogFile="true"/>
-    <include  file="calculate_area_resolution.sql" relativeToChangelogFile="true"/>
-    <include  file="calculate_area_resolution_intersects_fix.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_area_resolution_performance_fix.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
