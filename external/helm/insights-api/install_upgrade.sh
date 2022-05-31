@@ -16,9 +16,9 @@ echo "kubectl $KUBECTL_OPTS config set users.$USER.client-certificate-data (secr
 kubectl $KUBECTL_OPTS config set users.$USER.client-certificate-data $CLIENT_CERT
 
 #render templates to save as Gitlab job artifacts
-echo "helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > manifests.yaml"
-helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > manifests.yaml
+echo "helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > pre-manifests.yaml"
+helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > pre-manifests.yaml
 
 #install or upgrade the release
-echo "kubectl $KUBECTL_OPTS apply -f manifests.yaml"
-kubectl $KUBECTL_OPTS apply -f manifests.yaml
+echo "helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES > manifests.yaml"
+helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES > manifests.yaml

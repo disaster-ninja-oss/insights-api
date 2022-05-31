@@ -81,6 +81,7 @@ deploy-k8s-dev:
     name: rendered-helm-manifests
     when: always
     paths:
+      - 'pre-manifests.yaml'
       - 'manifests.yaml'
 
 deploy-k8s-test:
@@ -104,6 +105,7 @@ deploy-k8s-test:
     name: rendered-helm-manifests
     when: always
     paths:
+      - 'pre-manifests.yaml'
       - 'manifests.yaml'
 
 deploy-k8s-prod:
@@ -129,6 +131,7 @@ deploy-k8s-prod:
     name: rendered-helm-manifests
     when: always
     paths:
+      - 'pre-manifests.yaml'
       - 'manifests.yaml'
 
 deploy-dev:
