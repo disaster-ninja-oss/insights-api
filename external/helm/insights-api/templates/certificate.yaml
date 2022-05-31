@@ -15,7 +15,7 @@ metadata:
 spec:
   secretName: {{ .Values.envName }}-insights-api-k8s-01-konturlabs-com-tls
   issuerRef:
-    name: letsencrypt-production #use letsencrypt-staging for testing
+    name: letsencrypt-staging #use letsencrypt-staging for testing
     kind: ClusterIssuer
     group: cert-manager.io
   commonName: {{ .Values.envName }}-insights-api.k8s-01.konturlabs.com
