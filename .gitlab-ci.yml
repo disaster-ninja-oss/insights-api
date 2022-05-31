@@ -79,6 +79,7 @@ deploy-k8s-dev:
     - build-container
   artifacts:
     name: rendered-helm-manifests
+    when: always
     paths:
       - 'manifests.yaml'
 
@@ -101,6 +102,7 @@ deploy-k8s-test:
     - build-container
   artifacts:
     name: rendered-helm-manifests
+    when: always
     paths:
       - 'manifests.yaml'
 
@@ -125,6 +127,7 @@ deploy-k8s-prod:
     - build-container
   artifacts:
     name: rendered-helm-manifests
+    when: always
     paths:
       - 'manifests.yaml'
 
