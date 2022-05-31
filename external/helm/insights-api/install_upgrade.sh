@@ -1,6 +1,6 @@
 CHART_PATH='./external/helm/insights-api/'
 KUBECFG_FILE="./external/kubeconfig.yaml"
-#STAGE=$1 #TODO test it's passed from CI job
+#STAGE is passed from CI job
 RELEASE=$STAGE-insights-api
 USER=$STAGE-insights-api@kontur.io
 VALUES="$CHART_PATH/values/values-$STAGE.yaml"
@@ -20,5 +20,5 @@ echo "helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > manifests.yaml"
 helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > manifests.yaml
 
 #install or upgrade the release
-echo "helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES"
-helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES
+echo "kubectl $KUBECTL_OPTS apply -f manifests.yaml"
+kubectl $KUBECTL_OPTS apply -f manifests.yaml

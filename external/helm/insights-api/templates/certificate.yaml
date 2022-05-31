@@ -13,12 +13,12 @@ metadata:
     meta.helm.sh/release-name: {{ .Release.Name }}
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
 spec:
-  secretName: {{ .Values.envName }}-insights-api-k8s-01-konturlabs-com-tls
+  secretName: {{ .Values.envName }}-insights-api-tls
   issuerRef:
     name: letsencrypt-staging #use letsencrypt-staging for testing
     kind: ClusterIssuer
     group: cert-manager.io
-  commonName: {{ .Values.envName }}-insights-api.k8s-01.konturlabs.com
+  commonName: {{ .Values.envName }}-insights-api-tls
   dnsNames:
     - {{ .Values.envName }}-insights-api.k8s-01.konturlabs.com
 ---

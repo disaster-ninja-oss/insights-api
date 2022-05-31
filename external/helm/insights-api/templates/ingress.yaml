@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.envName }}-insights-api-k8s-01-konturlabs-com
+  name: {{ .Values.envName }}-insights-api
   namespace: {{ .Values.envName }}-insights-api
   labels:
     app.kubernetes.io/name: insights-api
@@ -17,7 +17,7 @@ spec:
   tls:
     - hosts:
         - {{ .Values.envName }}-insights-api.k8s-01.konturlabs.com
-      secretName: {{ .Values.envName }}-insights-api-k8s-01-konturlabs-com-tls
+      secretName: {{ .Values.envName }}-insights-api-tls
   ingressClassName: nginx
   rules:
     - host: {{ .Values.envName }}-insights-api.k8s-01.konturlabs.com
