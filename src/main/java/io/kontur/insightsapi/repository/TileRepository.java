@@ -1,12 +1,17 @@
 package io.kontur.insightsapi.repository;
 
+import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -15,16 +20,28 @@ public class TileRepository {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
+    private final JdbcTemplate jdbcTemplate;
+
     private final QueryFactory queryFactory;
 
     @Value("classpath:/sql.queries/get_tile_mvt.sql")
     private Resource getTileMvtResource;
 
-    public byte[] getTileMvt(Integer z, Integer x, Integer y){
+    public byte[] getTileMvt(Integer z, Integer x, Integer y, List<String> bivariateIndicators) {
+        var bivariateIndicatorsForQuery = Lists.newArrayList();
+        for (String current : bivariateIndicators) {
+            bivariateIndicatorsForQuery.add("coalesce(" + current + ", 0) as " + current);
+        }
         var paramSource = new MapSqlParameterSource("z", z);
         paramSource.addValue("x", x);
         paramSource.addValue("y", y);
-        return namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(getTileMvtResource), paramSource,
+        var query = String.format(queryFactory.getSql(getTileMvtResource), StringUtils.join(bivariateIndicatorsForQuery, ", "));
+        return namedParameterJdbcTemplate.queryForObject(query, paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
+    }
+
+    public List<String> getBivariateIndicators() {
+        var query = "select param_id from bivariate_indicators";
+        return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
     }
 }
