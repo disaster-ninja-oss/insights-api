@@ -27,7 +27,7 @@ public class TileRepository {
     @Value("classpath:/sql.queries/get_tile_mvt.sql")
     private Resource getTileMvtResource;
 
-    public byte[] getTileMvt(Integer z, Integer x, Integer y, List<String> bivariateIndicators) {
+    public byte[] getBivariateTileMvt(Integer z, Integer x, Integer y, List<String> bivariateIndicators) {
         var bivariateIndicatorsForQuery = Lists.newArrayList();
         for (String current : bivariateIndicators) {
             bivariateIndicatorsForQuery.add("coalesce(" + current + ", 0) as " + current);

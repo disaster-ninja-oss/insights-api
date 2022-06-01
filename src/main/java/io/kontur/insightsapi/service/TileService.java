@@ -10,9 +10,9 @@ public class TileService {
 
     private final TileRepository tileRepository;
 
-    public byte[] getTileMvt(Integer z, Integer x, Integer y) {
+    public byte[] getBivariateTileMvt(Integer z, Integer x, Integer y) {
         var bivariateIndicators = tileRepository.getBivariateIndicators();
-        return tileRepository.getTileMvt(z, x, y, bivariateIndicators);
+        return tileRepository.getBivariateTileMvt(z, x, y, bivariateIndicators);
     }
 
 }

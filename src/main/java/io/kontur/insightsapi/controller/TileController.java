@@ -28,10 +28,10 @@ public class TileController {
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @GetMapping(value = "/bivariate/v1/{z}/{x}/{y}.mvt", produces = "application/vnd.mapbox-vector-tile")
-    public byte[] getTileMvt(@PathVariable Integer z, @PathVariable Integer x, @PathVariable Integer y) {
+    public byte[] getBivariateTileMvt(@PathVariable Integer z, @PathVariable Integer x, @PathVariable Integer y) {
         if (z < 0 || z > 8 || x < 0 || x > (Math.pow(2, z) - 1) || y < 0 || y > (Math.pow(2, z) - 1)) {
             return new byte[0];
         }
-        return tileService.getTileMvt(z, x, y);
+        return tileService.getBivariateTileMvt(z, x, y);
     }
 }
