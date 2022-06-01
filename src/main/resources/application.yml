@@ -65,11 +65,6 @@ management:
       path-mapping:
         prometheus: metrics
 
-retry:
-  functionRequest:
-    delay: 1000
-    multiplier: 2
-
 bivatiateMatrix:
   highCorrelationLevel: 0.75
 

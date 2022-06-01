@@ -3,6 +3,8 @@ package io.kontur.insightsapi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.wololo.geojson.*;
 
@@ -14,22 +16,26 @@ public class GeometryTransformer {
 
     private final ObjectMapper objectMapper;
 
-    private final String ERROR_MESSAGE = "No geometry provided";
+    private static final String ERROR_MESSAGE = "No geometry provided";
+    private final Logger logger = LoggerFactory.getLogger(GeometryTransformer.class);
 
     public String transform(String geoJsonString, Boolean argNullCheck) throws JsonProcessingException {
+        GeoJSON geoJSON;
         try {
-            var geoJSON = GeoJSONFactory.create(geoJsonString);
-            var type = geoJSON.getType();
-            switch (type) {
-                case ("FeatureCollection"):
-                    return transformToGeometryCollection(geoJSON, argNullCheck);
-                case ("Feature"):
-                    return transformToGeometry(geoJSON, argNullCheck);
-                default:
-                    return geoJsonString;
-            }
+            geoJSON = GeoJSONFactory.create(geoJsonString);
         } catch (Exception e) {
-            throw new IllegalArgumentException("provided geojson is not valid");
+            String error = String.format("Provided geojson is not valid. Geojson: %s", geoJsonString);
+            logger.error(error, e);
+            throw new IllegalArgumentException(error, e);
+        }
+        var type = geoJSON.getType();
+        switch (type) {
+            case ("FeatureCollection"):
+                return transformToGeometryCollection(geoJSON, argNullCheck);
+            case ("Feature"):
+                return transformToGeometry(geoJSON, argNullCheck);
+            default:
+                return geoJsonString;
         }
     }
 
@@ -44,6 +50,7 @@ public class GeometryTransformer {
         if (argNullCheck) {
             return null;
         } else {
+            logger.error(ERROR_MESSAGE);
             throw new NullPointerException(ERROR_MESSAGE);
         }
     }
@@ -56,6 +63,7 @@ public class GeometryTransformer {
         if (argNullCheck) {
             return null;
         } else {
+            logger.error(ERROR_MESSAGE);
             throw new NullPointerException(ERROR_MESSAGE);
         }
     }

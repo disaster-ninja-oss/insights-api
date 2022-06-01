@@ -1,7 +1,6 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.FunctionArgs;
-import io.kontur.insightsapi.exception.EmptySqlQueryAnswer;
 import io.kontur.insightsapi.model.FunctionResult;
 import io.kontur.insightsapi.service.cacheable.FunctionsService;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +36,6 @@ public class FunctionsRepository implements FunctionsService {
 
     private final QueryFactory queryFactory;
 
-    @Retryable(value = EmptySqlQueryAnswer.class, backoff = @Backoff(delayExpression = "${retry.functionRequest.delay}",
-            multiplierExpression = "${retry.functionRequest.multiplier}"))
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
         List<String> params = args.stream()
                 .map(this::createFunctionsForSelect)
@@ -53,32 +47,12 @@ public class FunctionsRepository implements FunctionsService {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.addAll(createFunctionResultList(args, rs));
             }));
-            //null values may exist
-            //checkResultForNull(result);
-        } catch (EmptySqlQueryAnswer e) {
-            throw e;
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s", geojson);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
         }
         return result;
-    }
-
-    @Recover
-    public List<FunctionResult> calculateFunctionsResultFallback(Exception exception, String geojson, List<FunctionArgs> args) {
-        String error = "Sql query answer is empty after several attempts";
-        logger.error(error);
-        throw new EmptySqlQueryAnswer(error);
-    }
-
-    private void checkResultForNull(List<FunctionResult> result) {
-        boolean isResultNull = result.stream().allMatch(r -> r.getResult() == null);
-        if (isResultNull) {
-            String message = "Sql query answer is empty";
-            logger.warn(message);
-            throw new EmptySqlQueryAnswer(message);
-        }
     }
 
     private String createFunctionsForSelect(FunctionArgs functionArgs) {
