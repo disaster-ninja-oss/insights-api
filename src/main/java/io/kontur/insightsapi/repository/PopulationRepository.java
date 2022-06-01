@@ -28,6 +28,9 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class PopulationRepository {
 
+    @Value("classpath:/sql.queries/calculate_population_and_gdp.sql")
+    private Resource calculatePopulationAndAGdp;
+
     @Value("classpath:/sql.queries/population_humanitarian_impact.sql")
     private Resource populationHumanitarianImpact;
 
@@ -63,12 +66,8 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
-        var query = """
-                select type, population, urban, gdp
-                from calculate_population_and_gdp(:geometry)
-                """.trim();
         try {
-            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
+            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(calculatePopulationAndAGdp), paramSource, (rs, rowNum) ->
                     CalculatePopulationDto.builder()
                             .population(rs.getBigDecimal("population"))
                             .gdp(rs.getBigDecimal("gdp"))
