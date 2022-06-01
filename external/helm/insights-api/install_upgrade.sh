@@ -20,5 +20,5 @@ echo "helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > pre-manifests.y
 helm $HELM_OPTS template $RELEASE $CHART_PATH -f $VALUES > pre-manifests.yaml
 
 #install or upgrade the release
-echo "helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES > manifests.yaml"
-helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES > manifests.yaml
+echo "helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES -o yaml > manifests.yaml"
+helm $HELM_OPTS upgrade --install $RELEASE $CHART_PATH -f $VALUES -o yaml > manifests.yaml
