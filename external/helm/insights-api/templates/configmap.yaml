@@ -14,7 +14,7 @@ metadata:
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
 data:
   SPRING_PROFILES_ACTIVE: {{ .Values.envName }}
-  SPRING_DATASOURCE_URL: 'jdbc:postgresql://{{ .Values.envName }}-insights-api-database:{{ .Values.databasePort }}/insights-api'
+  SPRING_DATASOURCE_URL: 'jdbc:postgresql://{{ .Values.databaseHost }}:{{ .Values.databasePort }}/insights-api'
   SPRING_DATASOURCE_USERNAME: insights-api
   SERVER_SERVLET_CONTEXT_PATH: / #TODO remove once changed in application.yaml
   #do not use uppercase var names for hikari properties otherwise startup fails with smth like 'The configuration of the pool is sealed once started.'
