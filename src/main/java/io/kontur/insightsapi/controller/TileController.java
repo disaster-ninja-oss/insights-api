@@ -16,9 +16,9 @@ public class TileController {
 
     private final TileService tileService;
 
-    @Operation(summary = "Get tile using z, x, y.",
+    @Operation(summary = "Get bivariate mvt tile using z, x, y and indicator class.",
             tags = {"Tiles"},
-            description = "Get tile using z, x, y.",
+            description = "Get bivariate mvt tile using z, x, y and indicator class.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful operation",
                             content = @Content(mediaType = "application/vnd.mapbox-vector-tile")),
