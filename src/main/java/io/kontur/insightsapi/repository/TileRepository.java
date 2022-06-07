@@ -11,7 +11,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -40,8 +42,19 @@ public class TileRepository {
                 (rs, rowNum) -> rs.getBytes("tile"));
     }
 
-    public List<String> getBivariateIndicators() {
+    public List<String> getAllBivariateIndicators() {
         var query = "select param_id from bivariate_indicators";
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
+    }
+
+    public List<String> getGeneralBivariateIndicators() {
+        Set<String> result = new HashSet<>();
+        var query = "select x_numerator, x_denominator, y_numerator, y_denominator from bivariate_overlays";
+        jdbcTemplate.query(query, (rs, rowNum) ->
+                result.addAll(List.of(rs.getString("x_numerator"),
+                        rs.getString("x_denominator"),
+                        rs.getString("y_numerator"),
+                        rs.getString("y_denominator"))));
+        return result.stream().toList();
     }
 }
