@@ -3,7 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: {{ .Values.envName }}-insights-api
-  namespace: {{ .Values.envName }}-insights-api
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: insights-api
     app.kubernetes.io/instance: {{ .Values.envName }}-insights-api
