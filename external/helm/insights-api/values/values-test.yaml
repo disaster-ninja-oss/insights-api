@@ -4,3 +4,5 @@
 envName: test
 databaseHost: london.k8s-01.kontur.io.
 databasePort: 5432
+
+dnsNameOuter: test-apps.konturlabs.com
