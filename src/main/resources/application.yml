@@ -1,6 +1,6 @@
 server:
   servlet:
-    contextPath: /insights-api #TODO change to / and remove SERVER_SERVLET_CONTEXT_PATH from configmap once legacy envs are stopped
+    contextPath: /insights-api
   port: 8625
   shutdown: graceful
 
