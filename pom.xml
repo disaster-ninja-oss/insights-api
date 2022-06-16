@@ -41,7 +41,7 @@
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
         <maven-assembly-plugin.release.version>3.3.0</maven-assembly-plugin.release.version>
 
-        <jib.source.image>openjdk:16-alpine</jib.source.image>
+        <jib.source.image>openjdk:17-alpine</jib.source.image>
     </properties>
 
     <dependencies>
@@ -291,6 +291,9 @@
                         <jvmFlags>
                             <jvmFlag>-javaagent:/opentelemetry/opentelemetry-javaagent.jar</jvmFlag>
                             <jvmFlag>-Dlogging.config=classpath:logback-stdout-json.xml</jvmFlag>
+                            <jvmFlag>-server</jvmFlag>
+                            <jvmFlag>-Xmx3200m</jvmFlag>
+                            <jvmFlag>-Xms3200m</jvmFlag>
                         </jvmFlags>
                     </container>
                     <from>

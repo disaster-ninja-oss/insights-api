@@ -46,7 +46,7 @@ spec:
           imagePullPolicy: Always #don't use Always for local minikube - otherwise it tries reloading from remote
           resources:
             requests:
-              cpu: "1" #TODO test
+              cpu: "1"
               memory: "6G"
             {{ if eq .Values.envName "prod" }}
             limits:
