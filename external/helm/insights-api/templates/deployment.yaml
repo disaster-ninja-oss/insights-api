@@ -48,12 +48,8 @@ spec:
             requests:
               cpu: "1"
               memory: "6G"
-            {{ if eq .Values.envName "prod" }}
             limits:
               memory: "12G"
-            {{ else }}
-            #resource limits are not specified for non-prod stages so that they have lower priority
-            {{ end }}
           env:
             - name: OTEL_SERVICE_NAME
               valueFrom:
