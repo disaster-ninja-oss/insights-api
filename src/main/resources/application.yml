@@ -17,7 +17,7 @@ spring:
       maximum-pool-size: 10
   jdbc:
     template:
-      query-timeout: 300
+      query-timeout: 1800
   liquibase:
     change-log: classpath:db/changelog/master-changelog.xml
 
@@ -27,7 +27,7 @@ graphql:
     tracing-enabled: false
     actuator-metrics: true
     async:
-      timeout: 600s
+      timeout: 1800s
 
 management:
   metrics:
