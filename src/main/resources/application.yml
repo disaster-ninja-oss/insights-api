@@ -4,6 +4,8 @@ server:
   port: 8625
 
 spring:
+  main:
+    lazy-initialization: true
   datasource:
     driver-class-name: org.postgresql.Driver
     url: 'jdbc:postgresql://localhost:5432/postgres'
@@ -21,6 +23,9 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/master-changelog.xml
 
+springdoc:
+  packages-to-scan: io.kontur.insightsapi.controller
+
 graphql:
   servlet:
     corsEnabled: false
@@ -28,6 +33,8 @@ graphql:
     actuator-metrics: true
     async:
       timeout: 1800s
+  tools:
+    schema-location-pattern: graphql/*.graphqls
 
 management:
   metrics:
