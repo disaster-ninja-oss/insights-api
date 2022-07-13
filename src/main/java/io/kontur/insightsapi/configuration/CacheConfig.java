@@ -18,7 +18,7 @@ import org.springframework.data.redis.serializer.SerializationException;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class CacheConfig extends CachingConfigurerSupport {
     public KeyGenerator customStringKeyGenerator() {
         return (Object target, Method method, Object... params) -> {
             if (params.length == 1 && params[0] instanceof String) {
-                return hashFunction.hashString((String) params[0], Charset.defaultCharset()).toString();
+                return hashFunction.hashString((String) params[0], StandardCharsets.UTF_8).toString();
             }
             throw new IllegalArgumentException("Wrong params for StringKeyGenerator");
         };
@@ -42,8 +42,8 @@ public class CacheConfig extends CachingConfigurerSupport {
     public KeyGenerator customStringListKeyGenerator() {
         return (Object target, Method method, Object... params) -> {
             if (params.length == 2 && params[0] instanceof String && params[1] instanceof List) {
-                return hashFunction.hashString((String) params[0], Charset.defaultCharset()) + "_"
-                        + hashFunction.hashString(params[1].toString(), Charset.defaultCharset());
+                return hashFunction.hashString((String) params[0], StandardCharsets.UTF_8) + "_"
+                        + hashFunction.hashString(params[1].toString(), StandardCharsets.UTF_8);
             }
             throw new IllegalArgumentException("Wrong params for StringListKeyGenerator");
         };
@@ -53,8 +53,8 @@ public class CacheConfig extends CachingConfigurerSupport {
     public KeyGenerator customStringStringKeyGenerator() {
         return (Object target, Method method, Object... params) -> {
             if (params.length == 2 && params[0] instanceof String && params[1] instanceof String) {
-                return hashFunction.hashString((String) params[0], Charset.defaultCharset()) + "_"
-                        + hashFunction.hashString((String) params[1], Charset.defaultCharset());
+                return hashFunction.hashString((String) params[0], StandardCharsets.UTF_8) + "_"
+                        + hashFunction.hashString((String) params[1], StandardCharsets.UTF_8);
             }
             throw new IllegalArgumentException("Wrong params for StringStringKeyGenerator");
         };
@@ -64,7 +64,7 @@ public class CacheConfig extends CachingConfigurerSupport {
     public KeyGenerator customListKeyGenerator() {
         return (Object target, Method method, Object... params) -> {
             if (params.length == 1 && params[0] instanceof List) {
-                return hashFunction.hashString(params[0].toString(), Charset.defaultCharset());
+                return hashFunction.hashString(params[0].toString(), StandardCharsets.UTF_8);
             }
             throw new IllegalArgumentException("Wrong params for ListKeyGenerator");
         };
@@ -74,9 +74,9 @@ public class CacheConfig extends CachingConfigurerSupport {
     public KeyGenerator customStringStringListKeyGenerator() {
         return (Object target, Method method, Object... params) -> {
             if (params.length == 3 && params[0] instanceof String && params[1] instanceof String && params[2] instanceof List) {
-                return hashFunction.hashString((String) params[0], Charset.defaultCharset()) + "_"
-                        + hashFunction.hashString((String) params[1], Charset.defaultCharset()) + "_"
-                        + hashFunction.hashString(params[2].toString(), Charset.defaultCharset());
+                return hashFunction.hashString((String) params[0], StandardCharsets.UTF_8) + "_"
+                        + hashFunction.hashString((String) params[1], StandardCharsets.UTF_8) + "_"
+                        + hashFunction.hashString(params[2].toString(), StandardCharsets.UTF_8);
             }
             throw new IllegalArgumentException("Wrong params for StringStringListKeyGenerator");
         };
