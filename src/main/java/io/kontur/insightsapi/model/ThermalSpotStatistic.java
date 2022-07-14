@@ -2,6 +2,7 @@ package io.kontur.insightsapi.model;
 
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Getter
@@ -9,7 +10,7 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ThermalSpotStatistic {
+public class ThermalSpotStatistic implements Serializable {
 
     private BigDecimal industrialAreaKm2;
 

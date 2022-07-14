@@ -1,25 +1,15 @@
 package io.kontur.insightsapi.configuration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
-import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.data.redis.serializer.SerializationException;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
 
 @Configuration
@@ -80,40 +70,6 @@ public class CacheConfig extends CachingConfigurerSupport {
             }
             throw new IllegalArgumentException("Wrong params for StringStringListKeyGenerator");
         };
-    }
-
-    @Bean
-    public RedisCacheConfiguration cacheConfiguration(ObjectMapper objectMapper,
-                                                      @Value("${spring.cache.redis.time-to-live}") Integer ttl) {
-        return RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofSeconds(ttl))
-                .disableCachingNullValues()
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new CustomJsonRedisSerializer(objectMapper)));
-    }
-
-    @RequiredArgsConstructor
-    private static class CustomJsonRedisSerializer implements RedisSerializer<Object> {
-
-        private final ObjectMapper objectMapper;
-
-        @Override
-        public byte[] serialize(Object o) throws SerializationException {
-            try {
-                return objectMapper.writeValueAsBytes(o);
-            } catch (JsonProcessingException e) {
-                throw new SerializationException(e.getMessage(), e);
-            }
-        }
-
-        @Override
-        public Object deserialize(byte[] bytes) throws SerializationException {
-            try {
-                return objectMapper.readValue(bytes, Object.class);
-            } catch (IOException e) {
-                throw new SerializationException(e.getMessage(), e);
-            }
-        }
     }
 
 }

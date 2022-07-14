@@ -1,12 +1,14 @@
 package io.kontur.insightsapi.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Getter
 @Setter
-public class AdvancedAnalytics {
+public class AdvancedAnalytics implements Serializable {
 
     private String numerator;
 
