@@ -29,7 +29,7 @@ spring:
       correlation-rate-num-den, correlation-rate-polygon, correlation-rate-num-not-empty-layers, advanced-analytics-all,
       advanced-analytics
     redis:
-      time-to-live: 86400
+      time-to-live: 86400s
   redis:
     host: localhost
     port: 6379

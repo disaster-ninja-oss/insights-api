@@ -4,10 +4,7 @@ import lombok.*;
 import org.wololo.geojson.GeoJSON;
 import org.wololo.geojson.GeoJSONFactory;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.math.BigDecimal;
 
 @Getter
@@ -16,6 +13,9 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HumanitarianImpactDto implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = -931413138083947797L;
 
     private BigDecimal population;
 
@@ -31,6 +31,7 @@ public class HumanitarianImpactDto implements Serializable {
 
     private BigDecimal totalAreaKm2;
 
+    @Serial
     private void readObject(ObjectInputStream aInputStream) throws IOException, ClassNotFoundException {
         population = (BigDecimal) aInputStream.readObject();
         percentage = (String) aInputStream.readObject();
@@ -41,6 +42,7 @@ public class HumanitarianImpactDto implements Serializable {
         totalAreaKm2 = (BigDecimal) aInputStream.readObject();
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream aOutputStream) throws IOException {
         aOutputStream.writeObject(population);
         aOutputStream.writeObject(percentage);
