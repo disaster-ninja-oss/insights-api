@@ -204,6 +204,16 @@ spec:
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           imagePullPolicy: IfNotPresent
+        - name: redis-exporter
+          image: oliver006/redis_exporter:v1.43.0
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+          ports:
+            - name: metrics
+              protocol: TCP
+              containerPort: 9121
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---
