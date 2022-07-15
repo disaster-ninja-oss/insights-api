@@ -3,9 +3,15 @@ package io.kontur.insightsapi.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Getter
 @Setter
-public class PolygonCorrelationRate extends CorrelationRate implements Cloneable {
+public class PolygonCorrelationRate extends CorrelationRate implements Cloneable, Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 3252610813500507339L;
 
     @Override
     public PolygonCorrelationRate clone() {
