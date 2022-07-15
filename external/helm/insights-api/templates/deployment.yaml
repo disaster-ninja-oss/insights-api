@@ -160,7 +160,12 @@ spec:
               value: 'no'
             - name: REDIS_PORT
               value: '6379'
-          resources: {}
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "512M"
+            limits:
+              memory: "1G"
           volumeMounts:
             - name: start-scripts
               mountPath: /opt/bitnami/scripts/start-scripts
