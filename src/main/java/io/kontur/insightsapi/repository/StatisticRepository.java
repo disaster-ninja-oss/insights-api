@@ -105,7 +105,7 @@ public class StatisticRepository implements CorrelationRateService {
     }
 
     @Transactional(readOnly = true)
-    public List<Double> getPolygonCorrelationRateStatisticsBatch(List<NumeratorsDenominatorsDto> dtoList, String polygon) {
+    public List<Double> getPolygonCorrelationRateStatisticsBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", polygon);
         var requests = dtoList.stream()
@@ -128,7 +128,7 @@ public class StatisticRepository implements CorrelationRateService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(List<NumeratorsDenominatorsDto> dtoList, String polygon){
+    public Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList){
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", polygon);
         var distinctFieldsRequests = dtoList.stream()

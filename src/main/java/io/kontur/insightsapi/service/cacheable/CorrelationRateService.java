@@ -12,7 +12,7 @@ public interface CorrelationRateService {
 
     List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForCorrelation();
 
-    List<Double> getPolygonCorrelationRateStatisticsBatch(List<NumeratorsDenominatorsDto> dtoList, String polygon);
+    List<Double> getPolygonCorrelationRateStatisticsBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList);
 
-    Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(List<NumeratorsDenominatorsDto> dtoList, String polygon);
+    Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList);
 }
