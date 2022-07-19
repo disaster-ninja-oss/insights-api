@@ -74,16 +74,20 @@ from
     ( select
           json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
                                       'colors', o.colors, 'order', o.ord,
-                                      'x', jsonb_build_object('label', ax.label, 'quotient',
-                                                              jsonb_build_array(ax.numerator, ax.denominator),
+                                      'x', jsonb_build_object('label', ax.label, 'quotients',
+                                                              jsonb_build_array(
+                                                                      jsonb_build_object('name', bix1.param_id, 'label', bix1.param_label, 'direction', bix1.direction),
+                                                                      jsonb_build_object('name', bix2.param_id, 'label', bix2.param_label, 'direction', bix2.direction)),
                                                               'steps',
                                                               jsonb_build_array(
                                                                   jsonb_build_object('value', ax.min, 'label', ax.min_label),
                                                                   jsonb_build_object('value', ax.p25, 'label', ax.p25_label),
                                                                   jsonb_build_object('value', ax.p75, 'label', ax.p75_label),
                                                                   jsonb_build_object('value', ax.max, 'label', ax.max_label))),
-                                      'y', jsonb_build_object('label', ay.label, 'quotient',
-                                                              jsonb_build_array(ay.numerator, ay.denominator),
+                                      'y', jsonb_build_object('label', ay.label, 'quotients',
+                                                              jsonb_build_array(
+                                                                      jsonb_build_object('name', biy1.param_id, 'label', biy1.param_label, 'direction', biy1.direction),
+                                                                      jsonb_build_object('name', biy2.param_id, 'label', biy2.param_label, 'direction', biy2.direction)),
                                                               'steps',
                                                               jsonb_build_array(
                                                                   jsonb_build_object('value', ay.min, 'label', ay.min_label),
@@ -94,9 +98,17 @@ from
       from
           bivariate_axis     ax,
           bivariate_axis     ay,
-          bivariate_overlays o
+          bivariate_overlays o,
+          bivariate_indicators bix1,
+          bivariate_indicators bix2,
+          bivariate_indicators biy1,
+          bivariate_indicators biy2
       where
-            ax.denominator = o.x_denominator
+            bix1.param_id = o.x_numerator
+        and bix2.param_id = o.x_denominator
+        and biy1.param_id = o.y_numerator
+        and biy2.param_id = o.y_denominator
+        and ax.denominator = o.x_denominator
         and ax.numerator = o.x_numerator
         and ay.denominator = o.y_denominator
         and ay.numerator = o.y_numerator )                                                      ov,

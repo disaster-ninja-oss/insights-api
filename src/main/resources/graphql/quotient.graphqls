@@ -1,0 +1,5 @@
+type Quotient {
+    name: String
+    label: String
+    direction: [[String]]
+}
