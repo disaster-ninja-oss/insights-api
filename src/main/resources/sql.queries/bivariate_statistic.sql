@@ -52,7 +52,9 @@ from
     ( select
           json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
                                       'colors', o.colors, 'order', o.ord,
-                                      'x', jsonb_build_object('label', ax.label, 'quotients',
+                                      'x', jsonb_build_object('label', ax.label,
+                                                              'quotient', jsonb_build_array(ax.numerator, ax.denominator),
+                                                              'quotients',
                                                               jsonb_build_array(
                                                                       jsonb_build_object('name', bix1.param_id, 'label', bix1.param_label, 'direction', bix1.direction),
                                                                       jsonb_build_object('name', bix2.param_id, 'label', bix2.param_label, 'direction', bix2.direction)),
@@ -62,7 +64,9 @@ from
                                                                       jsonb_build_object('value', ax.p25, 'label', ax.p25_label),
                                                                       jsonb_build_object('value', ax.p75, 'label', ax.p75_label),
                                                                       jsonb_build_object('value', ax.max, 'label', ax.max_label))),
-                                      'y', jsonb_build_object('label', ay.label, 'quotients',
+                                      'y', jsonb_build_object('label', ay.label,
+                                                              'quotient', jsonb_build_array(ay.numerator, ay.denominator),
+                                                              'quotients',
                                                               jsonb_build_array(
                                                                       jsonb_build_object('name', biy1.param_id, 'label', biy1.param_label, 'direction', biy1.direction),
                                                                       jsonb_build_object('name', biy2.param_id, 'label', biy2.param_label, 'direction', biy2.direction)),
