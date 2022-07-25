@@ -43,7 +43,15 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         var transformedGeometry = getPolygon(arguments);
 
         //get numr & denm from bivariate_axis & bivariate_indicators size nearly 17k
-        List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = correlationRateService.getNumeratorsDenominatorsForCorrelation();
+        List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = correlationRateService.getNumeratorsDenominatorsForCorrelation()
+                .stream()
+                .sorted(Comparator.comparing(NumeratorsDenominatorsDto::getXLabel)
+                        .thenComparing(NumeratorsDenominatorsDto::getYLabel)
+                        .thenComparing(NumeratorsDenominatorsDto::getXNumerator)
+                        .thenComparing(NumeratorsDenominatorsDto::getXDenominator)
+                        .thenComparing(NumeratorsDenominatorsDto::getYNumerator)
+                        .thenComparing(NumeratorsDenominatorsDto::getYDenominator))
+                .collect(Collectors.toList());;
 
         String finalTransformedGeometry = transformedGeometry;
 
@@ -52,6 +60,12 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                 Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
                         .map(sourceDtoList -> findNumeratorsDenominatorsForNotEmptyLayers(sourceDtoList, finalTransformedGeometry))
                         .flatMap(Collection::stream)
+                        .sorted(Comparator.comparing(NumeratorsDenominatorsDto::getXLabel)
+                                .thenComparing(NumeratorsDenominatorsDto::getYLabel)
+                                .thenComparing(NumeratorsDenominatorsDto::getXNumerator)
+                                .thenComparing(NumeratorsDenominatorsDto::getXDenominator)
+                                .thenComparing(NumeratorsDenominatorsDto::getYNumerator)
+                                .thenComparing(NumeratorsDenominatorsDto::getYDenominator))
                         .collect(Collectors.toList());
 
         //calculate correlation for every bivariate_axis in defined polygon that intersects h3
