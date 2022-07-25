@@ -214,6 +214,14 @@ spec:
             - name: metrics
               protocol: TCP
               containerPort: 9121
+          env:
+            - name: REDIS_ADDR
+              value: redis://localhost:6379
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis
+                  key: redis-password
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
 ---
