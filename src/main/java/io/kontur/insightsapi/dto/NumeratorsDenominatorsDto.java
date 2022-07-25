@@ -10,6 +10,7 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class NumeratorsDenominatorsDto implements Serializable {
 
     @Serial
