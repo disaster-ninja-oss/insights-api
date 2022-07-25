@@ -3,5 +3,6 @@ type Axis {
     steps: [Step],
     quality: Float,
     quotient: [String],
+    quotients: [Quotient],
     parent: [String]
 }

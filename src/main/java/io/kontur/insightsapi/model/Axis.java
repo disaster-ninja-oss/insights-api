@@ -19,6 +19,8 @@ public class Axis implements Cloneable {
 
     private List<String> quotient;
 
+    private List<Quotient> quotients;
+
     private List<String> parent;
 
     @Override
