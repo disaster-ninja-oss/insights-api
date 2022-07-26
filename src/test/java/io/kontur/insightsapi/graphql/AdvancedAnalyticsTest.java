@@ -25,7 +25,7 @@ import java.util.List;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = AdvancedAnalyticsTest.Config.class)
 @TestPropertySource(properties = {
-        "url.local=http://localhost:8625/insights-api/graphql",
+        "url.local=http://localhost:8625/graphql",
         "url.dev=https://test-apps02.konturlabs.com/insights-api/graphql"
 })
 public class AdvancedAnalyticsTest {

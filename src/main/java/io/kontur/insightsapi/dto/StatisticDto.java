@@ -4,12 +4,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Getter
 @Setter
 @JsonInclude(content = JsonInclude.Include.NON_NULL)
-public class StatisticDto {
+public class StatisticDto implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = -389855591374124043L;
 
     private BigDecimal population;
 

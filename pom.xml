@@ -40,6 +40,8 @@
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
         <maven-assembly-plugin.release.version>3.3.0</maven-assembly-plugin.release.version>
+
+        <jib.source.image>openjdk:17-alpine</jib.source.image>
     </properties>
 
     <dependencies>
@@ -59,6 +61,15 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.retry</groupId>
             <artifactId>spring-retry</artifactId>
@@ -145,6 +156,17 @@
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
             <version>${postgresql-testcontainers.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback.contrib</groupId>
+            <artifactId>logback-jackson</artifactId>
+            <version>0.1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback.contrib</groupId>
+            <artifactId>logback-json-classic</artifactId>
+            <version>0.1.5</version>
         </dependency>
 
     </dependencies>
@@ -246,10 +268,139 @@
                     <target>16</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <executions>
+                    <execution>
+                        <id>download-opentelemetry-agent</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>wget</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <url>https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v1.13.1/opentelemetry-javaagent.jar</url>
+                    <unpack>false</unpack>
+                    <outputDirectory>${project.build.sourceDirectory}/../jib/opentelemetry/</outputDirectory>
+                    <md5>72a2f5977750a811d9d34aae58cd9b8a</md5>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>3.2.1</version>
+                <configuration>
+                    <container>
+                        <mainClass>io.kontur.insightsapi.InsightsApiApplication</mainClass>
+                        <jvmFlags>
+                            <jvmFlag>-javaagent:/opentelemetry/opentelemetry-javaagent.jar</jvmFlag>
+                            <jvmFlag>-Dlogging.config=classpath:logback-stdout-json.xml</jvmFlag>
+                            <jvmFlag>-server</jvmFlag>
+                            <jvmFlag>-Xmx3200m</jvmFlag>
+                            <jvmFlag>-Xms3200m</jvmFlag>
+                        </jvmFlags>
+                    </container>
+                    <from>
+                        <image>nexus.kontur.io:8084/library/${jib.source.image}</image>
+                    </from>
+                    <to>
+                        <image>nexus.kontur.io:8085/konturdev/${project.name}:${project.version}</image>
+                    </to>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>default-testResources</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testResources</goal>
+                        </goals>
+                        <configuration>
+                            <propertiesEncoding>UTF-8</propertiesEncoding>
+                            <delimiters>
+                                <delimiter>@</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-resources</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>resources</goal>
+                        </goals>
+                        <configuration>
+                            <propertiesEncoding>UTF-8</propertiesEncoding>
+                            <delimiters>
+                                <delimiter>@</delimiter>
+                            </delimiters>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/external/helm/insights-api/</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/external/helm/insights-api/</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>Chart.yaml</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                            <includeEmptyDirs>false</includeEmptyDirs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <profile>
+            <id>local-minikube</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.google.cloud.tools</groupId>
+                        <artifactId>jib-maven-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <configuration>
+                            <dockerClient>
+                                <environment>
+                                    <DOCKER_TLS_VERIFY>1</DOCKER_TLS_VERIFY>
+                                    <DOCKER_HOST>${DOCKER_HOST}</DOCKER_HOST>
+                                    <DOCKER_CERT_PATH>${DOCKER_CERT_PATH}</DOCKER_CERT_PATH>
+                                    <MINIKUBE_ACTIVE_DOCKERD>minikube</MINIKUBE_ACTIVE_DOCKERD>
+                                </environment>
+                            </dockerClient>
+                            <from>
+                                <image>nexus.kontur.io:8084/library/${jib.source.image}</image>
+                            </from>
+                            <to>
+                                <image>nexus.kontur.io:8085/konturdev/${project.name}:${project.version}</image>
+                            </to>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>release</id>
             <build>

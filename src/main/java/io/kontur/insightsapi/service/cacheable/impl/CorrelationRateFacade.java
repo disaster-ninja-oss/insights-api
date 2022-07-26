@@ -1,101 +1,60 @@
 package io.kontur.insightsapi.service.cacheable.impl;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
 import io.kontur.insightsapi.model.PolygonCorrelationRate;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.kontur.insightsapi.service.cacheable.CorrelationRateService;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Primary
 @ConditionalOnProperty(prefix = "cache", name = "correlation-rate")
+@RequiredArgsConstructor
 public class CorrelationRateFacade implements CorrelationRateService, CacheEvictable {
 
     private final StatisticRepository repository;
 
-    private final Cache<String, List<PolygonCorrelationRate>> allCorrelationRateStatisticsCache;
-
-    private final Cache<String, List<NumeratorsDenominatorsDto>> numeratorsDenominatorsForCorrelationCache;
-
-    private final Cache<String, List<Double>> polygonCorrelationRateStatisticsBatchCache;
-
-    private final Cache<String, Map<String, Boolean>> numeratorsForNotEmptyLayersBatchCache;
-
-    private final HashFunction hashFunction;
-
-    public CorrelationRateFacade(StatisticRepository repository, @Value("${cache.maximumSize}") Integer maximumSize) {
-        this.repository = repository;
-        this.allCorrelationRateStatisticsCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(1, TimeUnit.DAYS)
-                .maximumSize(maximumSize)
-                .build();
-        this.numeratorsDenominatorsForCorrelationCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(1, TimeUnit.DAYS)
-                .maximumSize(maximumSize)
-                .build();
-        this.polygonCorrelationRateStatisticsBatchCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(1, TimeUnit.DAYS)
-                .maximumSize(maximumSize)
-                .build();
-        this.numeratorsForNotEmptyLayersBatchCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(1, TimeUnit.DAYS)
-                .maximumSize(maximumSize)
-                .build();
-        this.hashFunction = Hashing.murmur3_32_fixed();
-    }
-
     @SneakyThrows
     @Override
+    @Cacheable(value = "correlation-rate-all", key = "'all'")
     public List<PolygonCorrelationRate> getAllCorrelationRateStatistics() {
-        return allCorrelationRateStatisticsCache.get("all",
-                repository::getAllCorrelationRateStatistics);
+        return repository.getAllCorrelationRateStatistics();
     }
 
     @SneakyThrows
     @Override
+    @Cacheable(value = "correlation-rate-num-den", key = "'all'")
     public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForCorrelation() {
-        return numeratorsDenominatorsForCorrelationCache.get("all",
-                repository::getNumeratorsDenominatorsForCorrelation);
+        return repository.getNumeratorsDenominatorsForCorrelation();
     }
 
     @SneakyThrows
     @Override
-    public List<Double> getPolygonCorrelationRateStatisticsBatch(List<NumeratorsDenominatorsDto> dtoList, String polygon) {
-        return polygonCorrelationRateStatisticsBatchCache.get(keyGen(dtoList, polygon),
-                () -> repository.getPolygonCorrelationRateStatisticsBatch(dtoList, polygon));
+    @Cacheable(value = "correlation-rate-polygon", keyGenerator = "stringListKeyGenerator")
+    public List<Double> getPolygonCorrelationRateStatisticsBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList) {
+        return repository.getPolygonCorrelationRateStatisticsBatch(polygon, dtoList);
     }
 
     @SneakyThrows
     @Override
-    public Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(List<NumeratorsDenominatorsDto> dtoList, String polygon) {
-        return numeratorsForNotEmptyLayersBatchCache.get(keyGen(dtoList, polygon),
-                () -> repository.getNumeratorsForNotEmptyLayersBatch(dtoList, polygon));
-    }
-
-    private String keyGen(List<NumeratorsDenominatorsDto> dtoList, String geojson) {
-        return hashFunction.hashString(geojson, Charset.defaultCharset()) + "_"
-                + hashFunction.hashString(dtoList.toString(), Charset.defaultCharset());
+    @Cacheable(value = "correlation-rate-num-not-empty-layers", keyGenerator = "stringListKeyGenerator")
+    public Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList) {
+        return repository.getNumeratorsForNotEmptyLayersBatch(polygon, dtoList);
     }
 
     @Override
+    @CacheEvict(value = {"correlation-rate-all", "correlation-rate-num-den", "correlation-rate-polygon", "correlation-rate-num-not-empty-layers"},
+            allEntries = true)
     public void evict() {
-        allCorrelationRateStatisticsCache.invalidateAll();
-        numeratorsDenominatorsForCorrelationCache.invalidateAll();
-        polygonCorrelationRateStatisticsBatchCache.invalidateAll();
-        numeratorsForNotEmptyLayersBatchCache.invalidateAll();
     }
 }

@@ -2,6 +2,7 @@
 variables:
   MAVEN_CLI_OPTS: '--batch-mode'
   MAVEN_OPTS: '-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository'
+  CERT_AUTH: $K8S_CERT_AUTH
 
 cache:
   paths:
@@ -15,7 +16,9 @@ cache:
 
 stages:
   - build
+  - build-container
   - deploy
+  - deploy-k8s
 
 build:
   extends: .default-job-settings
@@ -27,6 +30,19 @@ build:
     name: insights-api-$CI_COMMIT_REF_SLUG
     paths:
       - '*.zip'
+
+build-container:
+  when: manual
+  extends: .default-job-settings
+  stage: build-container
+  script:
+    - mvn $MAVEN_CLI_OPTS clean install -DskipTests jib:build -U -Prelease
+  dependencies:
+    - build
+  artifacts:
+    name: helm-chart-with-actual-project-version
+    paths:
+      - './external/helm/insights-api/Chart.yaml'
 
 deploy-test:
   tags:
@@ -43,6 +59,80 @@ deploy-test:
   when: manual
   dependencies:
     - build
+
+deploy-k8s-dev:
+  variables:
+    CLIENT_CERT: $K8S_CLIENT_CERT_DEV
+    CLIENT_KEY: $K8S_CLIENT_KEY_DEV
+    STAGE: dev
+  tags:
+    - kontur
+    - docker
+  stage: deploy-k8s
+  script:
+    - ./external/helm/insights-api/install_upgrade.sh
+  environment:
+    name: K8S-DEV
+    url: 'https://dev-insights-api.k8s-01.konturlabs.com'
+  when: manual
+  dependencies:
+    - build-container
+  artifacts:
+    name: rendered-helm-manifests
+    when: always
+    paths:
+      - 'pre-manifests.yaml'
+      - 'manifests.yaml'
+
+deploy-k8s-test:
+  variables:
+    CLIENT_CERT: $K8S_CLIENT_CERT_TEST
+    CLIENT_KEY: $K8S_CLIENT_KEY_TEST
+    STAGE: test
+  tags:
+    - kontur
+    - docker
+  stage: deploy-k8s
+  script:
+    - ./external/helm/insights-api/install_upgrade.sh
+  environment:
+    name: K8S-TEST
+    url: 'https://test-insights-api.k8s-01.konturlabs.com'
+  when: manual
+  dependencies:
+    - build-container
+  artifacts:
+    name: rendered-helm-manifests
+    when: always
+    paths:
+      - 'pre-manifests.yaml'
+      - 'manifests.yaml'
+
+deploy-k8s-prod:
+  variables:
+    CLIENT_CERT: $K8S_CLIENT_CERT_PROD
+    CLIENT_KEY: $K8S_CLIENT_KEY_PROD
+    STAGE: prod
+  tags:
+    - kontur
+    - docker
+  stage: deploy-k8s
+  script:
+    - ./external/helm/insights-api/install_upgrade.sh
+  environment:
+    name: K8S-PROD
+    url: 'https://prod-insights-api.k8s-01.konturlabs.com'
+  only:
+    - /^release-.*$/
+  when: manual
+  dependencies:
+    - build-container
+  artifacts:
+    name: rendered-helm-manifests
+    when: always
+    paths:
+      - 'pre-manifests.yaml'
+      - 'manifests.yaml'
 
 deploy-dev:
   tags:

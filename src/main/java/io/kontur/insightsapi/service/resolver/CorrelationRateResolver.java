@@ -43,7 +43,15 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         var transformedGeometry = getPolygon(arguments);
 
         //get numr & denm from bivariate_axis & bivariate_indicators size nearly 17k
-        List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = correlationRateService.getNumeratorsDenominatorsForCorrelation();
+        List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = correlationRateService.getNumeratorsDenominatorsForCorrelation()
+                .stream()
+                .sorted(Comparator.comparing(NumeratorsDenominatorsDto::getXLabel)
+                        .thenComparing(NumeratorsDenominatorsDto::getYLabel)
+                        .thenComparing(NumeratorsDenominatorsDto::getXNumerator)
+                        .thenComparing(NumeratorsDenominatorsDto::getXDenominator)
+                        .thenComparing(NumeratorsDenominatorsDto::getYNumerator)
+                        .thenComparing(NumeratorsDenominatorsDto::getYDenominator))
+                .collect(Collectors.toList());;
 
         String finalTransformedGeometry = transformedGeometry;
 
@@ -52,6 +60,12 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                 Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
                         .map(sourceDtoList -> findNumeratorsDenominatorsForNotEmptyLayers(sourceDtoList, finalTransformedGeometry))
                         .flatMap(Collection::stream)
+                        .sorted(Comparator.comparing(NumeratorsDenominatorsDto::getXLabel)
+                                .thenComparing(NumeratorsDenominatorsDto::getYLabel)
+                                .thenComparing(NumeratorsDenominatorsDto::getXNumerator)
+                                .thenComparing(NumeratorsDenominatorsDto::getXDenominator)
+                                .thenComparing(NumeratorsDenominatorsDto::getYNumerator)
+                                .thenComparing(NumeratorsDenominatorsDto::getYDenominator))
                         .collect(Collectors.toList());
 
         //calculate correlation for every bivariate_axis in defined polygon that intersects h3
@@ -253,7 +267,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         List<PolygonCorrelationRate> result = new ArrayList<>();
 
         //run for every 500 bivariative_axis sourceDtoList size = 500 & get correlationList
-        List<Double> correlations = correlationRateService.getPolygonCorrelationRateStatisticsBatch(sourceDtoList, transformedGeometry);
+        List<Double> correlations = correlationRateService.getPolygonCorrelationRateStatisticsBatch(transformedGeometry, sourceDtoList);
         for (int i = 0; i < sourceDtoList.size(); i++) {
             PolygonCorrelationRate polygonCorrelationRate = new PolygonCorrelationRate();
 
@@ -348,7 +362,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     private List<NumeratorsDenominatorsDto> findNumeratorsDenominatorsForNotEmptyLayers(List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos,
                                                                                         String transformedGeometry) {
         Map<String, Boolean> numeratorsForNotEmptyLayers =
-                correlationRateService.getNumeratorsForNotEmptyLayersBatch(numeratorsDenominatorsDtos, transformedGeometry);
+                correlationRateService.getNumeratorsForNotEmptyLayersBatch(transformedGeometry, numeratorsDenominatorsDtos);
         return numeratorsDenominatorsDtos.stream()
                 .filter(dto -> (numeratorsForNotEmptyLayers.containsKey(dto.getXNumerator())
                         && numeratorsForNotEmptyLayers.get(dto.getXNumerator()))
