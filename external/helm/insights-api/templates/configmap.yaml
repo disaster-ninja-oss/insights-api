@@ -24,6 +24,7 @@ data:
   OTEL_METRICS_EXPORTER: none
   OTEL_LOGS_EXPORTER: none
   spring.redis.host: '{{ .Values.envName }}-insights-api-redis'
+  graphql.servlet.tracing-enabled: 'metrics-only'
 ---
 #TODO: create manually, not managed by Helm as it's a secret
 #apiVersion: v1

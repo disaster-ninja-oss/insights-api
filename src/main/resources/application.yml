@@ -37,7 +37,7 @@ spring:
 graphql:
   servlet:
     corsEnabled: false
-    tracing-enabled: false
+    tracing-enabled: metrics-only
     actuator-metrics: true
     async:
       timeout: 600s
