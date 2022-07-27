@@ -3,9 +3,15 @@ package io.kontur.insightsapi.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Getter
 @Setter
-public class CorrelationRate {
+public class CorrelationRate implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = -5772207819296054714L;
 
     private Axis x;
 

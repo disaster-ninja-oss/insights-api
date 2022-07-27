@@ -11,7 +11,7 @@ import java.io.Serializable;
 public class PolygonCorrelationRate extends CorrelationRate implements Cloneable, Serializable {
 
     @Serial
-    private static final long serialVersionUID = 3252610813500507339L;
+    private static final long serialVersionUID = 3252610813500507438L;
 
     @Override
     public PolygonCorrelationRate clone() {
