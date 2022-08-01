@@ -73,8 +73,16 @@ spec:
               path: /insights-api/health/readiness
               port: 8625
             failureThreshold: 1
-            periodSeconds: 60
+            periodSeconds: 30
             initialDelaySeconds: 30
+          {{ if eq .Values.envName "prod" }}livenessProbe:
+            httpGet:
+              path: /insights-api/health/readiness
+              port: 8625
+            failureThreshold: 10
+            periodSeconds: 30
+            initialDelaySeconds: 30
+          {{ end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
