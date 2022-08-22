@@ -5,3 +5,4 @@ replicas: 1
 envName: local
 databaseHost: docker.for.mac.host.internal
 databasePort: 8900
+jmxEnabled: true
