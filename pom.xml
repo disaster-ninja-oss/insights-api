@@ -309,8 +309,9 @@
                             <jvmFlag>-Dcom.sun.management.jmxremote.authenticate=false</jvmFlag>
                             <jvmFlag>-Dcom.sun.management.jmxremote.port=5000</jvmFlag>
                             <jvmFlag>-Dcom.sun.management.jmxremote.rmi.port=5000</jvmFlag>
-                            <jvmFlag>-Dcom.sun.management.jmxremote.host=0.0.0.0</jvmFlag>
-                            <jvmFlag>-Djava.rmi.server.hostname=0.0.0.0</jvmFlag>
+                            <jvmFlag>-Dcom.sun.management.jmxremote=true</jvmFlag>
+                            <jvmFlag>-Dcom.sun.management.jmxremote.local.only=false</jvmFlag>
+                            <jvmFlag>-Djava.rmi.server.hostname=127.0.0.1</jvmFlag>
                         </jvmFlags>
                     </container>
                     <from>
