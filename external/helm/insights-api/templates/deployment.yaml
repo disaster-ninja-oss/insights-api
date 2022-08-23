@@ -50,9 +50,9 @@ spec:
           resources:
             requests:
               cpu: "1"
-              memory: "6G"
+              memory: "4700Mi"
             limits:
-              memory: "12G"
+              memory: "9Gi"
           env:
             - name: OTEL_SERVICE_NAME
               valueFrom:
