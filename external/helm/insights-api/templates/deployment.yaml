@@ -45,7 +45,7 @@ spec:
           image: nexus.kontur.io:8085/konturdev/insights-api:{{ .Chart.Version }}
           imagePullPolicy: Always #don't use Always for local minikube - otherwise it tries reloading from remote
           ports:
-            - containerPort: 8627{{ if eq .Values.jmxEnabled true }}
+            - containerPort: 8625{{ if eq .Values.jmxEnabled true }}
             - containerPort: 5000{{ end }}
           resources:
             requests:
