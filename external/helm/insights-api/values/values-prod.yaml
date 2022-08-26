@@ -7,3 +7,4 @@ databaseHost: paris.k8s-01.kontur.io.
 databasePort: 5432
 
 dnsNameOuter: apps.kontur.io
+alertingTime: 2m
