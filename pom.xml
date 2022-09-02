@@ -303,6 +303,14 @@
                             <jvmFlag>-server</jvmFlag>
                             <jvmFlag>-Xmx3200m</jvmFlag>
                             <jvmFlag>-Xms3200m</jvmFlag>
+                            <jvmFlag>-XX:+HeapDumpOnOutOfMemoryError</jvmFlag>
+                            <jvmFlag>-XX:HeapDumpPath=/tmp/insights_api_oom.hprof</jvmFlag>
+                            <jvmFlag>-Dcom.sun.management.jmxremote.ssl=false</jvmFlag>
+                            <jvmFlag>-Dcom.sun.management.jmxremote.authenticate=false</jvmFlag>
+                            <jvmFlag>-Dcom.sun.management.jmxremote.port=5000</jvmFlag>
+                            <jvmFlag>-Dcom.sun.management.jmxremote.rmi.port=5000</jvmFlag>
+                            <jvmFlag>-Dcom.sun.management.jmxremote=true</jvmFlag>
+                            <jvmFlag>-Djava.rmi.server.hostname=127.0.0.1</jvmFlag>
                         </jvmFlags>
                     </container>
                     <from>
