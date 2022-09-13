@@ -35,6 +35,9 @@ spring:
   redis:
     host: localhost
     port: 6379
+  servlet:
+    multipart:
+      enabled: false
 
 springdoc:
   packages-to-scan: io.kontur.insightsapi.controller
