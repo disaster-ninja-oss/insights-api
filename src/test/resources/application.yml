@@ -22,6 +22,8 @@ cache:
   urban-core: true
   correlation-rate: true
   advanced-analytics: true
+  covariance-rate: true
+  metrics: true
 
 graphql-request:
   parser-options:
