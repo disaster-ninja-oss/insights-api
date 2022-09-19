@@ -1,13 +1,17 @@
 package io.kontur.insightsapi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
+import io.kontur.insightsapi.dto.FileUploadResultDto;
+import io.kontur.insightsapi.exception.ConnectionException;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.AllArgsConstructor;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -25,30 +29,43 @@ public class IndicatorService {
 
     private final IndicatorRepository indicatorRepository;
 
-    public ResponseEntity<String> uploadIndicatorData(String uuid, HttpServletRequest request) {
+    private final ServletFileUpload upload;
+
+    private final ObjectMapper objectMapper;
+
+    public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         try {
-            ServletFileUpload upload = new ServletFileUpload();
+
             FileItemIterator itemIterator = upload.getItemIterator(request);
+            FileUploadResultDto fileUploadResultDto = new FileUploadResultDto();
+            String uuid = "";
 
             while (itemIterator.hasNext()) {
                 FileItemStream item = itemIterator.next();
                 if (!item.isFormField()) {
-                    return indicatorRepository.addIndicatorData(item, uuid);
+                    fileUploadResultDto = indicatorRepository.uploadCSVFileIntoTempTable(item);
+                } else {
+                    uuid = indicatorRepository.createIndicator(parseRequestFormDataParameters(item));
                 }
             }
 
-            return ResponseEntity.status(400).body("No file found in request");
+            if (Strings.isNotEmpty(uuid) && Strings.isNotEmpty(fileUploadResultDto.getTempTableName())) {
+                return indicatorRepository.copyDataToStatH3(fileUploadResultDto, uuid);
+            } else {
+                logger.warn("Either file or parameters were absent from request");
+                return ResponseEntity.status(400).body("Either file or parameters were absent from request");
+            }
 
         } catch (FileUploadException | IOException exception) {
             logger.error(exception.getMessage());
             return ResponseEntity.status(400).body(exception.getMessage());
-        } catch (SQLException sqlException) {
-            logger.error(sqlException.getMessage());
-            return ResponseEntity.status(500).body("Database usage issues");
+        } catch (SQLException | ConnectionException exception) {
+            logger.error(exception.getMessage());
+            return ResponseEntity.status(500).body(exception.getMessage());
         }
     }
 
-    public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
-        return indicatorRepository.createIndicator(bivariateIndicatorDto);
+    private BivariateIndicatorDto parseRequestFormDataParameters(FileItemStream item) throws IOException {
+        return objectMapper.readValue(item.openStream(), BivariateIndicatorDto.class);
     }
 }

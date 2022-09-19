@@ -3,10 +3,16 @@ package io.kontur.insightsapi.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
+import io.kontur.insightsapi.dto.FileUploadResultDto;
+import io.kontur.insightsapi.exception.ConnectionException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -25,11 +31,18 @@ import java.sql.SQLException;
 @RequiredArgsConstructor
 public class IndicatorRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(IndicatorRepository.class);
     private final JdbcTemplate jdbcTemplate;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final ObjectMapper objectMapper;
+
+    private final DataSource dataSource;
+
+    //TODO: temporary field, remove when we have final version of transposed stat_h3 table
+    @Value("${database.transposed.table}")
+    private String transposedTableName;
 
     @Transactional
     public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
@@ -44,44 +57,56 @@ public class IndicatorRepository {
                 .addValue("allowedUsers", objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
 
         //TODO:add owner in future
-        String queryBivariateIndicators = "INSERT INTO bivariate_indicators (param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public,allowed_users,date) " +
+        String bivariateIndicatorsQuery = "INSERT INTO bivariate_indicators (param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public,allowed_users,date) " +
                 "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),null,'NEW',:isPublic,:allowedUsers,now()) RETURNING param_uuid;";
-        return namedParameterJdbcTemplate.queryForObject(queryBivariateIndicators, paramSource, String.class);
+        return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
+    }
+
+    //    @Transactional
+    public FileUploadResultDto uploadCSVFileIntoTempTable(FileItemStream file) throws SQLException, IOException, ConnectionException {
+
+        String tempTableName = generateTempTableName();
+
+        String tempTableQuery = String.format("CREATE TEMPORARY TABLE %s (h3 h3index, value double precision)", tempTableName);
+        jdbcTemplate.update(tempTableQuery);
+
+        var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ','", tempTableName);
+
+        long numberOfInsertedRows;
+
+        try (Connection connection = DataSourceUtils.getConnection(dataSource);
+             InputStream fileInputStream = file.openStream()) {
+
+            if (connection.isWrapperFor(Connection.class)) {
+
+                CopyManager copyManager = new CopyManager((BaseConnection) connection.unwrap(Connection.class));
+                numberOfInsertedRows = copyManager.copyIn(copyManagerQuery, fileInputStream);
+                return new FileUploadResultDto(tempTableName, numberOfInsertedRows);
+            } else {
+                throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
+            }
+        }
     }
 
     @Transactional
-    public ResponseEntity<String> addIndicatorData(FileItemStream file, String uuid) throws SQLException, IOException {
+    public ResponseEntity<String> copyDataToStatH3(FileUploadResultDto fileUploadResultDto, String uuid) {
+        var copyDataFromTempToStatH3WithUuidQuery = String.format("INSERT INTO %s select h3, value, '%s' from %s", transposedTableName, uuid, fileUploadResultDto.getTempTableName());
+        long numberOfCopiedRows = jdbcTemplate.update(copyDataFromTempToStatH3WithUuidQuery);
 
-        String tempTableName = generateTempTableName(uuid);
+        var dropTempTableQuery = String.format("DROP TABLE %s", fileUploadResultDto.getTempTableName());
+        jdbcTemplate.update(dropTempTableQuery);
 
-        String tempTableQuery = "CREATE TEMPORARY TABLE " + tempTableName + " ON COMMIT DROP AS SELECT h3, value from stat_h3_test WITH NO DATA";
-        jdbcTemplate.update(tempTableQuery);
-
-        var queryCopyManager = "COPY " + tempTableName + " FROM STDIN DELIMITER ','";
-        DataSource dataSource = jdbcTemplate.getDataSource();
-        long numberOfInsertedRows;
-
-        if (dataSource != null && DataSourceUtils.getConnection(dataSource).isWrapperFor(Connection.class)) {
-            try (InputStream fileInputStream = file.openStream()) {
-
-                CopyManager copyManager = new CopyManager((BaseConnection) DataSourceUtils.getConnection(jdbcTemplate.getDataSource()).unwrap(Connection.class));
-                numberOfInsertedRows = copyManager.copyIn(queryCopyManager, fileInputStream);
-            }
-        } else {
-            throw new SQLException("Connection was closed unpredictably");
+        if (numberOfCopiedRows != fileUploadResultDto.getNumberOfUploadedRows()) {
+            logger.warn(String.format("No errors during uploading occurred but records number validation did not pass: " +
+                    "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
+            return ResponseEntity.ok().body(String.format("No errors during uploading occurred but records number validation did not pass: " +
+                    "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
         }
 
-        var copyDataFromTempToStatH3WithUUID = "insert into stat_h3_test select h3, value, '" + uuid + "' from " + tempTableName;
-        long numberOfCopiedRows = jdbcTemplate.update(copyDataFromTempToStatH3WithUUID);
-
-        if (numberOfCopiedRows != numberOfInsertedRows) {
-            return ResponseEntity.ok().body("No errors during uploading but rows number validation did not pass, check if all rows were uploaded.");
-        }
-
-        return ResponseEntity.ok().body(Long.toString(numberOfInsertedRows));
+        return ResponseEntity.ok().body(uuid);
     }
 
-    private String generateTempTableName(String uuid) {
-        return "_".concat(uuid.replaceAll("-", "").substring(0, 30));
+    private String generateTempTableName() {
+        return "_" + RandomStringUtils.randomAlphanumeric(29);
     }
 }
