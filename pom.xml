@@ -32,6 +32,8 @@
         <jts2geojson.version>0.17.0</jts2geojson.version>
         <guava.version>31.1-jre</guava.version>
         <postgresql-testcontainers.version>1.15.1</postgresql-testcontainers.version>
+        <commons-fileupload.version>1.4</commons-fileupload.version>
+
         <micrometer-registry-prometheus.version>1.5.1</micrometer-registry-prometheus.version>
 
         <maven-failsafe-plugin.version>3.0.0-M6</maven-failsafe-plugin.version>
@@ -119,7 +121,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
-            <scope>runtime</scope>
         </dependency>
 
         <dependency>
@@ -156,6 +157,12 @@
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
             <version>${postgresql-testcontainers.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>${commons-fileupload.version}</version>
         </dependency>
 
         <dependency>
