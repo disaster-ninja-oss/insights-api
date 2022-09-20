@@ -13,6 +13,7 @@ metadata:
     meta.helm.sh/release-name: {{ .Release.Name }}
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
 data:
+  SPRING_JMX_ENABLED: '{{ .Values.jmxEnabled }}'
   SPRING_PROFILES_ACTIVE: {{ .Values.envName }}
   SPRING_DATASOURCE_URL: 'jdbc:postgresql://{{ .Values.databaseHost }}:{{ .Values.databasePort }}/insights-api'
   SPRING_DATASOURCE_USERNAME: insights-api
@@ -24,7 +25,7 @@ data:
   OTEL_METRICS_EXPORTER: none
   OTEL_LOGS_EXPORTER: none
   spring.redis.host: '{{ .Values.envName }}-insights-api-redis'
-  graphql.servlet.tracing-enabled: 'metrics-only'
+  graphql.servlet.tracing-enabled: 'false' #11653
 ---
 #TODO: create manually, not managed by Helm as it's a secret
 #apiVersion: v1
