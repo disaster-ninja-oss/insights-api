@@ -247,7 +247,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                                                                       String transformedGeometry) {
         List<PolygonMetrics> result = new ArrayList<>();
 
-        //run for every 500 bivariative_axis sourceDtoList size = 500 & get correlationList
+        //run for every 100 bivariative_axis sourceDtoList size = 100 & get correlationList
         List<Double> correlations = correlationRateService.getPolygonCorrelationRateStatisticsBatch(transformedGeometry, sourceDtoList);
         for (int i = 0; i < sourceDtoList.size(); i++) {
             PolygonMetrics polygonCorrelationRate = new PolygonMetrics();
