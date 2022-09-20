@@ -62,7 +62,7 @@ public class IndicatorRepository {
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
     }
 
-    //    @Transactional
+    @Transactional
     public FileUploadResultDto uploadCSVFileIntoTempTable(FileItemStream file) throws SQLException, IOException, ConnectionException {
 
         String tempTableName = generateTempTableName();
