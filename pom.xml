@@ -254,18 +254,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Config assembly for runnable app archive packaging -->
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>${maven-assembly-plugin.version}</version>
-                <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <descriptors>
-                        <descriptor>assembly.xml</descriptor>
-                    </descriptors>
-                    <tarLongFileMode>posix</tarLongFileMode>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -327,62 +315,6 @@
                         <image>nexus.kontur.io:8085/konturdev/${project.name}:${project.version}</image>
                     </to>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                    <execution>
-                        <id>default-testResources</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>testResources</goal>
-                        </goals>
-                        <configuration>
-                            <propertiesEncoding>UTF-8</propertiesEncoding>
-                            <delimiters>
-                                <delimiter>@</delimiter>
-                            </delimiters>
-                            <useDefaultDelimiters>false</useDefaultDelimiters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>default-resources</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>resources</goal>
-                        </goals>
-                        <configuration>
-                            <propertiesEncoding>UTF-8</propertiesEncoding>
-                            <delimiters>
-                                <delimiter>@</delimiter>
-                            </delimiters>
-                            <useDefaultDelimiters>false</useDefaultDelimiters>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.basedir}/external/helm/insights-api/</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.basedir}/external/helm/insights-api/</directory>
-                                    <filtering>true</filtering>
-                                    <includes>
-                                        <include>Chart.yaml</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                            <includeEmptyDirs>false</includeEmptyDirs>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
