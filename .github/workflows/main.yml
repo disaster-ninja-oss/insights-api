@@ -1,4 +1,4 @@
---- # Time-stamp: <2022-09-19 17:24:26>
+--- # Time-stamp: <2022-09-17 20:19:59>
 
 name: 01 Building with Maven
 
@@ -40,11 +40,4 @@ jobs:
           echo '${{ secrets.NEXUS_DEPLOYER_PASS }}' | docker login nexus.kontur.io:8084 -u '${{ secrets.NEXUS_DEPLOYER }}' --password-stdin
           echo '${{ secrets.NEXUS_DEPLOYER_PASS }}' | docker login nexus.kontur.io:8085 -u '${{ secrets.NEXUS_DEPLOYER }}' --password-stdin
 
-          mvn $MAVEN_CLI_OPTS clean install -DskipTests jib:build -U -Prelease
-
-      - name: Uploading build artifacts
-        uses: actions/upload-artifact@v3.1.0
-        if: always()
-        with:
-          name: helm-chart-with-actual-project-version
-          path: external/helm/insights-api/Chart.yaml
+          mvn $MAVEN_CLI_OPTS clean install -DskipTests jib:build -U
