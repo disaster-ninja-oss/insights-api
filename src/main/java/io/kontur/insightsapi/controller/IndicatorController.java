@@ -16,7 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 
 @Tag(name = "Indicators", description = "Indicators API")
 @RestController
-@RequestMapping("/indicators")
+//TODO: this logic should be in the next release. Getting rid of endpoint for current 0.16.0 release
+//@RequestMapping("/indicators")
 @MultipartConfig
 @RequiredArgsConstructor
 public class IndicatorController {
