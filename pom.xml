@@ -16,6 +16,7 @@
     </parent>
 
     <properties>
+        <image.tag>${IMAGE_TAG}</image.tag>
         <java.version>16</java.version>
         <maven.compiler.release>16</maven.compiler.release>
         <project.resource.directory>src/main/resources</project.resource.directory>
@@ -310,7 +311,7 @@
                         <image>nexus.kontur.io:8084/library/${jib.source.image}</image>
                     </from>
                     <to>
-                        <image>nexus.kontur.io:8085/konturdev/${project.name}:${project.version}</image>
+                        <image>nexus.kontur.io:8085/konturdev/${project.name}:${image.tag}</image>
                     </to>
                 </configuration>
             </plugin>

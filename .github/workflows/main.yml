@@ -32,6 +32,7 @@ jobs:
           MAVEN_CLI_OPTS: '--batch-mode'
           NEXUS_DEPLOYER: ${{ secrets.NEXUS_DEPLOYER }}
           NEXUS_DEPLOYER_PASS: ${{ secrets.NEXUS_DEPLOYER_PASS }}
+          TAG: ${{ github.ref_name }}.${{ steps.get-cloned.outputs.SHA }}.${{ github.run_attempt }}
         run: |-
           set -e
 
@@ -40,4 +41,4 @@ jobs:
           echo '${{ secrets.NEXUS_DEPLOYER_PASS }}' | docker login nexus.kontur.io:8084 -u '${{ secrets.NEXUS_DEPLOYER }}' --password-stdin
           echo '${{ secrets.NEXUS_DEPLOYER_PASS }}' | docker login nexus.kontur.io:8085 -u '${{ secrets.NEXUS_DEPLOYER }}' --password-stdin
 
-          mvn $MAVEN_CLI_OPTS clean install jib:build -U
+          IMAGE_TAG="$TAG" mvn $MAVEN_CLI_OPTS clean install jib:build -U
