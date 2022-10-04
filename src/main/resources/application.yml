@@ -38,6 +38,12 @@ spring:
   servlet:
     multipart:
       enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://keycloak01.kontur.io/auth/realms/kontur
+          jwk-set-uri: https://keycloak01.kontur.io/auth/realms/kontur/protocol/openid-connect/certs
 
 springdoc:
   packages-to-scan: io.kontur.insightsapi.controller
@@ -108,3 +114,6 @@ graphql-request:
 database:
   transposed:
     table: stat_h3_test
+  bivariate:
+    indicators:
+      table: bivariate_indicators_test

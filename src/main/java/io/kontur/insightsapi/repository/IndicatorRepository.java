@@ -44,6 +44,9 @@ public class IndicatorRepository {
     @Value("${database.transposed.table}")
     private String transposedTableName;
 
+    @Value("${database.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
     @Transactional
     public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
 
@@ -57,8 +60,8 @@ public class IndicatorRepository {
                 .addValue("allowedUsers", objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
 
         //TODO:add owner in future
-        String bivariateIndicatorsQuery = "INSERT INTO bivariate_indicators (param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public,allowed_users,date) " +
-                "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),null,'NEW',:isPublic,:allowedUsers,now()) RETURNING param_uuid;";
+        String bivariateIndicatorsQuery = String.format("INSERT INTO %s (param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public,allowed_users,date) " +
+                "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),null,'NEW',:isPublic,:allowedUsers,now()) RETURNING param_uuid;", bivariateIndicatorsTableName);
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
     }
 
