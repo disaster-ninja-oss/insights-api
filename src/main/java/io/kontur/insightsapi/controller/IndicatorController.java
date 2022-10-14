@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/indicators")
 @MultipartConfig
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('uploadIndicators')")
 public class IndicatorController {
 
     private final IndicatorService indicatorService;
@@ -32,7 +33,6 @@ public class IndicatorController {
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @PostMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    @PreAuthorize("hasRole('uploadIndicators')")
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         return indicatorService.uploadIndicatorData(request);
     }

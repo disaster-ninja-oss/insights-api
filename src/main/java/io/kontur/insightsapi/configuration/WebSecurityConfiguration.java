@@ -16,7 +16,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,18 +30,12 @@ public class WebSecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf()
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/graphql/**", "POST"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/graphiql/**", "POST"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/cache/cleanUp", "GET"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/indicators/**", "POST"))
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/tiles/**", "GET"))
-                .and()
-                .headers().cacheControl().disable()
-                .and()
+        return http
+                .csrf()
+                .disable()
                 .authorizeRequests(auth -> auth
                         .antMatchers("/graphql/**", "/graphiql/**", "/tiles/**", "/cache/cleanUp").permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated()//TODO: secure other endpoints in future
                 )
                 .oauth2ResourceServer(resourceServerConfigurer -> resourceServerConfigurer
                         .jwt(jwtConfigurer -> jwtConfigurer.jwtAuthenticationConverter(
@@ -66,16 +59,17 @@ public class WebSecurityConfiguration {
             @Override
             public Collection<GrantedAuthority> convert(Jwt jwt) {
                 Collection<GrantedAuthority> grantedAuthorities = converter.convert(jwt);
-                if (jwt.hasClaim(ClaimParams.REALM_ACCESS)) {
-                    //client roles not supported yet
-                    JSONObject realmAccess = jwt.getClaim(ClaimParams.REALM_ACCESS);
-                    if (realmAccess.containsKey(ClaimParams.ROLES)) {
-                        JSONArray realmRoles = (JSONArray) realmAccess.get(ClaimParams.ROLES);
-                        List<SimpleGrantedAuthority> keycloakAuthorities = realmRoles.stream()
-                                .map(role -> new SimpleGrantedAuthority(
-                                        ClaimParams.ROLE_PREFIX + role))
-                                .collect(Collectors.toList());
-                        grantedAuthorities.addAll(keycloakAuthorities);
+                if (jwt.hasClaim(ClaimParams.RESOURCE_ACCESS)) {
+                    JSONObject resourceAccess = jwt.getClaim(ClaimParams.RESOURCE_ACCESS);
+                    if (resourceAccess.containsKey("insights-api")) {
+                        JSONObject insightsApi = (JSONObject) resourceAccess.get(ClaimParams.INSIGHTS_API_CLIENT);
+                        if (insightsApi.containsKey(ClaimParams.ROLES)) {
+                            JSONArray roles = (JSONArray) insightsApi.get(ClaimParams.ROLES);
+                            List<SimpleGrantedAuthority> keycloakAuthorities = roles.stream()
+                                    .map(role -> new SimpleGrantedAuthority((String) role))
+                                    .toList();
+                            grantedAuthorities.addAll(keycloakAuthorities);
+                        }
                     }
                 }
                 if (jwt.hasClaim(ClaimParams.USERNAME)) {
@@ -92,7 +86,9 @@ public class WebSecurityConfiguration {
         public static final String ROLE_PREFIX = "ROLE_";
         public static final String USERNAME_PREFIX = "USERNAME_";
 
-        public static final String REALM_ACCESS = "realm_access";
+        public static final String RESOURCE_ACCESS = "resource_access";
+
+        public static final String INSIGHTS_API_CLIENT = "insights-api";
         public static final String ROLES = "roles";
         public static final String USERNAME = "username";
     }
