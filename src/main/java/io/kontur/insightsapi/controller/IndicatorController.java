@@ -27,17 +27,17 @@ public class IndicatorController {
 
     private final IndicatorService indicatorService;
 
-    @Operation(summary = "Creates or updates data about specific indicator.",
-            tags = {"Indicators"},
-            description = "Uploads data from CSV file into stat_h3 table and calculates insights for indicator.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Successful operation"),
-                    @ApiResponse(responseCode = "400", description = "Bad Request"),
-                    @ApiResponse(responseCode = "500", description = "Internal error")})
+//    @Operation(summary = "Creates or updates data about specific indicator.",
+//            tags = {"Indicators"},
+//            description = "Uploads data from CSV file into stat_h3 table and calculates insights for indicator.",
+//            responses = {
+//                    @ApiResponse(responseCode = "200", description = "Successful operation"),
+//                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+//                    @ApiResponse(responseCode = "500", description = "Internal error")})
 //    @PostMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
-        return indicatorService.uploadIndicatorData(request);
-    }
+//    public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
+//        return indicatorService.uploadIndicatorData(request);
+//    }
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
     public String createIndicator(@RequestBody @Valid BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
