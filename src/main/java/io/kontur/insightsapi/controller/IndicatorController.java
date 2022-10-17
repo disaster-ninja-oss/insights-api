@@ -1,5 +1,7 @@
 package io.kontur.insightsapi.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.service.IndicatorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -8,11 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 @Tag(name = "Indicators", description = "Indicators API")
 @RestController
@@ -30,8 +34,13 @@ public class IndicatorController {
                     @ApiResponse(responseCode = "200", description = "Successful operation"),
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
                     @ApiResponse(responseCode = "500", description = "Internal error")})
-    @PostMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+//    @PostMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         return indicatorService.uploadIndicatorData(request);
+    }
+
+    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public String createIndicator(@RequestBody @Valid BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
+        return indicatorService.createIndicator(bivariateIndicatorDto);
     }
 }

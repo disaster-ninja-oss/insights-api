@@ -33,6 +33,10 @@ public class IndicatorService {
 
     private final ObjectMapper objectMapper;
 
+    public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
+        return indicatorRepository.createIndicator(bivariateIndicatorDto);
+    }
+
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         try {
 
