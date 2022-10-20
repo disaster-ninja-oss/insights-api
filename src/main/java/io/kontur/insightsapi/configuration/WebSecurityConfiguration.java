@@ -82,8 +82,6 @@ public class WebSecurityConfiguration {
     }
 
     public static class ClaimParams {
-
-        public static final String ROLE_PREFIX = "ROLE_";
         public static final String USERNAME_PREFIX = "USERNAME_";
 
         public static final String RESOURCE_ACCESS = "resource_access";
