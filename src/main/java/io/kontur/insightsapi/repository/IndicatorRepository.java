@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.ConnectionException;
+import io.kontur.insightsapi.exception.CsvFileUploadException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -44,6 +45,9 @@ public class IndicatorRepository {
     @Value("${database.transposed.table}")
     private String transposedTableName;
 
+    @Value("${database.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
     @Transactional
     public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
 
@@ -57,13 +61,13 @@ public class IndicatorRepository {
                 .addValue("allowedUsers", objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
 
         //TODO:add owner in future
-        String bivariateIndicatorsQuery = "INSERT INTO bivariate_indicators (param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public,allowed_users,date) " +
-                "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),null,'NEW',:isPublic,:allowedUsers,now()) RETURNING param_uuid;";
+        String bivariateIndicatorsQuery = String.format("INSERT INTO %s (param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public,allowed_users,date) " +
+                "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),null,'NEW',:isPublic,:allowedUsers,now()) RETURNING param_uuid;", bivariateIndicatorsTableName);
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
     }
 
-    @Transactional
-    public FileUploadResultDto uploadCSVFileIntoTempTable(FileItemStream file) throws SQLException, IOException, ConnectionException {
+    public FileUploadResultDto uploadCSVFileIntoTempTable(FileItemStream file)
+            throws SQLException, IOException, ConnectionException {
 
         String tempTableName = generateTempTableName();
 
@@ -81,10 +85,12 @@ public class IndicatorRepository {
 
                 CopyManager copyManager = new CopyManager((BaseConnection) connection.unwrap(Connection.class));
                 numberOfInsertedRows = copyManager.copyIn(copyManagerQuery, fileInputStream);
-                return new FileUploadResultDto(tempTableName, numberOfInsertedRows);
+                return new FileUploadResultDto(tempTableName, numberOfInsertedRows, null);
             } else {
                 throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
             }
+        } catch (Exception e) {
+            return new FileUploadResultDto(null, 0, e.getMessage());
         }
     }
 
@@ -108,5 +114,10 @@ public class IndicatorRepository {
 
     private String generateTempTableName() {
         return "_" + RandomStringUtils.randomAlphanumeric(29);
+    }
+
+    @Transactional
+    public void deleteIndicator(String uuid) {
+        jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'", bivariateIndicatorsTableName, uuid));
     }
 }

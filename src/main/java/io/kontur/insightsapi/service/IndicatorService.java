@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.ConnectionException;
+import io.kontur.insightsapi.exception.CsvFileUploadException;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.AllArgsConstructor;
 import org.apache.commons.fileupload.FileItemIterator;
@@ -50,7 +51,12 @@ public class IndicatorService {
                 FileItemStream item = itemIterator.next();
                 String name = item.getFieldName();
 
-                if (!item.isFormField() && "file".equals(name) && itemIndex == 1) {
+                if (!item.isFormField()
+                        && "file".equals(name)
+                        && itemIndex == 1
+                        && item.getName() != null
+                        && item.getName().endsWith(".csv")) {
+
                     fileUploadResultDto = indicatorRepository.uploadCSVFileIntoTempTable(item);
 
                 } else if ("parameters".equals(name) && itemIndex == 0) {
@@ -70,16 +76,26 @@ public class IndicatorService {
                         return ResponseEntity.status(400).body(validationErrorMessage.toString());
                     }
                 } else {
-                    return ResponseEntity.status(400).body("Wrong field parameter in multipart request or wrong parameters order: " +
-                            "please send a request with multipart data with keys 'parameters' and 'file' in a corresponding order");
+                    return ResponseEntity.status(400).body("Wrong field parameter or wrong parameters order in multipart request: " +
+                            "please send a request with multipart data with keys 'parameters' and 'file' in a corresponding order. " +
+                            "File should have a \".csv\" extension");
                 }
             }
 
             if (Strings.isNotEmpty(uuid) && Strings.isNotEmpty(fileUploadResultDto.getTempTableName())) {
                 return indicatorRepository.copyDataToStatH3(fileUploadResultDto, uuid);
+            } else if (Strings.isNotEmpty(uuid) && Strings.isEmpty(fileUploadResultDto.getTempTableName())) {
+
+                indicatorRepository.deleteIndicator(uuid);
+
+                if (Strings.isNotEmpty(fileUploadResultDto.getErrorMessage())) {
+                    logger.error(fileUploadResultDto.getErrorMessage());
+                    return ResponseEntity.status(500).body(fileUploadResultDto.getErrorMessage());
+                }
+                logger.error("File was absent from request");
+                return ResponseEntity.status(400).body("File was absent from request");
             } else {
-                logger.warn("Either file or parameters were absent from request");
-                return ResponseEntity.status(400).body("Either file or parameters were absent from request");
+                return ResponseEntity.status(500).body("Could not process request, neither indicator nor h3 indexes were created");
             }
 
         } catch (MismatchedInputException exception) {
