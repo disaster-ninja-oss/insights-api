@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.ConnectionException;
-import io.kontur.insightsapi.exception.CsvFileUploadException;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.AllArgsConstructor;
 import org.apache.commons.fileupload.FileItemIterator;
@@ -38,10 +37,6 @@ public class IndicatorService {
     private final ServletFileUpload upload;
 
     private final ObjectMapper objectMapper;
-
-    public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
-        return indicatorRepository.createIndicator(bivariateIndicatorDto);
-    }
 
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         try {

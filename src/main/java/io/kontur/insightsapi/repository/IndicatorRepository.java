@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.ConnectionException;
-import io.kontur.insightsapi.exception.CsvFileUploadException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.lang3.RandomStringUtils;
