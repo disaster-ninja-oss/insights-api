@@ -66,8 +66,8 @@ public class IndicatorRepository {
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
     }
 
-    public FileUploadResultDto uploadCSVFileIntoTempTable(FileItemStream file)
-            throws SQLException, IOException, ConnectionException {
+    public FileUploadResultDto uploadCSVFileIntoTempTable(FileItemStream file) throws SQLException, IOException, ConnectionException {
+
 
         String tempTableName = generateTempTableName();
 
