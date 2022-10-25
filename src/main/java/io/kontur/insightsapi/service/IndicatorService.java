@@ -50,11 +50,7 @@ public class IndicatorService {
                 FileItemStream item = itemIterator.next();
                 String name = item.getFieldName();
 
-                if (!item.isFormField()
-                        && "file".equals(name)
-                        && itemIndex == 1
-                        && item.getName() != null
-                        && item.getName().endsWith(".csv")) {
+                if (!item.isFormField() && "file".equals(name) && itemIndex == 1) {
 
                     fileUploadResultDto = indicatorRepository.uploadCSVFileIntoTempTable(item);
 
@@ -76,8 +72,7 @@ public class IndicatorService {
                     }
                 } else {
                     return ResponseEntity.status(400).body("Wrong field parameter or wrong parameters order in multipart request: " +
-                            "please send a request with multipart data with keys 'parameters' and 'file' in a corresponding order. " +
-                            "File should have a \".csv\" extension");
+                            "please send a request with multipart data with keys 'parameters' and 'file' in a corresponding order.");
                 }
             }
 
@@ -94,6 +89,7 @@ public class IndicatorService {
                 logger.error("File was absent from request");
                 return ResponseEntity.status(400).body("File was absent from request");
             } else {
+                logger.error("Could not process request, neither indicator nor h3 indexes were created");
                 return ResponseEntity.status(500).body("Could not process request, neither indicator nor h3 indexes were created");
             }
 
