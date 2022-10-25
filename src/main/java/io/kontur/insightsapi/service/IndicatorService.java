@@ -84,7 +84,7 @@ public class IndicatorService {
 
                 if (Strings.isNotEmpty(fileUploadResultDto.getErrorMessage())) {
                     logger.error(fileUploadResultDto.getErrorMessage());
-                    return ResponseEntity.status(500).body(fileUploadResultDto.getErrorMessage());
+                    return ResponseEntity.status(400).body(fileUploadResultDto.getErrorMessage());
                 }
                 logger.error("File was absent from request");
                 return ResponseEntity.status(400).body("File was absent from request");
