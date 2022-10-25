@@ -112,7 +112,7 @@ public class IndicatorRepository {
     }
 
     private String generateTempTableName() {
-        return "_" + RandomStringUtils.randomAlphanumeric(29);
+        return "_" + RandomStringUtils.randomAlphanumeric(29).toLowerCase();
     }
 
     @Transactional
