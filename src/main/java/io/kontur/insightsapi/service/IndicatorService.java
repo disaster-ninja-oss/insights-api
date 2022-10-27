@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
@@ -33,10 +32,6 @@ public class IndicatorService {
 
     private final ObjectMapper objectMapper;
 
-    public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
-        return indicatorRepository.createIndicator(bivariateIndicatorDto);
-    }
-
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         try {
 
@@ -63,7 +58,7 @@ public class IndicatorService {
         } catch (FileUploadException | IOException exception) {
             logger.error(exception.getMessage());
             return ResponseEntity.status(400).body(exception.getMessage());
-        } catch (SQLException | ConnectionException exception) {
+        } catch (Exception exception) {
             logger.error(exception.getMessage());
             return ResponseEntity.status(500).body(exception.getMessage());
         }

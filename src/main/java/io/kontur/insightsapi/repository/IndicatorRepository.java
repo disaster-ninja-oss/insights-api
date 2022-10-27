@@ -69,7 +69,7 @@ public class IndicatorRepository {
 
         String tempTableName = generateTempTableName();
 
-        String tempTableQuery = String.format("CREATE TEMPORARY TABLE %s (h3 h3index, value double precision)", tempTableName);
+        String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, value double precision)", tempTableName);
         jdbcTemplate.update(tempTableQuery);
 
         var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ','", tempTableName);
@@ -85,6 +85,7 @@ public class IndicatorRepository {
                 numberOfInsertedRows = copyManager.copyIn(copyManagerQuery, fileInputStream);
                 return new FileUploadResultDto(tempTableName, numberOfInsertedRows);
             } else {
+                logger.error("Could not connect ot Copy Manager");
                 throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
             }
         }
@@ -109,6 +110,6 @@ public class IndicatorRepository {
     }
 
     private String generateTempTableName() {
-        return "_" + RandomStringUtils.randomAlphanumeric(29);
+        return "_" + RandomStringUtils.randomAlphanumeric(29).toLowerCase();
     }
 }
