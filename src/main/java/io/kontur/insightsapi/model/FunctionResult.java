@@ -16,9 +16,11 @@ import java.math.BigDecimal;
 public class FunctionResult implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = -1261015979499460304L;
+    private static final long serialVersionUID = 820740790464566332L;
 
     private String id;
 
     private BigDecimal result;
+
+    private Unit unit;
 }

@@ -73,7 +73,7 @@ public class FunctionsRepository implements FunctionsService {
     private List<FunctionResult> createFunctionResultList(List<FunctionArgs> args, ResultSet rs) {
         return args.stream().map(arg -> {
             try {
-                return new FunctionResult(arg.getId(), rs.getBigDecimal("result" + arg.getId()));
+                return new FunctionResult(arg.getId(), rs.getBigDecimal("result" + arg.getId()), null);
             } catch (SQLException e) {
                 logger.error("Can't get BigDecimal value from result set", e);
                 return null;
