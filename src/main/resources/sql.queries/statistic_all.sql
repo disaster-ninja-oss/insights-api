@@ -4,11 +4,14 @@ select
                        'meta', jsonb_build_object('max_zoom', 8,
                                                   'min_zoom', 0),
                        'indicators', (
-                           select jsonb_agg(jsonb_build_object('name', param_id,
-                                                               'label', param_label,
-                                                               'direction', direction,
-                                                               'copyrights', copyrights))
-                           from bivariate_indicators
+                           select jsonb_agg(jsonb_build_object('name', bi.param_id,
+                                                               'label', bi.param_label,
+                                                               'direction', bi.direction,
+                                                               'copyrights', bi.copyrights,
+                                                               'unit', jsonb_build_object('id', bul.unit_id,
+                                                                                          'shortName', bul.short_name,
+                                                                                          'longName', bul.long_name)))
+                           from bivariate_indicators bi join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
                        ),
                        'colors', jsonb_build_object(
                            'fallback', '#ccc',

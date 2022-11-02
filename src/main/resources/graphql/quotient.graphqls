@@ -1,5 +1,9 @@
 type Quotient {
-    name: String
-    label: String
-    direction: [[String]]
+    name: String,
+    label: String,
+    direction: [[String]],
+    description: String,
+    coverage: String,
+    updateFrequency: String,
+    unit: Unit
 }

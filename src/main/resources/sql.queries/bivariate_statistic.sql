@@ -3,11 +3,17 @@ select
                        'meta', jsonb_build_object('max_zoom', 8,
                                                   'min_zoom', 0),
                        'indicators', (
-                           select jsonb_agg(jsonb_build_object('name', param_id,
-                                                               'label', param_label,
-                                                               'direction', direction,
-                                                               'copyrights', copyrights))
-                           from bivariate_indicators
+                           select jsonb_agg(jsonb_build_object('name', bi.param_id,
+                                                               'label', bi.param_label,
+                                                               'direction', bi.direction,
+                                                               'copyrights', bi.copyrights,
+                                                               'description', bi.description,
+                                                               'coverage', bi.coverage,
+                                                               'update_frequency', bi.update_frequency,
+                                                               'unit', jsonb_build_object('id', bul.unit_id,
+                                                                                          'shortName', bul.short_name,
+                                                                                          'longName', bul.long_name)))
+                           from bivariate_indicators bi left join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
                        ),
                        'colors', jsonb_build_object(
                            'fallback', '#ccc',
@@ -20,6 +26,27 @@ select
                        'initAxis',
                        jsonb_build_object('x', jsonb_build_object('label', x.label, 'quotient',
                                                                   jsonb_build_array(x.numerator, x.denominator),
+                                                                  'quotients',
+                                                                  jsonb_build_array(
+                                                                          jsonb_build_object('name', bix1.param_id,
+                                                                                             'label', bix1.param_label,
+                                                                                             'direction', bix1.direction,
+                                                                                             'description', bix1.description,
+                                                                                             'coverage', bix1.coverage,
+                                                                                             'update_frequency', bix1.update_frequency,
+                                                                                             'unit', jsonb_build_object('id', bulx1.unit_id,
+                                                                                                                        'shortName', bulx1.short_name,
+                                                                                                                        'longName', bulx1.long_name)),
+                                                                          jsonb_build_object('name', bix2.param_id,
+                                                                                             'label', bix2.param_label,
+                                                                                             'direction', bix2.direction,
+                                                                                             'description', bix2.description,
+                                                                                             'coverage', bix2.coverage,
+                                                                                             'update_frequency', bix2.update_frequency,
+                                                                                             'unit', jsonb_build_object('id', bulx2.unit_id,
+                                                                                                                        'shortName', bulx2.short_name,
+                                                                                                                        'longName', bulx2.long_name))
+                                                                                   ),
                                                                   'steps',
                                                                   jsonb_build_array(
                                                                       jsonb_build_object('value', x.min, 'label', x.min_label),
@@ -28,6 +55,27 @@ select
                                                                       jsonb_build_object('value', x.max, 'label', x.max_label))),
                                           'y', jsonb_build_object('label', y.label, 'quotient',
                                                                   jsonb_build_array(y.numerator, y.denominator),
+                                                                  'quotients',
+                                                                  jsonb_build_array(
+                                                                          jsonb_build_object('name', biy1.param_id,
+                                                                                             'label', biy1.param_label,
+                                                                                             'direction', biy1.direction,
+                                                                                             'description', biy1.description,
+                                                                                             'coverage', biy1.coverage,
+                                                                                             'update_frequency', biy1.update_frequency,
+                                                                                             'unit', jsonb_build_object('id', buly1.unit_id,
+                                                                                                                        'shortName', buly1.short_name,
+                                                                                                                        'longName', buly1.long_name)),
+                                                                          jsonb_build_object('name', biy2.param_id,
+                                                                                             'label', biy2.param_label,
+                                                                                             'direction', biy2.direction,
+                                                                                             'description', biy2.description,
+                                                                                             'coverage', biy2.coverage,
+                                                                                             'update_frequency', biy2.update_frequency,
+                                                                                             'unit', jsonb_build_object('id', buly2.unit_id,
+                                                                                                                        'shortName', buly2.short_name,
+                                                                                                                        'longName', buly2.long_name))
+                                                                                   ),
                                                                   'steps',
                                                                   jsonb_build_array(
                                                                       jsonb_build_object('value', y.min, 'label', y.min_label),
@@ -56,8 +104,25 @@ from
                                                               'quotient', jsonb_build_array(ax.numerator, ax.denominator),
                                                               'quotients',
                                                               jsonb_build_array(
-                                                                      jsonb_build_object('name', bix1.param_id, 'label', bix1.param_label, 'direction', bix1.direction),
-                                                                      jsonb_build_object('name', bix2.param_id, 'label', bix2.param_label, 'direction', bix2.direction)),
+                                                                      jsonb_build_object('name', bix1.param_id,
+                                                                                         'label', bix1.param_label,
+                                                                                         'direction', bix1.direction,
+                                                                                         'description', bix1.description,
+                                                                                         'coverage', bix1.coverage,
+                                                                                         'update_frequency', bix1.update_frequency,
+                                                                                         'unit', jsonb_build_object('id', bulx1.unit_id,
+                                                                                                                    'shortName', bulx1.short_name,
+                                                                                                                    'longName', bulx1.long_name)),
+                                                                      jsonb_build_object('name', bix2.param_id,
+                                                                                         'label', bix2.param_label,
+                                                                                         'direction', bix2.direction,
+                                                                                         'description', bix2.description,
+                                                                                         'coverage', bix2.coverage,
+                                                                                         'update_frequency', bix2.update_frequency,
+                                                                                         'unit', jsonb_build_object('id', bulx2.unit_id,
+                                                                                                                    'shortName', bulx2.short_name,
+                                                                                                                    'longName', bulx2.long_name))
+                                                                               ),
                                                               'steps',
                                                               jsonb_build_array(
                                                                       jsonb_build_object('value', ax.min, 'label', ax.min_label),
@@ -68,8 +133,25 @@ from
                                                               'quotient', jsonb_build_array(ay.numerator, ay.denominator),
                                                               'quotients',
                                                               jsonb_build_array(
-                                                                      jsonb_build_object('name', biy1.param_id, 'label', biy1.param_label, 'direction', biy1.direction),
-                                                                      jsonb_build_object('name', biy2.param_id, 'label', biy2.param_label, 'direction', biy2.direction)),
+                                                                      jsonb_build_object('name', biy1.param_id,
+                                                                                         'label', biy1.param_label,
+                                                                                         'direction', biy1.direction,
+                                                                                         'description', biy1.description,
+                                                                                         'coverage', biy1.coverage,
+                                                                                         'update_frequency', biy1.update_frequency,
+                                                                                         'unit', jsonb_build_object('id', buly1.unit_id,
+                                                                                                                    'shortName', buly1.short_name,
+                                                                                                                    'longName', buly1.long_name)),
+                                                                      jsonb_build_object('name', biy2.param_id,
+                                                                                         'label', biy2.param_label,
+                                                                                         'direction', biy2.direction,
+                                                                                         'description', biy2.description,
+                                                                                         'coverage', biy2.coverage,
+                                                                                         'update_frequency', biy2.update_frequency,
+                                                                                         'unit', jsonb_build_object('id', buly2.unit_id,
+                                                                                                                    'shortName', buly2.short_name,
+                                                                                                                    'longName', buly2.long_name))
+                                                                               ),
                                                               'steps',
                                                               jsonb_build_array(
                                                                       jsonb_build_object('value', ay.min, 'label', ay.min_label),
@@ -84,9 +166,17 @@ from
           bivariate_indicators bix1,
           bivariate_indicators bix2,
           bivariate_indicators biy1,
-          bivariate_indicators biy2
+          bivariate_indicators biy2,
+          bivariate_unit_localization bulx1,
+          bivariate_unit_localization bulx2,
+          bivariate_unit_localization buly1,
+          bivariate_unit_localization buly2
       where
-            bix1.param_id = o.x_numerator
+            bulx1.unit_id = bix1.unit_id
+        and bulx2.unit_id = bix2.unit_id
+        and buly1.unit_id = biy1.unit_id
+        and buly2.unit_id = biy2.unit_id
+        and bix1.param_id = o.x_numerator
         and bix2.param_id = o.x_denominator
         and biy1.param_id = o.y_numerator
         and biy2.param_id = o.y_denominator
@@ -95,9 +185,25 @@ from
         and ay.denominator = o.y_denominator
         and ay.numerator = o.y_numerator )                                                      ov,
     bivariate_axis                                                                              x,
-    bivariate_axis                                                                              y
+    bivariate_axis                                                                              y,
+    bivariate_indicators bix1,
+    bivariate_indicators bix2,
+    bivariate_indicators biy1,
+    bivariate_indicators biy2,
+    bivariate_unit_localization bulx1,
+    bivariate_unit_localization bulx2,
+    bivariate_unit_localization buly1,
+    bivariate_unit_localization buly2
 where
       x.numerator = 'count'
   and x.denominator = 'area_km2'
   and y.numerator = 'view_count'
   and y.denominator = 'area_km2'
+  and x.numerator = bix1.param_id
+  and bix1.unit_id = bulx1.unit_id
+  and x.denominator = bix2.param_id
+  and bix2.unit_id = bulx2.unit_id
+  and y.numerator = biy1.param_id
+  and biy1.unit_id = buly1.unit_id
+  and y.denominator = biy2.param_id
+  and biy2.unit_id = buly2.unit_id

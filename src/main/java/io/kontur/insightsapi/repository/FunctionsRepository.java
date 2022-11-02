@@ -2,6 +2,7 @@ package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.FunctionArgs;
 import io.kontur.insightsapi.model.FunctionResult;
+import io.kontur.insightsapi.model.Unit;
 import io.kontur.insightsapi.service.cacheable.FunctionsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -33,6 +37,8 @@ public class FunctionsRepository implements FunctionsService {
     private final Logger logger = LoggerFactory.getLogger(FunctionsRepository.class);
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    private final JdbcTemplate jdbcTemplate;
 
     private final QueryFactory queryFactory;
 
@@ -73,12 +79,38 @@ public class FunctionsRepository implements FunctionsService {
     private List<FunctionResult> createFunctionResultList(List<FunctionArgs> args, ResultSet rs) {
         return args.stream().map(arg -> {
             try {
-                return new FunctionResult(arg.getId(), rs.getBigDecimal("result" + arg.getId()), null);
+                return new FunctionResult(arg.getId(), rs.getBigDecimal("result" + arg.getId()), getUnit(arg));
             } catch (SQLException e) {
                 logger.error("Can't get BigDecimal value from result set", e);
                 return null;
             }
         }).toList();
+    }
+
+    private Unit getUnit(FunctionArgs arg) {
+        String query;
+        //TODO: localization for units can be added to this request in future
+        try {
+            if ("percentageXWhereNoY".equals(arg.getName())) {
+                query = "select unit_id, short_name, long_name " +
+                        "from bivariate_unit_localization " +
+                        "where unit_id = 'perc'";
+            } else {
+                query = String.format("select bivariate_unit_localization.unit_id, short_name, long_name " +
+                        "from bivariate_unit_localization " +
+                        "join bivariate_indicators bi on bivariate_unit_localization.unit_id = bi.unit_id " +
+                        "where bi.param_id = '%s'", arg.getX());
+            }
+            return jdbcTemplate.queryForObject(query, (rs, rowNum) ->
+                    Unit.builder()
+                            .id(rs.getString("unit_id"))
+                            .shortName(rs.getString("short_name"))
+                            .longName(rs.getString("long_name"))
+                            .build());
+        } catch (EmptyResultDataAccessException e) {
+            logger.error("No such unit", e);
+            throw new EmptyResultDataAccessException("No such unit", 1);
+        }
     }
 
     private String checkString(String string) {

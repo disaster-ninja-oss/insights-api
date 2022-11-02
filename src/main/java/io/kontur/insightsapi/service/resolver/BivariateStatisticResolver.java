@@ -14,6 +14,8 @@ public class BivariateStatisticResolver implements GraphQLResolver<PolygonStatis
     private final StatisticService statisticService;
 
     public BivariateStatistic getBivariateStatistic(PolygonStatistic statistic) {
-        return statisticService.getBivariateStatistic();
+        var y = statisticService.getBivariateStatistic();
+        System.out.println(1);
+        return y;
     }
 }
