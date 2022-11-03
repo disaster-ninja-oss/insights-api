@@ -92,9 +92,11 @@ public class FunctionsRepository implements FunctionsService {
         //TODO: localization for units can be added to this request in future
         try {
             if ("percentageXWhereNoY".equals(arg.getName())) {
-                query = "select unit_id, short_name, long_name " +
-                        "from bivariate_unit_localization " +
-                        "where unit_id = 'perc'";
+                query = """
+                        select unit_id, short_name, long_name
+                        from bivariate_unit_localization
+                        where unit_id = 'perc'
+                        """;
             } else {
                 query = String.format("select bivariate_unit_localization.unit_id, short_name, long_name " +
                         "from bivariate_unit_localization " +
