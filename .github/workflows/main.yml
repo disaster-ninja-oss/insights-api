@@ -21,6 +21,11 @@ jobs:
 
       - uses: actions/checkout@v3
 
+      - name: Extracting metadata from a cloned repository
+        id: get-cloned
+        run: |-
+          echo "::set-output name=SHA::$(git log -1 --format='%h')"
+
       - uses: actions/setup-java@v3
         with:
           java-version: 16
@@ -32,6 +37,7 @@ jobs:
           MAVEN_CLI_OPTS: '--batch-mode'
           NEXUS_DEPLOYER: ${{ secrets.NEXUS_DEPLOYER }}
           NEXUS_DEPLOYER_PASS: ${{ secrets.NEXUS_DEPLOYER_PASS }}
+          TAG: ${{ github.ref_name }}.${{ steps.get-cloned.outputs.SHA }}.${{ github.run_attempt }}
         run: |-
           set -e
 
@@ -40,4 +46,5 @@ jobs:
           echo '${{ secrets.NEXUS_DEPLOYER_PASS }}' | docker login nexus.kontur.io:8084 -u '${{ secrets.NEXUS_DEPLOYER }}' --password-stdin
           echo '${{ secrets.NEXUS_DEPLOYER_PASS }}' | docker login nexus.kontur.io:8085 -u '${{ secrets.NEXUS_DEPLOYER }}' --password-stdin
 
-          mvn $MAVEN_CLI_OPTS clean install -DskipTests jib:build -U
+          IMAGE_TAG="$TAG" mvn $MAVEN_CLI_OPTS clean install jib:build -U
+          echo "<h3>Docker image tag</h3> $TAG <br><br>" >> $GITHUB_STEP_SUMMARY
