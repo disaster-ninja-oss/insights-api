@@ -98,10 +98,12 @@ public class FunctionsRepository implements FunctionsService {
                         where unit_id = 'perc'
                         """;
             } else {
-                query = String.format("select bivariate_unit_localization.unit_id, short_name, long_name " +
-                        "from bivariate_unit_localization " +
-                        "join bivariate_indicators bi on bivariate_unit_localization.unit_id = bi.unit_id " +
-                        "where bi.param_id = '%s'", arg.getX());
+                query = String.format("""
+                        select bivariate_unit_localization.unit_id, short_name, long_name
+                        from bivariate_indicators bi
+                        left join bivariate_unit_localization on bi.unit_id = bivariate_unit_localization.unit_id
+                        where bi.param_id = '%s';
+                        """, arg.getX());
             }
             return jdbcTemplate.queryForObject(query, (rs, rowNum) ->
                     Unit.builder()
