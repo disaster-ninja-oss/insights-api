@@ -21,4 +21,14 @@ public class Quotient implements Serializable {
     private String coverage;
     private String updateFrequency;
     private Unit unit;
+
+    @SuppressWarnings("unused")
+    public String getUpdate_frequency() {
+        return updateFrequency;
+    }
+
+    @SuppressWarnings("unused")
+    public void setUpdate_frequency(String updateFrequency) {
+        this.updateFrequency = updateFrequency;
+    }
 }

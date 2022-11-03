@@ -163,20 +163,12 @@ from
           bivariate_axis     ax,
           bivariate_axis     ay,
           bivariate_overlays o,
-          bivariate_indicators bix1,
-          bivariate_indicators bix2,
-          bivariate_indicators biy1,
-          bivariate_indicators biy2,
-          bivariate_unit_localization bulx1,
-          bivariate_unit_localization bulx2,
-          bivariate_unit_localization buly1,
-          bivariate_unit_localization buly2
+          bivariate_indicators bix1 left join bivariate_unit_localization bulx1 on bix1.unit_id = bulx1.unit_id,
+          bivariate_indicators bix2 left join bivariate_unit_localization bulx2 on bix2.unit_id = bulx2.unit_id,
+          bivariate_indicators biy1 left join bivariate_unit_localization buly1 on biy1.unit_id = buly1.unit_id,
+          bivariate_indicators biy2 left join bivariate_unit_localization buly2 on biy2.unit_id = buly2.unit_id
       where
-            bulx1.unit_id = bix1.unit_id
-        and bulx2.unit_id = bix2.unit_id
-        and buly1.unit_id = biy1.unit_id
-        and buly2.unit_id = biy2.unit_id
-        and bix1.param_id = o.x_numerator
+            bix1.param_id = o.x_numerator
         and bix2.param_id = o.x_denominator
         and biy1.param_id = o.y_numerator
         and biy2.param_id = o.y_denominator
@@ -186,24 +178,16 @@ from
         and ay.numerator = o.y_numerator )                                                      ov,
     bivariate_axis                                                                              x,
     bivariate_axis                                                                              y,
-    bivariate_indicators bix1,
-    bivariate_indicators bix2,
-    bivariate_indicators biy1,
-    bivariate_indicators biy2,
-    bivariate_unit_localization bulx1,
-    bivariate_unit_localization bulx2,
-    bivariate_unit_localization buly1,
-    bivariate_unit_localization buly2
+    bivariate_indicators bix1 left join bivariate_unit_localization bulx1 on bix1.unit_id = bulx1.unit_id,
+    bivariate_indicators bix2 left join bivariate_unit_localization bulx2 on bix2.unit_id = bulx2.unit_id,
+    bivariate_indicators biy1 left join bivariate_unit_localization buly1 on biy1.unit_id = buly1.unit_id,
+    bivariate_indicators biy2 left join bivariate_unit_localization buly2 on biy2.unit_id = buly2.unit_id
 where
       x.numerator = 'count'
   and x.denominator = 'area_km2'
   and y.numerator = 'view_count'
   and y.denominator = 'area_km2'
   and x.numerator = bix1.param_id
-  and bix1.unit_id = bulx1.unit_id
   and x.denominator = bix2.param_id
-  and bix2.unit_id = bulx2.unit_id
   and y.numerator = biy1.param_id
-  and biy1.unit_id = buly1.unit_id
   and y.denominator = biy2.param_id
-  and biy2.unit_id = buly2.unit_id

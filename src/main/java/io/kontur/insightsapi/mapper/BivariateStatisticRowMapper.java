@@ -18,6 +18,8 @@ public class BivariateStatisticRowMapper implements RowMapper<BivariateStatistic
     @SneakyThrows
     @Override
     public BivariateStatistic mapRow(ResultSet resultSet, int i) {
-        return objectMapper.readValue(resultSet.getString(1), BivariateStatistic.class);
+        var t = objectMapper.readValue(resultSet.getString(1), BivariateStatistic.class);
+        System.out.println(1);
+        return t;
     }
 }
