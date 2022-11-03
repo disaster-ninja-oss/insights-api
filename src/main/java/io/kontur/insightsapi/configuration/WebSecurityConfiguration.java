@@ -34,7 +34,7 @@ public class WebSecurityConfiguration {
                 .csrf()
                 .disable()
                 .authorizeRequests(auth -> auth
-                        .antMatchers("/graphql/**", "/graphiql/**", "/tiles/**", "/cache/cleanUp").permitAll()
+                        .antMatchers("/graphql/**", "/graphiql/**", "/tiles/**", "/cache/cleanUp", "/health/readiness", "/metrics").permitAll()
                         .anyRequest().authenticated()//TODO: secure other endpoints in future
                 )
                 .oauth2ResourceServer(resourceServerConfigurer -> resourceServerConfigurer
