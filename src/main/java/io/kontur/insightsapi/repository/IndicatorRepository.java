@@ -53,15 +53,18 @@ public class IndicatorRepository {
         var paramSource = new MapSqlParameterSource()
                 .addValue("id", bivariateIndicatorDto.getId())
                 .addValue("label", bivariateIndicatorDto.getLabel())
-                .addValue("copyrights", objectMapper.writeValueAsString(bivariateIndicatorDto.getCopyrights()))
-                .addValue("direction", objectMapper.writeValueAsString(bivariateIndicatorDto.getDirection()))
+                .addValue("copyrights",
+                        bivariateIndicatorDto.getCopyrights() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getCopyrights()))
+                .addValue("direction",
+                        bivariateIndicatorDto.getDirection() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getDirection()))
                 .addValue("isBase", bivariateIndicatorDto.getIsBase())
                 .addValue("isPublic", bivariateIndicatorDto.getIsPublic())
-                .addValue("allowedUsers", objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
+                .addValue("allowedUsers",
+                        bivariateIndicatorDto.getAllowedUsers() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
 
         //TODO:add owner in future
         String bivariateIndicatorsQuery = String.format("INSERT INTO %s (param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public,allowed_users,date) " +
-                "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),null,'NEW',:isPublic,:allowedUsers,now()) RETURNING param_uuid;", bivariateIndicatorsTableName);
+                "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),'','NEW',:isPublic,:allowedUsers,now()) RETURNING param_uuid;", bivariateIndicatorsTableName);
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
     }
 
@@ -70,7 +73,7 @@ public class IndicatorRepository {
 
         String tempTableName = generateTempTableName();
 
-        String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, value double precision)", tempTableName);
+        String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, value double precision, CONSTRAINT h3_cell_check CHECK (h3_is_valid_cell(h3::h3index)))", tempTableName);
         jdbcTemplate.update(tempTableQuery);
 
         var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ','", tempTableName);
@@ -90,7 +93,18 @@ public class IndicatorRepository {
                 throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
             }
         } catch (Exception e) {
-            return new FileUploadResultDto(null, 0, e.getMessage());
+            deleteTempTable(tempTableName);
+            return new FileUploadResultDto(null, 0, adjustMessageForKnownExceptions(e.getMessage()));
+        }
+    }
+
+//    TODO: HERE
+    private String adjustMessageForKnownExceptions(String message) {
+        if (message.contains("stringToH3")) {
+            return String.format("Unable to represent %s from the file as H3",
+                    message.substring(message.indexOf(", line") + 2, message.indexOf(", column")));
+        } else {
+            return message;
         }
     }
 
@@ -99,8 +113,7 @@ public class IndicatorRepository {
         var copyDataFromTempToStatH3WithUuidQuery = String.format("INSERT INTO %s select h3, value, '%s' from %s", transposedTableName, uuid, fileUploadResultDto.getTempTableName());
         long numberOfCopiedRows = jdbcTemplate.update(copyDataFromTempToStatH3WithUuidQuery);
 
-        var dropTempTableQuery = String.format("DROP TABLE %s", fileUploadResultDto.getTempTableName());
-        jdbcTemplate.update(dropTempTableQuery);
+        deleteTempTable(fileUploadResultDto.getTempTableName());
 
         if (numberOfCopiedRows != fileUploadResultDto.getNumberOfUploadedRows()) {
             logger.warn(String.format("No errors during uploading occurred but records number validation did not pass: " +
@@ -119,5 +132,9 @@ public class IndicatorRepository {
     @Transactional
     public void deleteIndicator(String uuid) {
         jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'", bivariateIndicatorsTableName, uuid));
+    }
+
+    private void deleteTempTable(String tempTableName) {
+        jdbcTemplate.update(String.format("DROP TABLE %s", tempTableName));
     }
 }

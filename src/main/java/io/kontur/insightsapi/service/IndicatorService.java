@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.service;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
@@ -93,12 +94,6 @@ public class IndicatorService {
                 return ResponseEntity.status(500).body("Could not process request, neither indicator nor h3 indexes were created");
             }
 
-        } catch (MismatchedInputException exception) {
-            String incorrectFieldMessage = String.format("%s field has an incorrect type: %s",
-                    exception.getPath().get(0).getFieldName(),
-                    exception.getMessage());
-            logger.error(incorrectFieldMessage);
-            return ResponseEntity.status(400).body(incorrectFieldMessage);
         } catch (FileUploadException | IOException exception) {
             logger.error(exception.getMessage());
             return ResponseEntity.status(400).body(exception.getMessage());
@@ -116,6 +111,22 @@ public class IndicatorService {
     }
 
     private BivariateIndicatorDto parseRequestFormDataParameters(FileItemStream item) throws IOException {
-        return objectMapper.readValue(item.openStream(), BivariateIndicatorDto.class);
+        try {
+            return objectMapper.readValue(item.openStream(), BivariateIndicatorDto.class);
+        } catch (JsonParseException exception) {
+            throw new IOException(generateExceptionMessage(exception.getProcessor().getParsingContext().getCurrentName()));
+        } catch (MismatchedInputException exception) {
+            throw new IOException(generateExceptionMessage(exception.getPath().get(0).getFieldName()));
+        }
+    }
+
+    private String generateExceptionMessage(String fieldName) {
+        return switch (fieldName) {
+            case "isPublic", "isBase" -> String.format("%s field supports only boolean values", fieldName);
+            case "id", "label" -> String.format("%s field supports only string values", fieldName);
+            case "copyrights", "allowedUsers" -> String.format("Incorrect type of %s field, array expected.", fieldName);
+            case "direction" -> String.format("Incorrect type of %s field, array of arrays expected.", fieldName);
+            default -> String.format("Incorrect type of %s field", fieldName);
+        };
     }
 }

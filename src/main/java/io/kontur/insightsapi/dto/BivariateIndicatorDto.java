@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -31,11 +30,11 @@ public class BivariateIndicatorDto {
     private List<List<String>> direction;
 
     @JsonProperty(value = "isBase", required = true, defaultValue = "false")
-    @NotNull
+    @NotNull(message = "Incorrect type of is_base field, true/false expected.")
     private Boolean isBase = false;
 
     @JsonProperty(value = "isPublic", required = true, defaultValue = "false")
-    @NotNull
+    @NotNull(message = "Incorrect type of is_public field, true/false expected.")
     private Boolean isPublic = false;
 
     @JsonProperty(value = "allowedUsers")
