@@ -12,4 +12,6 @@ public class FileUploadResultDto {
     private String tempTableName;
 
     private long numberOfUploadedRows;
+
+    private String errorMessage;
 }

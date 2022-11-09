@@ -86,7 +86,7 @@ public class IndicatorRepository {
 
                 CopyManager copyManager = new CopyManager((BaseConnection) connection.unwrap(Connection.class));
                 numberOfInsertedRows = copyManager.copyIn(copyManagerQuery, fileInputStream);
-                return new FileUploadResultDto(tempTableName, numberOfInsertedRows);
+                return new FileUploadResultDto(tempTableName, numberOfInsertedRows, null);
             } else {
                 logger.error("Could not connect ot Copy Manager");
                 throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
