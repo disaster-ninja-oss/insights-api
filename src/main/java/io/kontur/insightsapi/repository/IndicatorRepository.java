@@ -73,7 +73,7 @@ public class IndicatorRepository {
 
         String tempTableName = generateTempTableName();
 
-        String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, value double precision, CONSTRAINT h3_cell_check CHECK (h3_is_valid_cell(h3::h3index)))", tempTableName);
+        String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, value double precision, CONSTRAINT valid_cell CHECK (h3_is_valid_cell(h3::h3index)))", tempTableName);
         jdbcTemplate.update(tempTableQuery);
 
         var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ','", tempTableName);
@@ -98,11 +98,16 @@ public class IndicatorRepository {
         }
     }
 
-//    TODO: HERE
     private String adjustMessageForKnownExceptions(String message) {
         if (message.contains("stringToH3")) {
             return String.format("Unable to represent %s from the file as H3",
-                    message.substring(message.indexOf(", line") + 2, message.indexOf(", column")));
+                    message.substring(message.indexOf(", line") + 2, message.indexOf(", column", message.indexOf(", line"))));
+        } else if (message.contains("valid_cell")) {
+            return String.format("Incorrect H3index found in the file: %s",
+                    message.substring(message.indexOf(", line") + 2, message.indexOf(": \"", message.indexOf(", line"))));
+        } else if (message.contains("double precision")) {
+            return String.format("Incorrect value found in the file: %s",
+                    message.substring(message.indexOf(", line") + 2, message.indexOf(", column", message.indexOf(", line"))));
         } else {
             return message;
         }
