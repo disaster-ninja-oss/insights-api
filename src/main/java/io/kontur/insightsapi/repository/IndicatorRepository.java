@@ -70,7 +70,6 @@ public class IndicatorRepository {
 
     public FileUploadResultDto uploadCSVFileIntoTempTable(FileItemStream file) throws SQLException, IOException, ConnectionException {
 
-
         String tempTableName = generateTempTableName();
 
         String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, value double precision, CONSTRAINT valid_cell CHECK (h3_is_valid_cell(h3::h3index)))", tempTableName);
@@ -87,7 +86,7 @@ public class IndicatorRepository {
 
                 CopyManager copyManager = new CopyManager((BaseConnection) connection.unwrap(Connection.class));
                 numberOfInsertedRows = copyManager.copyIn(copyManagerQuery, fileInputStream);
-                return new FileUploadResultDto(tempTableName, numberOfInsertedRows, null);
+                return new FileUploadResultDto(tempTableName, numberOfInsertedRows);
             } else {
                 logger.error("Could not connect ot Copy Manager");
                 throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");

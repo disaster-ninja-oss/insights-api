@@ -8,6 +8,12 @@ spring:
   cache:
     redis:
       time-to-live: 86400
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://keycloak01.kontur.io/auth/realms/kontur
+          jwk-set-uri: https://keycloak01.kontur.io/auth/realms/kontur/protocol/openid-connect/certs
 
 bivatiateMatrix:
   highCorrelationLevel: 0.8
