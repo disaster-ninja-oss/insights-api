@@ -1,4 +1,5 @@
 type FunctionResult {
     id: String,
     result: Float
+    unit: Unit
 }

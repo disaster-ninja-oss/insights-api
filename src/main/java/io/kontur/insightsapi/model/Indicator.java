@@ -16,4 +16,22 @@ public class Indicator {
     private List<String> copyrights;
 
     private List<List<String>> direction;
+
+    private String description;
+
+    private String coverage;
+
+    private String updateFrequency;
+
+    private Unit unit;
+
+    @SuppressWarnings("unused")
+    public String getUpdate_frequency() {
+        return updateFrequency;
+    }
+
+    @SuppressWarnings("unused")
+    public void setUpdate_frequency(String updateFrequency) {
+        this.updateFrequency = updateFrequency;
+    }
 }

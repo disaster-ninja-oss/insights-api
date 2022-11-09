@@ -2,5 +2,9 @@ type Indicator {
     name: String,
     label: String,
     copyrights: [String],
-    direction: [[String]]
+    direction: [[String]],
+    description: String,
+    coverage: String,
+    updateFrequency: String,
+    unit: Unit
 }

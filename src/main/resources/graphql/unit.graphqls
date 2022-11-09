@@ -1,0 +1,5 @@
+type Unit {
+    id: String,
+    shortName: String,
+    longName: String
+}

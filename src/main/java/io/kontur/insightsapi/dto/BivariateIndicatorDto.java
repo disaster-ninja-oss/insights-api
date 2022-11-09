@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,29 +15,26 @@ import java.util.List;
 public class BivariateIndicatorDto {
 
     @JsonProperty(value = "id", required = true)
-    @NotEmpty(message = "Id cannot be null or empty")
+    @NotNull
     private String id;
 
     @JsonProperty(value = "label", required = true)
-    @NotEmpty(message = "Label cannot be null or empty")
+    @NotNull
     private String label;
 
     @JsonProperty(value = "copyrights")
-    private List<String> copyrights;
+    private List<String> copyrights = new ArrayList<>();
 
     @JsonProperty(value = "direction", required = true)
-    @NotEmpty(message = "List of directions cannot be null or empty")
-    private List<List<String>> direction;
+    private List<List<String>> direction = new ArrayList<>();
 
-    @JsonProperty(value = "isBase", required = true, defaultValue = "false")
-    @NotNull
+    @JsonProperty(value = "isBase", required = true)
     private Boolean isBase = false;
 
-    @JsonProperty(value = "isPublic", required = true, defaultValue = "false")
-    @NotNull
+    @JsonProperty(value = "isPublic", required = true)
     private Boolean isPublic = false;
 
     @JsonProperty(value = "allowedUsers")
-    private List<String> allowedUsers;
+    private List<String> allowedUsers = new ArrayList<>();
 
 }
