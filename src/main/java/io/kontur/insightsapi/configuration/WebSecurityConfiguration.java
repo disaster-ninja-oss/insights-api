@@ -19,7 +19,6 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
@@ -34,7 +33,7 @@ public class WebSecurityConfiguration {
                 .csrf()
                 .disable()
                 .authorizeRequests(auth -> auth
-                        .antMatchers("/graphql/**", "/graphiql/**", "/tiles/**", "/cache/cleanUp", "/health/readiness", "/metrics").permitAll()
+                        .antMatchers("/graphql/**", "/graphiql/**", "/vendor/graphiql/**", "/tiles/**", "/cache/cleanUp", "/health/readiness", "/metrics").permitAll()
                         .anyRequest().authenticated()//TODO: secure other endpoints in future
                 )
                 .oauth2ResourceServer(resourceServerConfigurer -> resourceServerConfigurer
