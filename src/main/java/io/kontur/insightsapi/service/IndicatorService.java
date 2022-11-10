@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.ConnectionException;
+import io.kontur.insightsapi.exception.TableDataCopyException;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.AllArgsConstructor;
 import org.apache.commons.fileupload.FileItemIterator;
@@ -40,11 +41,12 @@ public class IndicatorService {
     private final ObjectMapper objectMapper;
 
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
+        String uuid = "";
+        FileUploadResultDto fileUploadResultDto = new FileUploadResultDto();
+
         try {
 
             FileItemIterator itemIterator = upload.getItemIterator(request);
-            FileUploadResultDto fileUploadResultDto = new FileUploadResultDto();
-            String uuid = "";
             int itemIndex = 0;
 
             while (itemIterator.hasNext()) {
@@ -98,7 +100,13 @@ public class IndicatorService {
             logger.error(exception.getMessage());
             return ResponseEntity.status(400).body(exception.getMessage());
         } catch (SQLException | ConnectionException exception) {
+            indicatorRepository.deleteIndicator(uuid);
             logger.error(exception.getMessage());
+            return ResponseEntity.status(500).body(exception.getMessage());
+        } catch (TableDataCopyException exception) {
+            logger.error(exception.getMessage());
+            indicatorRepository.deleteTempTable(fileUploadResultDto.getTempTableName());
+            indicatorRepository.deleteIndicator(uuid);
             return ResponseEntity.status(500).body(exception.getMessage());
         }
     }
@@ -124,7 +132,8 @@ public class IndicatorService {
         return switch (fieldName) {
             case "isPublic", "isBase" -> String.format("%s field supports only boolean values", fieldName);
             case "id", "label" -> String.format("%s field supports only string values", fieldName);
-            case "copyrights", "allowedUsers" -> String.format("Incorrect type of %s field, array expected.", fieldName);
+            case "copyrights", "allowedUsers" ->
+                    String.format("Incorrect type of %s field, array expected.", fieldName);
             case "direction" -> String.format("Incorrect type of %s field, array of arrays expected.", fieldName);
             default -> String.format("Incorrect type of %s field", fieldName);
         };

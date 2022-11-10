@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.ConnectionException;
+import io.kontur.insightsapi.exception.TableDataCopyException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -88,7 +89,8 @@ public class IndicatorRepository {
                 numberOfInsertedRows = copyManager.copyIn(copyManagerQuery, fileInputStream);
                 return new FileUploadResultDto(tempTableName, numberOfInsertedRows, null);
             } else {
-                logger.error("Could not connect ot Copy Manager");
+                logger.error("Could not connect to Copy Manager");
+                deleteTempTable(tempTableName);
                 throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
             }
         } catch (Exception e) {
@@ -113,20 +115,24 @@ public class IndicatorRepository {
     }
 
     @Transactional
-    public ResponseEntity<String> copyDataToStatH3(FileUploadResultDto fileUploadResultDto, String uuid) {
-        var copyDataFromTempToStatH3WithUuidQuery = String.format("INSERT INTO %s select h3, value, '%s' from %s", transposedTableName, uuid, fileUploadResultDto.getTempTableName());
-        long numberOfCopiedRows = jdbcTemplate.update(copyDataFromTempToStatH3WithUuidQuery);
+    public ResponseEntity<String> copyDataToStatH3(FileUploadResultDto fileUploadResultDto, String uuid) throws TableDataCopyException {
+        try {
+            var copyDataFromTempToStatH3WithUuidQuery = String.format("INSERT INTO %s select h3, value, '%s' from %s", transposedTableName, uuid, fileUploadResultDto.getTempTableName());
+            long numberOfCopiedRows = jdbcTemplate.update(copyDataFromTempToStatH3WithUuidQuery);
 
-        deleteTempTable(fileUploadResultDto.getTempTableName());
+            deleteTempTable(fileUploadResultDto.getTempTableName());
 
-        if (numberOfCopiedRows != fileUploadResultDto.getNumberOfUploadedRows()) {
-            logger.warn(String.format("No errors during uploading occurred but records number validation did not pass: " +
-                    "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
-            return ResponseEntity.ok().body(String.format("No errors during uploading occurred but records number validation did not pass: " +
-                    "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
+            if (numberOfCopiedRows != fileUploadResultDto.getNumberOfUploadedRows()) {
+                logger.warn(String.format("No errors during uploading occurred but records number validation did not pass: " +
+                        "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
+                return ResponseEntity.ok().body(String.format("No errors during uploading occurred but records number validation did not pass: " +
+                        "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
+            }
+
+            return ResponseEntity.ok().body(uuid);
+        } catch (Exception exception) {
+            throw new TableDataCopyException(exception);
         }
-
-        return ResponseEntity.ok().body(uuid);
     }
 
     private String generateTempTableName() {
@@ -138,7 +144,7 @@ public class IndicatorRepository {
         jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'", bivariateIndicatorsTableName, uuid));
     }
 
-    private void deleteTempTable(String tempTableName) {
+    public void deleteTempTable(String tempTableName) {
         jdbcTemplate.update(String.format("DROP TABLE %s", tempTableName));
     }
 }
