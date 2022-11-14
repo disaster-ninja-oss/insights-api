@@ -2,6 +2,12 @@
 --changeset insights-api:calculate_validated_input splitStatements:false stripComments:false endDelimiter:; runOnChange:true
 drop function if exists calculate_validated_input(text);
 
+--This function fixe as much as possible input geometry. Make it automatically valid, fix invalid multipolygons,
+--fix problem with 180 meridian
+--Input: string with geometry collection as geojson or wkt in EPSG:4326
+--Input example: {"type":"GeometryCollection","geometries":[{"type":"Point","coordinates":[-95.575,30.205]},
+-- {"type":"Polygon","coordinates":[[[-95.58,30.2],[-95.58,30.21],[-95.57,30.21],[-95.57,30.2],[-95.58,30.2]]]}]}
+--Output: fixed geometry in EPSG:3857
 create or replace function calculate_validated_input(geometry_string text)
     returns geometry
     language sql
