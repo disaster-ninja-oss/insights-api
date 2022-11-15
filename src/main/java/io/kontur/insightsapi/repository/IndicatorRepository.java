@@ -75,7 +75,7 @@ public class IndicatorRepository {
         String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, value double precision, CONSTRAINT valid_cell CHECK (h3_is_valid_cell(h3::h3index)))", tempTableName);
         jdbcTemplate.update(tempTableQuery);
 
-        var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ','", tempTableName);
+        var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ',' null 'NULL'", tempTableName);
 
         long numberOfInsertedRows;
 
