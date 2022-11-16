@@ -1,5 +1,5 @@
 with validated_input as materialized (
-    select calculate_validated_input(:geometry) as geom
+    select map_to_geometry_obj(:geometry) as geom
 ),
      distinct_h3 as (
          select distinct on (h3) population,
