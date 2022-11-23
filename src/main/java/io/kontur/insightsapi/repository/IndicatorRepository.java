@@ -16,6 +16,7 @@ import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -43,6 +44,14 @@ public class IndicatorRepository {
 
     private final DataSource dataSource;
 
+    @Value("classpath:/sql.queries/insert_bivariate_indicators.sql")
+    private Resource insertBivariateIndicators;
+
+    @Value("classpath:/sql.queries/update_bivariate_indicators.sql")
+    private Resource updateBivariateIndicators;
+
+    private final QueryFactory queryFactory;
+
     private final BivariateIndicatorRowMapper bivariateIndicatorRowMapper;
 
     //TODO: temporary field, remove when we have final version of transposed stat_h3 table
@@ -59,20 +68,9 @@ public class IndicatorRepository {
 
         //TODO: change state in future
         if (update) {
-            bivariateIndicatorsQuery = String.format("UPDATE %s " +
-                    "SET param_label = :label, copyrights = :copyrights::json, direction = :direction::json, " +
-                    "is_base = :isBase, is_public = :isPublic, allowed_users = :allowedUsers::json, date = now(), " +
-                    "description = :description, coverage = :coverage, update_frequency = :updateFrequency, " +
-                    "application = :application, unit_id = :unitId " +
-                    "WHERE param_id = :id AND owner = %s " +
-                    "RETURNING param_uuid;", bivariateIndicatorsTableName, owner);
+            bivariateIndicatorsQuery = String.format(queryFactory.getSql(updateBivariateIndicators), bivariateIndicatorsTableName, owner);
         } else {
-            bivariateIndicatorsQuery = String.format("INSERT INTO %s " +
-                    "(param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public," +
-                    "allowed_users,date,description,coverage,update_frequency,application,unitId) " +
-                    "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),:owner,'NEW',:isPublic," +
-                    ":allowedUsers::json,now(),:description,:coverage,:updateFrequency,:application,:unitId) " +
-                    "RETURNING param_uuid;", bivariateIndicatorsTableName);
+            bivariateIndicatorsQuery = String.format(queryFactory.getSql(insertBivariateIndicators), bivariateIndicatorsTableName);
         }
 
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);

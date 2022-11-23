@@ -75,7 +75,7 @@ public class IndicatorService {
                         update = true;
                     }
 
-                    //TODO: here probably make a 'state' update inside inner transaction so new state being commited
+                    //TODO: here probably make a 'state' update inside inner transaction so new state being committed
                     uuid = indicatorRepository.createOrUpdateIndicator(incomingBivariateIndicatorDto, owner, update);
 
                     itemIndex++;
@@ -112,15 +112,9 @@ public class IndicatorService {
         } catch (BivariateIndicatorsPRViolationException exception) {
             return logAndReturnErrorWithMessage(500, exception.getMessage());
         } catch (SQLException | ConnectionException | TableDataCopyException exception) {
-//            indicatorRepository.deleteIndicator(uuid);
-            //TODO: update state to previous value
+            //TODO: update state to previous value if committed in future
             return logAndReturnErrorWithMessage(500, exception.getMessage());
         }
-//        catch (TableDataCopyException exception) {
-//            indicatorRepository.deleteTempTable(fileUploadResultDto.getTempTableName());
-//            indicatorRepository.deleteIndicator(uuid);
-//            return logAndReturnErrorWithMessage(500, exception.getMessage());
-//        }
     }
 
     private void validateParameters(BivariateIndicatorDto bivariateIndicatorDto) {
