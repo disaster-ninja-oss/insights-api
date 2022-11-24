@@ -312,8 +312,7 @@
                             <jvmFlag>-javaagent:/opentelemetry/opentelemetry-javaagent.jar</jvmFlag>
                             <jvmFlag>-Dlogging.config=classpath:logback-stdout-json.xml</jvmFlag>
                             <jvmFlag>-server</jvmFlag>
-                            <jvmFlag>-Xmx3200m</jvmFlag>
-                            <jvmFlag>-Xms3200m</jvmFlag>
+                            <jvmFlag>-XX:MaxRAMPercentage=50</jvmFlag>
                             <jvmFlag>-XX:+HeapDumpOnOutOfMemoryError</jvmFlag>
                             <jvmFlag>-XX:HeapDumpPath=/tmp/insights_api_oom.hprof</jvmFlag>
                             <jvmFlag>-Dcom.sun.management.jmxremote.ssl=false</jvmFlag>

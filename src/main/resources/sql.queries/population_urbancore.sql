@@ -2,7 +2,7 @@ with resolution as (
     select calculate_area_resolution(ST_SetSRID(:polygon::geometry, 4326)) as resolution
 ),
                      validated_input as (
-                        select calculate_validated_input(:polygon) geom
+                        select map_to_geometry_obj(:polygon) geom
                      ),
                      stat_area as (
                          select distinct on (h.h3) h.*

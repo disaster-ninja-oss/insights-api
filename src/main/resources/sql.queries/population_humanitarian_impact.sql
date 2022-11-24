@@ -2,7 +2,7 @@ with resolution as (
         select calculate_area_resolution(ST_SetSRID(:geometry::geometry, 4326)) as resolution
     ),
          validated_input as (
-            select calculate_validated_input(:geometry) geom
+            select map_to_geometry_obj(:geometry) geom
          ),
         subdivided_polygons as (
                   select ST_Subdivide(v.geom) geom

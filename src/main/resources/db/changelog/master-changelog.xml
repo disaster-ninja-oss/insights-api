@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <include  file="calculate_validated_input.sql" relativeToChangelogFile="true"/>
+    <include  file="map_to_geometry_obj.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_area_resolution_performance_fix.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
