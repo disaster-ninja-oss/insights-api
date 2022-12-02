@@ -95,10 +95,6 @@ public class IndicatorService {
                     && (Strings.isEmpty(fileUploadResultDto.getTempTableName())
                     || fileUploadResultDto.getNumberOfUploadedRows() == 0)) {
 
-                if (update) {
-                    return ResponseEntity.ok().body(uuid);
-                }
-
                 if (Strings.isNotEmpty(fileUploadResultDto.getErrorMessage())) {
                     return logAndReturnErrorWithMessage(400, fileUploadResultDto.getErrorMessage());
                 }
@@ -106,6 +102,11 @@ public class IndicatorService {
                 if (fileUploadResultDto.getTempTableName() != null) {
                     indicatorRepository.deleteTempTable(fileUploadResultDto.getTempTableName());
                 }
+
+                if (update) {
+                    return ResponseEntity.ok().body(uuid);
+                }
+
                 indicatorRepository.deleteIndicator(uuid);
 
                 return logAndReturnErrorWithMessage(400, "File was absent or has a missing data in the request");
