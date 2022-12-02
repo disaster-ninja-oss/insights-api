@@ -19,6 +19,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -86,20 +87,28 @@ public class IndicatorService {
                 }
             }
 
-            if (Strings.isNotEmpty(uuid) && Strings.isNotEmpty(fileUploadResultDto.getTempTableName())) {
+            if (Strings.isNotEmpty(uuid)
+                    && Strings.isNotEmpty(fileUploadResultDto.getTempTableName())
+                    && fileUploadResultDto.getNumberOfUploadedRows() != 0) {
                 return indicatorRepository.copyDataToStatH3(fileUploadResultDto, uuid, update);
-            } else if (Strings.isNotEmpty(uuid) && Strings.isEmpty(fileUploadResultDto.getTempTableName())) {
+            } else if (Strings.isNotEmpty(uuid)
+                    && (Strings.isEmpty(fileUploadResultDto.getTempTableName())
+                    || fileUploadResultDto.getNumberOfUploadedRows() == 0)) {
 
                 if (update) {
                     return ResponseEntity.ok().body(uuid);
                 }
 
-                indicatorRepository.deleteIndicator(uuid);
-
                 if (Strings.isNotEmpty(fileUploadResultDto.getErrorMessage())) {
                     return logAndReturnErrorWithMessage(400, fileUploadResultDto.getErrorMessage());
                 }
-                return logAndReturnErrorWithMessage(400, "File was absent from request");
+
+                if (fileUploadResultDto.getTempTableName() != null) {
+                    indicatorRepository.deleteTempTable(fileUploadResultDto.getTempTableName());
+                }
+                indicatorRepository.deleteIndicator(uuid);
+
+                return logAndReturnErrorWithMessage(400, "File was absent or has a missing data in the request");
 
             } else {
                 return logAndReturnErrorWithMessage(500, "Could not process request, neither indicator nor h3 indexes were created");
@@ -111,7 +120,7 @@ public class IndicatorService {
             return logAndReturnErrorWithMessage(401, "Incorrect authentication data: could not get username");
         } catch (BivariateIndicatorsPRViolationException exception) {
             return logAndReturnErrorWithMessage(500, exception.getMessage());
-        } catch (SQLException | ConnectionException | TableDataCopyException exception) {
+        } catch (Exception exception) {
             //TODO: update state to previous value if committed in future
             return logAndReturnErrorWithMessage(500, exception.getMessage());
         }
@@ -142,6 +151,9 @@ public class IndicatorService {
     }
 
     private String generateExceptionMessage(String fieldName) {
+        if (fieldName == null) {
+            return "Incorrect parameters json";
+        }
         return switch (fieldName) {
             case "isPublic", "isBase" -> String.format("%s field supports only boolean values", fieldName);
             case "id", "label" -> String.format("%s field supports only string values", fieldName);
