@@ -2,6 +2,7 @@ package io.kontur.insightsapi.service;
 
 import io.kontur.insightsapi.repository.TileRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,13 @@ public class TileService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error);
         }
         return tileRepository.getBivariateTileMvt(z, x, y, bivariateIndicators);
+    }
+
+    public byte[] getBivariateTileMvtIndicatorsList(Integer z, Integer x, Integer y, List<String> indicatorsList) {
+        if (CollectionUtils.isEmpty(indicatorsList)){
+            indicatorsList = tileRepository.getAllBivariateIndicators();
+        }
+        return tileRepository.getBivariateTileMvt(z, x, y, indicatorsList);
     }
 
 }
