@@ -97,11 +97,9 @@ public class IndicatorRepository {
                 return new FileUploadResultDto(tempTableName, numberOfInsertedRows, null);
             } else {
                 logger.error("Could not connect to Copy Manager");
-                deleteTempTable(tempTableName);
                 throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
             }
         } catch (Exception e) {
-            deleteTempTable(tempTableName);
             return new FileUploadResultDto(null, 0, adjustMessageForKnownExceptions(e.getMessage()));
         }
     }
