@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Tiles", description = "Tiles API")
 @RestController
 @RequestMapping("/tiles")
@@ -31,5 +33,22 @@ public class TileController {
             return new byte[0];
         }
         return tileService.getBivariateTileMvt(z, x, y, indicatorsClass);
+    }
+
+    @Operation(summary = "Get bivariate mvt tile using z, x, y and list of indicator.",
+            tags = {"Tiles"},
+            description = "Get bivariate mvt tile using z, x, y and list of indicator.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful operation",
+                            content = @Content(mediaType = "application/vnd.mapbox-vector-tile")),
+                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+                    @ApiResponse(responseCode = "500", description = "Internal error")})
+    @GetMapping(value = "/bivariate/v2/{z}/{x}/{y}.mvt", produces = "application/vnd.mapbox-vector-tile")
+    public byte[] getBivariateTileMvtV2(@PathVariable Integer z, @PathVariable Integer x, @PathVariable Integer y,
+                                      @RequestParam(required = false) List<String> indicatorsList) {
+        if (z < 0 || z > 8 || x < 0 || x > (Math.pow(2, z) - 1) || y < 0 || y > (Math.pow(2, z) - 1)) {
+            return new byte[0];
+        }
+        return tileService.getBivariateTileMvtIndicatorsList(z, x, y, indicatorsList);
     }
 }
