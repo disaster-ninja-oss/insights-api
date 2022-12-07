@@ -37,10 +37,23 @@ public class TileService {
     }
 
     public byte[] getBivariateTileMvtIndicatorsList(Integer z, Integer x, Integer y, List<String> indicatorsList) {
-        if (CollectionUtils.isEmpty(indicatorsList)){
-            indicatorsList = tileRepository.getAllBivariateIndicators();
+        var indicators = indicatorsList;
+        if (CollectionUtils.isEmpty(indicators)) {
+            indicators = tileRepository.getAllBivariateIndicators();
+        } else {
+            if (!checkIndicatorsList(indicators)) {
+                String error = "Wrong indicator name. " +
+                        "All indicators should be from bivariate_indicators table";
+                logger.error(error);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error);
+            }
         }
-        return tileRepository.getBivariateTileMvt(z, x, y, indicatorsList);
+        return tileRepository.getBivariateTileMvt(z, x, y, indicators);
+    }
+
+    private boolean checkIndicatorsList(List<String> indicatorsList) {
+        var bivariateIndicators = tileRepository.getAllBivariateIndicators();
+        return bivariateIndicators.containsAll(indicatorsList);
     }
 
 }
