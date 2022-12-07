@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Data
@@ -33,11 +35,38 @@ public class BivariateIndicatorDto {
     @NotNull(message = "Incorrect type of is_base field, true/false expected.")
     private Boolean isBase = false;
 
+    @JsonProperty(value = "uuid")
+    private String uuid;
+
+    @JsonProperty(value = "owner")
+    private String owner;
+
+    @JsonProperty(value = "state")
+    private String state;
+
     @JsonProperty(value = "isPublic", required = true, defaultValue = "false")
     @NotNull(message = "Incorrect type of is_public field, true/false expected.")
     private Boolean isPublic = false;
 
     @JsonProperty(value = "allowedUsers")
     private List<String> allowedUsers;
+
+    @JsonProperty(value = "date")
+    private LocalDateTime date;
+
+    @JsonProperty(value = "description")
+    private String description;
+
+    @JsonProperty(value = "coverage")
+    private String coverage;
+
+    @JsonProperty(value = "updateFrequency")
+    private String updateFrequency;
+
+    @JsonProperty(value = "application")
+    private List<String> application;
+
+    @JsonProperty(value = "unitId")
+    private String unitId;
 
 }

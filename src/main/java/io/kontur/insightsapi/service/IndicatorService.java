@@ -5,8 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
+import io.kontur.insightsapi.exception.BivariateIndicatorsPRViolationException;
 import io.kontur.insightsapi.exception.ConnectionException;
+import io.kontur.insightsapi.exception.TableDataCopyException;
 import io.kontur.insightsapi.repository.IndicatorRepository;
+import io.kontur.insightsapi.service.auth.AuthService;
 import lombok.AllArgsConstructor;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
@@ -16,15 +19,15 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import javax.validation.*;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Service
@@ -39,12 +42,17 @@ public class IndicatorService {
 
     private final ObjectMapper objectMapper;
 
+    private final AuthService authService;
+
+    @Transactional
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
+        String uuid = "";
+        FileUploadResultDto fileUploadResultDto = new FileUploadResultDto();
+        boolean update = false;
+
         try {
 
             FileItemIterator itemIterator = upload.getItemIterator(request);
-            FileUploadResultDto fileUploadResultDto = new FileUploadResultDto();
-            String uuid = "";
             int itemIndex = 0;
 
             while (itemIterator.hasNext()) {
@@ -57,56 +65,79 @@ public class IndicatorService {
 
                 } else if ("parameters".equals(name) && itemIndex == 0) {
 
-                    BivariateIndicatorDto bivariateIndicatorDto = parseRequestFormDataParameters(item);
+                    BivariateIndicatorDto incomingBivariateIndicatorDto = parseRequestFormDataParameters(item);
+                    validateParameters(incomingBivariateIndicatorDto);
 
-                    Set<ConstraintViolation<BivariateIndicatorDto>> validationViolations = validateParameters(bivariateIndicatorDto);
-                    if (validationViolations.isEmpty()) {
-                        //TODO: create or update indicator
-                        uuid = indicatorRepository.createIndicator(bivariateIndicatorDto);
-                        itemIndex++;
-                    } else {
-                        StringBuilder validationErrorMessage = new StringBuilder();
-                        for (ConstraintViolation<BivariateIndicatorDto> bivariateIndicatorDtoConstraintViolation : validationViolations) {
-                            validationErrorMessage.append(bivariateIndicatorDtoConstraintViolation.getMessage()).append(". ");
-                        }
-                        return ResponseEntity.status(400).body(validationErrorMessage.toString());
+                    String owner = authService.getCurrentUsername().orElseThrow();
+                    BivariateIndicatorDto savedBivariateIndicator =
+                            indicatorRepository.getIndicatorByIdAndOwner(incomingBivariateIndicatorDto.getId(), owner);
+
+                    if (savedBivariateIndicator != null) {
+                        update = true;
                     }
+
+                    //TODO: here probably make a 'state' update inside inner transaction so new state being committed
+                    uuid = indicatorRepository.createOrUpdateIndicator(incomingBivariateIndicatorDto, owner, update);
+
+                    itemIndex++;
+
                 } else {
-                    return ResponseEntity.status(400).body("Wrong field parameter or wrong parameters order in multipart request: " +
+                    return logAndReturnErrorWithMessage(400, "Wrong field parameter or wrong parameters order in multipart request: " +
                             "please send a request with multipart data with keys 'parameters' and 'file' in a corresponding order.");
                 }
             }
 
-            if (Strings.isNotEmpty(uuid) && Strings.isNotEmpty(fileUploadResultDto.getTempTableName())) {
-                return indicatorRepository.copyDataToStatH3(fileUploadResultDto, uuid);
-            } else if (Strings.isNotEmpty(uuid) && Strings.isEmpty(fileUploadResultDto.getTempTableName())) {
+            if (Strings.isNotEmpty(uuid)
+                    && Strings.isNotEmpty(fileUploadResultDto.getTempTableName())
+                    && fileUploadResultDto.getNumberOfUploadedRows() != 0) {
+                return indicatorRepository.copyDataToStatH3(fileUploadResultDto, uuid, update);
+            } else if (Strings.isNotEmpty(uuid)
+                    && (Strings.isEmpty(fileUploadResultDto.getTempTableName())
+                    || fileUploadResultDto.getNumberOfUploadedRows() == 0)) {
+
+                if (Strings.isNotEmpty(fileUploadResultDto.getErrorMessage())) {
+                    return logAndReturnErrorWithMessage(400, fileUploadResultDto.getErrorMessage());
+                }
+
+                if (fileUploadResultDto.getTempTableName() != null) {
+                    indicatorRepository.deleteTempTable(fileUploadResultDto.getTempTableName());
+                }
+
+                if (update) {
+                    return ResponseEntity.ok().body(uuid);
+                }
 
                 indicatorRepository.deleteIndicator(uuid);
 
-                if (Strings.isNotEmpty(fileUploadResultDto.getErrorMessage())) {
-                    logger.error(fileUploadResultDto.getErrorMessage());
-                    return ResponseEntity.status(400).body(fileUploadResultDto.getErrorMessage());
-                }
-                logger.error("File was absent from request");
-                return ResponseEntity.status(400).body("File was absent from request");
+                return logAndReturnErrorWithMessage(400, "File was absent or has a missing data in the request");
+
             } else {
-                logger.error("Could not process request, neither indicator nor h3 indexes were created");
-                return ResponseEntity.status(500).body("Could not process request, neither indicator nor h3 indexes were created");
+                return logAndReturnErrorWithMessage(500, "Could not process request, neither indicator nor h3 indexes were created");
             }
 
-        } catch (FileUploadException | IOException exception) {
-            logger.error(exception.getMessage());
-            return ResponseEntity.status(400).body(exception.getMessage());
-        } catch (SQLException | ConnectionException exception) {
-            logger.error(exception.getMessage());
-            return ResponseEntity.status(500).body(exception.getMessage());
+        } catch (FileUploadException | IOException | ValidationException exception) {
+            return logAndReturnErrorWithMessage(400, exception.getMessage());
+        } catch (NoSuchElementException exception) {
+            return logAndReturnErrorWithMessage(401, "Incorrect authentication data: could not get username");
+        } catch (BivariateIndicatorsPRViolationException exception) {
+            return logAndReturnErrorWithMessage(500, exception.getMessage());
+        } catch (Exception exception) {
+            //TODO: update state to previous value if committed in future
+            return logAndReturnErrorWithMessage(500, exception.getMessage());
         }
     }
 
-    private Set<ConstraintViolation<BivariateIndicatorDto>> validateParameters(BivariateIndicatorDto bivariateIndicatorDto) {
+    private void validateParameters(BivariateIndicatorDto bivariateIndicatorDto) {
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
             Validator validator = factory.getValidator();
-            return validator.validate(bivariateIndicatorDto);
+            Set<ConstraintViolation<BivariateIndicatorDto>> validationViolations = validator.validate(bivariateIndicatorDto);
+            if (!validationViolations.isEmpty()) {
+                StringBuilder validationErrorMessage = new StringBuilder();
+                for (ConstraintViolation<BivariateIndicatorDto> bivariateIndicatorDtoConstraintViolation : validationViolations) {
+                    validationErrorMessage.append(bivariateIndicatorDtoConstraintViolation.getMessage()).append(". ");
+                }
+                throw new ValidationException(validationErrorMessage.toString());
+            }
         }
     }
 
@@ -121,12 +152,21 @@ public class IndicatorService {
     }
 
     private String generateExceptionMessage(String fieldName) {
+        if (fieldName == null) {
+            return "Incorrect parameters json";
+        }
         return switch (fieldName) {
             case "isPublic", "isBase" -> String.format("%s field supports only boolean values", fieldName);
             case "id", "label" -> String.format("%s field supports only string values", fieldName);
-            case "copyrights", "allowedUsers" -> String.format("Incorrect type of %s field, array expected.", fieldName);
+            case "copyrights", "allowedUsers" ->
+                    String.format("Incorrect type of %s field, array expected.", fieldName);
             case "direction" -> String.format("Incorrect type of %s field, array of arrays expected.", fieldName);
             default -> String.format("Incorrect type of %s field", fieldName);
         };
+    }
+
+    private ResponseEntity<String> logAndReturnErrorWithMessage(int errorCode, String message) {
+        logger.error(message);
+        return ResponseEntity.status(errorCode).body(message);
     }
 }

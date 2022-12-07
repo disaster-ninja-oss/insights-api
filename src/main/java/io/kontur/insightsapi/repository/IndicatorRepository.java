@@ -4,7 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
+import io.kontur.insightsapi.exception.BivariateIndicatorsPRViolationException;
 import io.kontur.insightsapi.exception.ConnectionException;
+import io.kontur.insightsapi.exception.TableDataCopyException;
+import io.kontur.insightsapi.mapper.BivariateIndicatorRowMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -13,19 +16,20 @@ import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -40,6 +44,16 @@ public class IndicatorRepository {
 
     private final DataSource dataSource;
 
+    @Value("classpath:/sql.queries/insert_bivariate_indicators.sql")
+    private Resource insertBivariateIndicators;
+
+    @Value("classpath:/sql.queries/update_bivariate_indicators.sql")
+    private Resource updateBivariateIndicators;
+
+    private final QueryFactory queryFactory;
+
+    private final BivariateIndicatorRowMapper bivariateIndicatorRowMapper;
+
     //TODO: temporary field, remove when we have final version of transposed stat_h3 table
     @Value("${database.transposed.table}")
     private String transposedTableName;
@@ -47,24 +61,18 @@ public class IndicatorRepository {
     @Value("${database.bivariate.indicators.table}")
     private String bivariateIndicatorsTableName;
 
-    @Transactional
-    public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException {
+    public String createOrUpdateIndicator(BivariateIndicatorDto bivariateIndicatorDto, String owner, boolean update) throws JsonProcessingException {
 
-        var paramSource = new MapSqlParameterSource()
-                .addValue("id", bivariateIndicatorDto.getId())
-                .addValue("label", bivariateIndicatorDto.getLabel())
-                .addValue("copyrights",
-                        bivariateIndicatorDto.getCopyrights() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getCopyrights()))
-                .addValue("direction",
-                        bivariateIndicatorDto.getDirection() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getDirection()))
-                .addValue("isBase", bivariateIndicatorDto.getIsBase())
-                .addValue("isPublic", bivariateIndicatorDto.getIsPublic())
-                .addValue("allowedUsers",
-                        bivariateIndicatorDto.getAllowedUsers() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
+        var paramSource = initParams(bivariateIndicatorDto, owner);
+        String bivariateIndicatorsQuery;
 
-        //TODO:add owner in future
-        String bivariateIndicatorsQuery = String.format("INSERT INTO %s (param_id,param_label,copyrights,direction,is_base,param_uuid,owner,state,is_public,allowed_users,date) " +
-                "VALUES (:id,:label,:copyrights::json,:direction::json,:isBase,gen_random_uuid(),'','NEW',:isPublic,:allowedUsers,now()) RETURNING param_uuid;", bivariateIndicatorsTableName);
+        //TODO: change state in future
+        if (update) {
+            bivariateIndicatorsQuery = String.format(queryFactory.getSql(updateBivariateIndicators), bivariateIndicatorsTableName, owner);
+        } else {
+            bivariateIndicatorsQuery = String.format(queryFactory.getSql(insertBivariateIndicators), bivariateIndicatorsTableName);
+        }
+
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
     }
 
@@ -79,8 +87,8 @@ public class IndicatorRepository {
 
         long numberOfInsertedRows;
 
-        try (Connection connection = DataSourceUtils.getConnection(dataSource);
-             InputStream fileInputStream = file.openStream()) {
+        try (InputStream fileInputStream = file.openStream()) {
+            Connection connection = DataSourceUtils.getConnection(dataSource);
 
             if (connection.isWrapperFor(Connection.class)) {
 
@@ -88,11 +96,10 @@ public class IndicatorRepository {
                 numberOfInsertedRows = copyManager.copyIn(copyManagerQuery, fileInputStream);
                 return new FileUploadResultDto(tempTableName, numberOfInsertedRows, null);
             } else {
-                logger.error("Could not connect ot Copy Manager");
+                logger.error("Could not connect to Copy Manager");
                 throw new ConnectionException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
             }
         } catch (Exception e) {
-            deleteTempTable(tempTableName);
             return new FileUploadResultDto(null, 0, adjustMessageForKnownExceptions(e.getMessage()));
         }
     }
@@ -112,33 +119,79 @@ public class IndicatorRepository {
         }
     }
 
-    @Transactional
-    public ResponseEntity<String> copyDataToStatH3(FileUploadResultDto fileUploadResultDto, String uuid) {
-        var copyDataFromTempToStatH3WithUuidQuery = String.format("INSERT INTO %s select h3, value, '%s' from %s", transposedTableName, uuid, fileUploadResultDto.getTempTableName());
-        long numberOfCopiedRows = jdbcTemplate.update(copyDataFromTempToStatH3WithUuidQuery);
+    public ResponseEntity<String> copyDataToStatH3(FileUploadResultDto fileUploadResultDto, String uuid, boolean update) throws TableDataCopyException {
+        try {
+            if (update) {
+                jdbcTemplate.update(String.format("DELETE FROM %s WHERE indicator = '%s'", transposedTableName, uuid));
+            }
+            var copyDataFromTempToStatH3WithUuidQuery = String.format("INSERT INTO %s select h3, value, '%s' from %s", transposedTableName, uuid, fileUploadResultDto.getTempTableName());
+            long numberOfCopiedRows = jdbcTemplate.update(copyDataFromTempToStatH3WithUuidQuery);
 
-        deleteTempTable(fileUploadResultDto.getTempTableName());
+            deleteTempTable(fileUploadResultDto.getTempTableName());
 
-        if (numberOfCopiedRows != fileUploadResultDto.getNumberOfUploadedRows()) {
-            logger.warn(String.format("No errors during uploading occurred but records number validation did not pass: " +
-                    "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
-            return ResponseEntity.ok().body(String.format("No errors during uploading occurred but records number validation did not pass: " +
-                    "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
+            if (numberOfCopiedRows != fileUploadResultDto.getNumberOfUploadedRows()) {
+                logger.warn(String.format("No errors during uploading occurred but records number validation did not pass: " +
+                        "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
+                return ResponseEntity.ok().body(String.format("No errors during uploading occurred but records number validation did not pass: " +
+                        "uploaded from CSV = %s, number of records put in database = %s, uuid = %s", fileUploadResultDto.getNumberOfUploadedRows(), numberOfCopiedRows, uuid));
+            }
+
+            return ResponseEntity.ok().body(uuid);
+        } catch (Exception exception) {
+            throw new TableDataCopyException(exception);
         }
-
-        return ResponseEntity.ok().body(uuid);
     }
 
     private String generateTempTableName() {
         return "_" + RandomStringUtils.randomAlphanumeric(29).toLowerCase();
     }
 
-    @Transactional
     public void deleteIndicator(String uuid) {
         jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'", bivariateIndicatorsTableName, uuid));
     }
 
-    private void deleteTempTable(String tempTableName) {
+    public void deleteTempTable(String tempTableName) {
         jdbcTemplate.update(String.format("DROP TABLE %s", tempTableName));
     }
+
+    public BivariateIndicatorDto getIndicatorByIdAndOwner(String id, String owner) throws BivariateIndicatorsPRViolationException {
+        List<BivariateIndicatorDto> bivariateIndicatorDtos = jdbcTemplate.query(
+                String.format("SELECT * FROM %s WHERE param_id = '%s' AND owner = '%s'",
+                        bivariateIndicatorsTableName,
+                        id,
+                        owner),
+                bivariateIndicatorRowMapper);
+
+        return switch (bivariateIndicatorDtos.size()) {
+            case 0 -> null;
+            case 1 -> bivariateIndicatorDtos.get(0);
+            default -> {
+                throw new BivariateIndicatorsPRViolationException(String.format("More then one indicator found with name: %s, for user: %s", id, owner));
+            }
+        };
+    }
+
+    private MapSqlParameterSource initParams(BivariateIndicatorDto bivariateIndicatorDto, String owner) throws JsonProcessingException {
+        return new MapSqlParameterSource()
+                .addValue("id", bivariateIndicatorDto.getId())
+                .addValue("label", bivariateIndicatorDto.getLabel())
+                .addValue("copyrights",
+                        bivariateIndicatorDto.getCopyrights() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getCopyrights()))
+                .addValue("direction",
+                        bivariateIndicatorDto.getDirection() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getDirection()))
+                .addValue("isBase", bivariateIndicatorDto.getIsBase())
+                .addValue("isPublic", bivariateIndicatorDto.getIsPublic())
+                .addValue("allowedUsers",
+                        bivariateIndicatorDto.getAllowedUsers() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()))
+                .addValue("owner", owner)
+                //TODO: think about state and date
+                .addValue("description", bivariateIndicatorDto.getDescription())
+                .addValue("coverage", bivariateIndicatorDto.getCoverage())
+                //TODO: discuss these values, should be some default values if not specified
+                .addValue("updateFrequency", bivariateIndicatorDto.getUpdateFrequency())
+                .addValue("application", bivariateIndicatorDto.getApplication())
+                .addValue("unitId", bivariateIndicatorDto.getUnitId());
+
+    }
+
 }
