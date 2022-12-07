@@ -40,15 +40,15 @@ public class TileService {
         var indicators = indicatorsList;
         if (CollectionUtils.isEmpty(indicators)) {
             indicators = tileRepository.getAllBivariateIndicators();
-        }
-        if (checkIndicatorsList(indicators)) {
-            return tileRepository.getBivariateTileMvt(z, x, y, indicators);
         } else {
-            String error = "Wrong indicator name. " +
-                    "All indicators should be from bivariate_indicators table";
-            logger.error(error);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error);
+            if (!checkIndicatorsList(indicators)) {
+                String error = "Wrong indicator name. " +
+                        "All indicators should be from bivariate_indicators table";
+                logger.error(error);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error);
+            }
         }
+        return tileRepository.getBivariateTileMvt(z, x, y, indicators);
     }
 
     private boolean checkIndicatorsList(List<String> indicatorsList) {
