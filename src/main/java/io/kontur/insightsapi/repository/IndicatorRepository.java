@@ -190,7 +190,8 @@ public class IndicatorRepository {
                 //TODO: discuss these values, should be some default values if not specified
                 .addValue("updateFrequency", bivariateIndicatorDto.getUpdateFrequency())
                 .addValue("application", bivariateIndicatorDto.getApplication())
-                .addValue("unitId", bivariateIndicatorDto.getUnitId());
+                .addValue("unitId", bivariateIndicatorDto.getUnitId())
+                .addValue("lastUpdated", bivariateIndicatorDto.getLastUpdated());
 
     }
 
