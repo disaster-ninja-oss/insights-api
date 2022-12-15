@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.ResultSet;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -38,7 +39,7 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
         bivariateIndicatorDto.setAllowedUsers(resultSet.getString(BivariateIndicatorsColumns.allowed_users.name()) == null
                 ? null
                 : objectMapper.readValue(resultSet.getString(BivariateIndicatorsColumns.allowed_users.name()), new TypeReference<List<String>>(){}));
-        bivariateIndicatorDto.setDate(resultSet.getObject(BivariateIndicatorsColumns.date.name(), LocalDateTime.class));
+        bivariateIndicatorDto.setDate(resultSet.getObject(BivariateIndicatorsColumns.date.name(), OffsetDateTime.class));
         bivariateIndicatorDto.setDescription(resultSet.getString(BivariateIndicatorsColumns.description.name()));
         bivariateIndicatorDto.setCoverage(resultSet.getString(BivariateIndicatorsColumns.coverage.name()));
         bivariateIndicatorDto.setUpdateFrequency(resultSet.getString(BivariateIndicatorsColumns.update_frequency.name()));
@@ -46,11 +47,12 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
                 ? null
                 : objectMapper.readValue(resultSet.getString(BivariateIndicatorsColumns.application.name()), new TypeReference<List<String>>(){}));
         bivariateIndicatorDto.setUnitId(resultSet.getString(BivariateIndicatorsColumns.unit_id.name()));
+        bivariateIndicatorDto.setLastUpdated(resultSet.getObject(BivariateIndicatorsColumns.last_updated.name(), OffsetDateTime.class));
         return bivariateIndicatorDto;
     }
 
     private enum BivariateIndicatorsColumns {
         param_id, param_label, copyrights, direction, is_base, param_uuid, owner, state, is_public,
-        allowed_users, date, description, coverage, update_frequency, application, unit_id
+        allowed_users, date, description, coverage, update_frequency, application, unit_id, last_updated
     }
 }

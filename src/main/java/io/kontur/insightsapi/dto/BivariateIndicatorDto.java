@@ -52,7 +52,7 @@ public class BivariateIndicatorDto {
     private List<String> allowedUsers;
 
     @JsonProperty(value = "date")
-    private LocalDateTime date;
+    private OffsetDateTime date;
 
     @JsonProperty(value = "description")
     private String description;
@@ -68,5 +68,8 @@ public class BivariateIndicatorDto {
 
     @JsonProperty(value = "unitId")
     private String unitId;
+
+    @JsonProperty(value = "lastUpdated")
+    private OffsetDateTime lastUpdated;
 
 }
