@@ -1,6 +1,7 @@
 package io.kontur.insightsapi.service.cacheable.impl;
 
 import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
+import io.kontur.insightsapi.dto.NumeratorsDenominatorsUuidCorrelationDto;
 import io.kontur.insightsapi.model.PolygonMetrics;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
@@ -37,8 +38,15 @@ public class CorrelationRateFacade implements CorrelationRateService, CacheEvict
         return repository.getPolygonCorrelationRateStatisticsBatch(polygon, dtoList);
     }
 
+    @SneakyThrows
     @Override
-    @CacheEvict(value = {"correlation-rate-all", "correlation-rate-polygon"},
+    @Cacheable(value = "correlation-rate-polygon-all", keyGenerator = "stringKeyGenerator")
+    public List<NumeratorsDenominatorsUuidCorrelationDto> getPolygonCorrelationRateStatistics(String polygon) {
+        return repository.getPolygonCorrelationRateStatistics(polygon);
+    }
+
+    @Override
+    @CacheEvict(value = {"correlation-rate-all", "correlation-rate-polygon", "correlation-rate-polygon-all"},
             allEntries = true)
     public void evict() {
     }
