@@ -5,6 +5,8 @@ import io.kontur.insightsapi.dto.StatisticDto;
 import io.kontur.insightsapi.repository.PopulationRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -21,7 +23,8 @@ class PopulationTransformerTest {
     @Test
     void calculatePopulation() {
         PopulationRepository populationRepository = mock(PopulationRepository.class);
-        PopulationTransformer populationTransformer = new PopulationTransformer(populationRepository);
+        Helper helper = mock(Helper.class);
+        PopulationTransformer populationTransformer = new PopulationTransformer(populationRepository, helper, false);
         when(populationRepository.getPopulationAndGdp(POPULATION_QUERY)).thenReturn(getPopulation());
         when(populationRepository.getArea(POPULATION_QUERY)).thenReturn(BigDecimal.ONE);
 

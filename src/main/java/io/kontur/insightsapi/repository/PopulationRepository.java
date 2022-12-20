@@ -31,6 +31,9 @@ public class PopulationRepository {
     @Value("classpath:/sql.queries/calculate_population_and_gdp.sql")
     private Resource calculatePopulationAndAGdp;
 
+    @Value("classpath:/sql.queries/calculate_population_and_gdp_v2.sql")
+    private Resource calculatePopulationAndAGdpV2;
+
     @Value("classpath:/sql.queries/population_humanitarian_impact.sql")
     private Resource populationHumanitarianImpact;
 
@@ -39,6 +42,9 @@ public class PopulationRepository {
 
     @Value("classpath:/sql.queries/population_urbancore.sql")
     private Resource populationUrbanCore;
+
+    @Value("${calculations.useStatSeparateTables:false}")
+    private Boolean useStatSeparateTables;
 
     private final QueryFactory queryFactory;
 
@@ -66,8 +72,9 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
+        var query = useStatSeparateTables ? calculatePopulationAndAGdpV2 : calculatePopulationAndAGdp;
         try {
-            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(calculatePopulationAndAGdp), paramSource, (rs, rowNum) ->
+            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(query), paramSource, (rs, rowNum) ->
                     CalculatePopulationDto.builder()
                             .population(rs.getBigDecimal("population"))
                             .gdp(rs.getBigDecimal("gdp"))

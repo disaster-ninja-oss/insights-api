@@ -1,6 +1,7 @@
 package io.kontur.insightsapi.service;
 
 import graphql.schema.DataFetchingEnvironment;
+import io.kontur.insightsapi.repository.HelperRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class Helper {
+
+    private final HelperRepository helperRepository;
 
     public List<String> transformFieldList(List<String> fieldList, Map<String, String> queryMap) {
         var queryList = new ArrayList<String>();
@@ -34,5 +37,9 @@ public class Helper {
             return arguments.get("polygonV2").toString();
         }
         return null;
+    }
+
+    public String transformGeometryToWkt(String geometry) {
+        return helperRepository.transformGeometryToWkt(geometry);
     }
 }

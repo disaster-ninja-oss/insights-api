@@ -9,6 +9,7 @@ import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.BivariateStatistic;
 import io.kontur.insightsapi.model.PolygonMetrics;
 import io.kontur.insightsapi.repository.StatisticRepository;
+import io.kontur.insightsapi.service.Helper;
 import io.kontur.insightsapi.service.MetricsHelper;
 import io.kontur.insightsapi.service.cacheable.CorrelationRateService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,8 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     private final MetricsHelper metricsHelper;
 
     private final StatisticRepository statisticRepository;
+
+    private final Helper helper;
 
     @Value("${bivatiateMatrix.highCorrelationLevel}")
     private Double highCorrelationLevel;
@@ -51,7 +54,7 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
 
         var transformedGeometry = metricsHelper.getPolygon(arguments);
         if (useStatSeparateTables) {
-            transformedGeometry = transformGeometryToWkt(transformedGeometry);
+            transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
             Map<NumeratorsDenominatorsUuidDto, NumeratorsDenominatorsDto> numeratorsDenominatorsMap = metricsHelper
                     .getAllNumeratorsDenominators();
             correlationRateList = calculateAllPolygonCorrelations(numeratorsDenominatorsMap, transformedGeometry);
@@ -343,9 +346,5 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
             currentRate.setAvgMetricsX(xAvgCorrelationMap.get(numeratorDenominatorX));
             currentRate.setAvgMetricsY(yAvgCorrelationMap.get(numeratorDenominatorY));
         }
-    }
-
-    private String transformGeometryToWkt(String geometry) {
-        return statisticRepository.transformGeometryToWkt(geometry);
     }
 }

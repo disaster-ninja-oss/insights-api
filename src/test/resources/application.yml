@@ -42,3 +42,6 @@ database:
   bivariate:
     indicators:
       table: bivariate_indicators_test
+
+calculations:
+  useStatSeparateTables: false

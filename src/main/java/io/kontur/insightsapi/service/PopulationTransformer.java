@@ -10,10 +10,10 @@ import io.kontur.insightsapi.service.cacheable.HumanitarianImpactService;
 import io.kontur.insightsapi.service.cacheable.OsmQualityService;
 import io.kontur.insightsapi.service.cacheable.PopulationService;
 import io.kontur.insightsapi.service.cacheable.UrbanCoreService;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class PopulationTransformer implements HumanitarianImpactService, OsmQualityService, PopulationService,
         UrbanCoreService {
 
@@ -36,7 +35,21 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
 
     private final Logger logger = LoggerFactory.getLogger(PopulationTransformer.class);
 
+    private final Helper helper;
+
+    private final Boolean useStatSeparateTables;
+
+    public PopulationTransformer(PopulationRepository populationRepository, Helper helper,
+                                 @Value("${calculations.useStatSeparateTables:false}") Boolean useStatSeparateTables) {
+        this.populationRepository = populationRepository;
+        this.helper = helper;
+        this.useStatSeparateTables = useStatSeparateTables;
+    }
+
     public Optional<Map<String, CalculatePopulationDto>> calculatePopulationAndGdp(String geometry) {
+        if (useStatSeparateTables) {
+            geometry = helper.transformGeometryToWkt(geometry);
+        }
         Map<String, CalculatePopulationDto> population = populationRepository.getPopulationAndGdp(geometry);
         return Optional.ofNullable(population);
     }
@@ -102,11 +115,11 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
         return new FeatureCollection(features);
     }
 
-    public OsmQuality calculateOsmQuality(String geojson, List<String> osmRequestFields){
+    public OsmQuality calculateOsmQuality(String geojson, List<String> osmRequestFields) {
         return populationRepository.calculateOsmQuality(geojson, osmRequestFields);
     }
 
-    public UrbanCore calculateUrbanCore(String geometry, List<String> requestFields){
+    public UrbanCore calculateUrbanCore(String geometry, List<String> requestFields) {
         return populationRepository.calculateUrbanCore(geometry, requestFields);
     }
 }
