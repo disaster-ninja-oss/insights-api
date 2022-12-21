@@ -61,6 +61,9 @@ public class StatisticRepository implements CorrelationRateService {
     @Value("classpath:/sql.queries/statistic_correlation_emptylayer_intersect.sql")
     private Resource statisticCorrelationEmptylayerIntersect;
 
+    @Value("${calculations.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
     private final JdbcTemplate jdbcTemplate;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -107,7 +110,9 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsWithUuidForCorrelation() {
-        return jdbcTemplate.query(queryFactory.getSql(statisticCorrelationNumdenomWithUuid), (rs, rowNum) ->
+        var queryString = String.format(queryFactory.getSql(statisticCorrelationNumdenomWithUuid), bivariateIndicatorsTableName,
+                bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName);
+        return jdbcTemplate.query(queryString, (rs, rowNum) ->
                 NumeratorsDenominatorsDto.builder()
                         .xNumerator(rs.getString("x_num"))
                         .xDenominator(rs.getString("x_den"))
@@ -139,7 +144,7 @@ public class StatisticRepository implements CorrelationRateService {
     public List<NumeratorsDenominatorsUuidCorrelationDto> getPolygonCorrelationRateStatistics(String polygon) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", polygon);
-        var query = queryFactory.getSql(statisticCorrelationIntersectAll);
+        var query = String.format(queryFactory.getSql(statisticCorrelationIntersectAll), bivariateIndicatorsTableName);
         try {
             return namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) ->
                     NumeratorsDenominatorsUuidCorrelationDto.builder()
