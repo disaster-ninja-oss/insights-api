@@ -46,6 +46,9 @@ public class PopulationRepository {
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
 
+    @Value("${calculations.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
     private final QueryFactory queryFactory;
 
     private static final Map<String, String> queryMap = Map.of(
@@ -72,9 +75,15 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
-        var query = useStatSeparateTables ? calculatePopulationAndAGdpV2 : calculatePopulationAndAGdp;
+        var queryString = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            queryString = String.format(queryFactory.getSql(calculatePopulationAndAGdpV2), bivariateIndicatorsTableName,
+                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName);
+        } else {
+            queryString = queryFactory.getSql(calculatePopulationAndAGdp);
+        }
         try {
-            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(query), paramSource, (rs, rowNum) ->
+            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryString, paramSource, (rs, rowNum) ->
                     CalculatePopulationDto.builder()
                             .population(rs.getBigDecimal("population"))
                             .gdp(rs.getBigDecimal("gdp"))
@@ -121,7 +130,7 @@ public class PopulationRepository {
                             .name(rs.getString("name"))
                             .percentage(rs.getString("percentage"))
                             .totalAreaKm2(rs.getBigDecimal("totalAreaKm2")).build());
-        }  catch (DataAccessResourceFailureException e) {
+        } catch (DataAccessResourceFailureException e) {
             String error = String.format(DatabaseUtil.ERROR_TIMEOUT, geometry);
             logger.error(error, e);
             throw new DataAccessResourceFailureException(error, e);

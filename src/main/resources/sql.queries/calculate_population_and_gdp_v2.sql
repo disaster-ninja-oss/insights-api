@@ -7,7 +7,7 @@ with validated_input
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
                       join stat_h3_transposed st on (sh.h3 = st.h3)
-             where sh.zoom = 8 and indicator_uuid IN (select param_uuid from bivariate_indicators_wrk where param_id IN ('gdp','population', 'residential'))),
+             where sh.zoom = 8 and indicator_uuid IN (select param_uuid from %s where param_id IN ('gdp','population', 'residential'))),
      distinct_h3 as (select a.h3                                          h3,
                             st_transform(h3_cell_to_geometry(a.h3), 3857) geom,
                             a.indicator_value                             population,
@@ -16,9 +16,9 @@ with validated_input
                      from res a,
                           res b,
                           res c,
-                          bivariate_indicators_wrk bi_a,
-                          bivariate_indicators_wrk bi_b,
-                          bivariate_indicators_wrk bi_c
+                          %s bi_a,
+                          %s bi_b,
+                          %s bi_c
                      where a.h3 = b.h3
                        and a.h3 = c.h3
                        and a.indicator_uuid = bi_a.param_uuid
