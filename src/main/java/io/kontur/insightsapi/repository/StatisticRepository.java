@@ -259,12 +259,4 @@ public class StatisticRepository implements CorrelationRateService {
     public void jitDisable() {
         jdbcTemplate.execute("set local jit = off");
     }
-
-    public String transformGeometryToWkt(String geometry) {
-        var paramSource = new MapSqlParameterSource("geometry", geometry);
-        var query = "select ST_AsText(map_to_geometry_obj(:geometry))";
-        var geometryString = namedParameterJdbcTemplate
-                .queryForObject(query, paramSource, String.class);
-        return "SRID=3857;" + geometryString;
-    }
 }
