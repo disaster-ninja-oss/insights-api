@@ -44,4 +44,8 @@ database:
       table: bivariate_indicators_test
 
 calculations:
-  useStatSeparateTables: false
+  useStatSeparateTables: true
+  # TODO: temp configuration, delete when we have final version of transposed table
+  bivariate:
+    indicators:
+      table: bivariate_indicators_wrk

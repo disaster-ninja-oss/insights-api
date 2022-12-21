@@ -23,7 +23,7 @@ select a.indicator_uuid as numerator_uuid,
     b.indicator_uuid as denominator_uuid,
     (a.indicator_value / b.indicator_value) as normalized_value,
     a.h3
-from res a, res b, bivariate_indicators_wrk as bi_b, existing_indicators as ex_a, existing_indicators as ex_b
+from res a, res b, %s as bi_b, existing_indicators as ex_a, existing_indicators as ex_b
 where b.indicator_value != 0 and bi_b.is_base and bi_b.param_uuid = b.indicator_uuid and a.h3 = b.h3 and a.indicator_uuid = ex_a.indicator_uuid and b.indicator_uuid = ex_b.indicator_uuid
 order by a.h3
     )
