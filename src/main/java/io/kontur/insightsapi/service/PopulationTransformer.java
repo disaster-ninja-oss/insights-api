@@ -59,6 +59,9 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
     }
 
     public List<HumanitarianImpactDto> calculateHumanitarianImpact(String wkt) {
+        if (useStatSeparateTables) {
+            wkt = helper.transformGeometryToWkt(wkt);
+        }
         return populationRepository.calculateHumanitarianImpact(wkt);
     }
 
