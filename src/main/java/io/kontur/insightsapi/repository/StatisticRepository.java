@@ -2,6 +2,7 @@ package io.kontur.insightsapi.repository;
 
 import com.google.common.collect.Lists;
 import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
+import io.kontur.insightsapi.dto.NumeratorsDenominatorsUuidCorrelationDto;
 import io.kontur.insightsapi.mapper.*;
 import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.BivariateStatistic;
@@ -25,6 +26,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,11 +49,20 @@ public class StatisticRepository implements CorrelationRateService {
     @Value("classpath:/sql.queries/statistic_correlation_numdenom.sql")
     private Resource statisticCorrelationNumdenom;
 
+    @Value("classpath:/sql.queries/statistic_correlation_numdenom_with_uuid.sql")
+    private Resource statisticCorrelationNumdenomWithUuid;
+
     @Value("classpath:/sql.queries/statistic_correlation_intersect.sql")
     private Resource statisticCorrelationIntersect;
 
+    @Value("classpath:/sql.queries/statistic_correlation_intersect_all_indicators.sql")
+    private Resource statisticCorrelationIntersectAll;
+
     @Value("classpath:/sql.queries/statistic_correlation_emptylayer_intersect.sql")
     private Resource statisticCorrelationEmptylayerIntersect;
+
+    @Value("${calculations.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -98,6 +109,25 @@ public class StatisticRepository implements CorrelationRateService {
     }
 
     @Transactional(readOnly = true)
+    public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsWithUuidForCorrelation() {
+        var queryString = String.format(queryFactory.getSql(statisticCorrelationNumdenomWithUuid), bivariateIndicatorsTableName,
+                bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName);
+        return jdbcTemplate.query(queryString, (rs, rowNum) ->
+                NumeratorsDenominatorsDto.builder()
+                        .xNumerator(rs.getString("x_num"))
+                        .xDenominator(rs.getString("x_den"))
+                        .xLabel(rs.getString("x_param_label"))
+                        .xNumUuid(rs.getObject("x_num_param_uuid", UUID.class))
+                        .xDenUuid(rs.getObject("x_den_param_uuid", UUID.class))
+                        .yNumerator(rs.getString("y_num"))
+                        .yDenominator(rs.getString("y_den"))
+                        .yLabel(rs.getString("y_param_label"))
+                        .yNumUuid(rs.getObject("y_num_param_uuid", UUID.class))
+                        .yDenUuid(rs.getObject("y_den_param_uuid", UUID.class))
+                        .quality(rs.getDouble("quality")).build());
+    }
+
+    @Transactional(readOnly = true)
     public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForCorrelation() {
         return jdbcTemplate.query(queryFactory.getSql(statisticCorrelationNumdenom), (rs, rowNum) ->
                 NumeratorsDenominatorsDto.builder()
@@ -108,6 +138,27 @@ public class StatisticRepository implements CorrelationRateService {
                         .yDenominator(rs.getString("y_den"))
                         .yLabel(rs.getString("y_param_label"))
                         .quality(rs.getDouble("quality")).build());
+    }
+
+    @Transactional(readOnly = true)
+    public List<NumeratorsDenominatorsUuidCorrelationDto> getPolygonCorrelationRateStatistics(String polygon) {
+        var paramSource = new MapSqlParameterSource();
+        paramSource.addValue("polygon", polygon);
+        var query = String.format(queryFactory.getSql(statisticCorrelationIntersectAll), bivariateIndicatorsTableName);
+        try {
+            return namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) ->
+                    NumeratorsDenominatorsUuidCorrelationDto.builder()
+                            .xNumUuid(rs.getObject("xNumUuid", UUID.class))
+                            .xDenUuid(rs.getObject("xDenUuid", UUID.class))
+                            .yNumUuid(rs.getObject("yNumUuid", UUID.class))
+                            .yDenUuid(rs.getObject("yDenUuid", UUID.class))
+                            .metrics(rs.getDouble("metrics"))
+                            .build());
+        } catch (Exception e) {
+            String error = String.format("Sql exception for geometry %s", polygon);
+            logger.error(error, e);
+            throw new IllegalArgumentException(error, e);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -158,7 +209,7 @@ public class StatisticRepository implements CorrelationRateService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList){
+    public Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", polygon);
         var distinctFieldsRequests = dtoList.stream()
@@ -207,5 +258,13 @@ public class StatisticRepository implements CorrelationRateService {
 
     public void jitDisable() {
         jdbcTemplate.execute("set local jit = off");
+    }
+
+    public String transformGeometryToWkt(String geometry) {
+        var paramSource = new MapSqlParameterSource("geometry", geometry);
+        var query = "select ST_AsText(map_to_geometry_obj(:geometry))";
+        var geometryString = namedParameterJdbcTemplate
+                .queryForObject(query, paramSource, String.class);
+        return "SRID=3857;" + geometryString;
     }
 }

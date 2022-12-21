@@ -10,4 +10,6 @@ public interface MetricsService {
     List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForMetrics();
 
     Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList);
+
+    List<NumeratorsDenominatorsDto> getAllNumeratorsDenominators();
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.Lists;
 import io.kontur.insightsapi.dto.ForAvgCorrelationDto;
 import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
+import io.kontur.insightsapi.dto.NumeratorsDenominatorsUuidDto;
 import io.kontur.insightsapi.dto.PureNumeratorDenominatorDto;
 import io.kontur.insightsapi.model.PolygonMetrics;
 import io.kontur.insightsapi.service.cacheable.MetricsService;
@@ -21,7 +22,22 @@ public class MetricsHelper {
 
     private final MetricsService metricsService;
 
-    public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForNotEmptyLayers(Map<String, Object> arguments, String transformedGeometry){
+    public Map<NumeratorsDenominatorsUuidDto, NumeratorsDenominatorsDto> getAllNumeratorsDenominators() {
+        var numDenList = metricsService.getAllNumeratorsDenominators();
+        Map<NumeratorsDenominatorsUuidDto, NumeratorsDenominatorsDto> result = new HashMap<>();
+        for (NumeratorsDenominatorsDto current : numDenList) {
+            var key = NumeratorsDenominatorsUuidDto.builder()
+                    .xNumUuid(current.getXNumUuid())
+                    .xDenUuid(current.getXDenUuid())
+                    .yNumUuid(current.getYNumUuid())
+                    .yDenUuid(current.getYDenUuid())
+                    .build();
+            result.put(key, current);
+        }
+        return result;
+    }
+
+    public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForNotEmptyLayers(Map<String, Object> arguments, String transformedGeometry) {
         List<NumeratorsDenominatorsDto> numeratorsDenominatorsDtos = metricsService.getNumeratorsDenominatorsForMetrics()
                 .stream()
                 .sorted(Comparator.comparing(NumeratorsDenominatorsDto::getXLabel)
@@ -36,15 +52,15 @@ public class MetricsHelper {
 
         //find numerators for not empty layers
         return Lists.partition(numeratorsDenominatorsDtos, 500).parallelStream()
-                        .map(sourceDtoList -> findNumeratorsDenominatorsForNotEmptyLayers(sourceDtoList, finalTransformedGeometry))
-                        .flatMap(Collection::stream)
-                        .sorted(Comparator.comparing(NumeratorsDenominatorsDto::getXLabel)
-                                .thenComparing(NumeratorsDenominatorsDto::getYLabel)
-                                .thenComparing(NumeratorsDenominatorsDto::getXNumerator)
-                                .thenComparing(NumeratorsDenominatorsDto::getXDenominator)
-                                .thenComparing(NumeratorsDenominatorsDto::getYNumerator)
-                                .thenComparing(NumeratorsDenominatorsDto::getYDenominator))
-                        .collect(Collectors.toList());
+                .map(sourceDtoList -> findNumeratorsDenominatorsForNotEmptyLayers(sourceDtoList, finalTransformedGeometry))
+                .flatMap(Collection::stream)
+                .sorted(Comparator.comparing(NumeratorsDenominatorsDto::getXLabel)
+                        .thenComparing(NumeratorsDenominatorsDto::getYLabel)
+                        .thenComparing(NumeratorsDenominatorsDto::getXNumerator)
+                        .thenComparing(NumeratorsDenominatorsDto::getXDenominator)
+                        .thenComparing(NumeratorsDenominatorsDto::getYNumerator)
+                        .thenComparing(NumeratorsDenominatorsDto::getYDenominator))
+                .collect(Collectors.toList());
 
     }
 

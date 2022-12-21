@@ -32,13 +32,20 @@ public class MetricsFacade implements MetricsService, CacheEvictable {
 
     @SneakyThrows
     @Override
+    @Cacheable(value = "metrics-num-den-with-uuid", key = "'all-uuid'")
+    public List<NumeratorsDenominatorsDto> getAllNumeratorsDenominators() {
+        return repository.getNumeratorsDenominatorsWithUuidForCorrelation();
+    }
+
+    @SneakyThrows
+    @Override
     @Cacheable(value = "metrics-num-not-empty-layers", keyGenerator = "stringListKeyGenerator")
     public Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList) {
         return repository.getNumeratorsForNotEmptyLayersBatch(polygon, dtoList);
     }
 
     @Override
-    @CacheEvict(value = {"metrics-num-den", "metrics-num-not-empty-layers"},
+    @CacheEvict(value = {"metrics-num-den", "metrics-num-den-with-uuid", "metrics-num-not-empty-layers"},
             allEntries = true)
     public void evict() {
     }
