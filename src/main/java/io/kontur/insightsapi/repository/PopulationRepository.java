@@ -43,6 +43,9 @@ public class PopulationRepository {
     @Value("classpath:/sql.queries/population_osm.sql")
     private Resource populationOsm;
 
+    @Value("classpath:/sql.queries/population_osm_v2.sql")
+    private Resource populationOsmV2;
+
     @Value("classpath:/sql.queries/population_urbancore.sql")
     private Resource populationUrbanCore;
 
@@ -158,7 +161,14 @@ public class PopulationRepository {
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(populationOsm), StringUtils.join(queryList, ", "));
+        var query = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            query = String.format(queryFactory.getSql(populationOsmV2), bivariateIndicatorsTableName, bivariateIndicatorsTableName,
+                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName,
+                    bivariateIndicatorsTableName, StringUtils.join(queryList, ", "));
+        } else {
+            query = String.format(queryFactory.getSql(populationOsm), StringUtils.join(queryList, ", "));
+        }
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     OsmQuality.builder()
