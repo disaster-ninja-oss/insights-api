@@ -204,6 +204,8 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = StringUtils.EMPTY;
         if (useStatSeparateTables) {
+            var transformedGeometry = helper.transformGeometryToWkt(geojson);
+            paramSource.addValue("transformed_polygon", transformedGeometry);
             query = String.format(queryFactory.getSql(populationUrbanCoreV2), bivariateIndicatorsTableName);
         } else {
             query = String.format(queryFactory.getSql(populationUrbanCore), StringUtils.join(queryList, ", "));

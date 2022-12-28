@@ -1,6 +1,6 @@
-with resolution as (select 7 as resolution),
+with resolution as (select calculate_area_resolution(ST_SetSRID(:polygon::geometry, 4326)) as resolution),
      validated_input
-         as (select (:polygon)::geometry as geom),
+         as (select (:transformed_polygon)::geometry as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
      subdivision as (select st_subdivide(v.geom) geom from validated_input v),
      res as (select st.h3, st.indicator_value as population, h3_cell_area(st.h3, 'km^2') as area_km2

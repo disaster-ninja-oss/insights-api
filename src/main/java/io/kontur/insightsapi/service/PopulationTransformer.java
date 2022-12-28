@@ -126,9 +126,6 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
     }
 
     public UrbanCore calculateUrbanCore(String geometry, List<String> requestFields) {
-        if (useStatSeparateTables) {
-            geometry = helper.transformGeometryToWkt(geometry);
-        }
         return populationRepository.calculateUrbanCore(geometry, requestFields);
     }
 }
