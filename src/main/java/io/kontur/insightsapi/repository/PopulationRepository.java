@@ -125,6 +125,8 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var queryString = StringUtils.EMPTY;
         if (useStatSeparateTables) {
+            var transformedGeometry = helper.transformGeometryToWkt(geometry);
+            paramSource.addValue("transformed_geometry", transformedGeometry);
             queryString = String.format(queryFactory.getSql(populationHumanitarianImpactV2), bivariateIndicatorsTableName);
         } else {
             queryString = queryFactory.getSql(populationHumanitarianImpact);
