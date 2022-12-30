@@ -37,6 +37,9 @@ public class PopulationRepository {
     @Value("classpath:/sql.queries/population_humanitarian_impact.sql")
     private Resource populationHumanitarianImpact;
 
+    @Value("classpath:/sql.queries/population_humanitarian_impact_v2.sql")
+    private Resource populationHumanitarianImpactV2;
+
     @Value("classpath:/sql.queries/population_osm.sql")
     private Resource populationOsm;
 
@@ -120,8 +123,16 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public List<HumanitarianImpactDto> calculateHumanitarianImpact(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
+        var queryString = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            var transformedGeometry = helper.transformGeometryToWkt(geometry);
+            paramSource.addValue("transformed_geometry", transformedGeometry);
+            queryString = String.format(queryFactory.getSql(populationHumanitarianImpactV2), bivariateIndicatorsTableName);
+        } else {
+            queryString = queryFactory.getSql(populationHumanitarianImpact);
+        }
         try {
-            return namedParameterJdbcTemplate.query(queryFactory.getSql(populationHumanitarianImpact), paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.query(queryString, paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))
