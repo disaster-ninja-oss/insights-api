@@ -49,6 +49,9 @@ public class PopulationRepository {
     @Value("classpath:/sql.queries/population_urbancore.sql")
     private Resource populationUrbanCore;
 
+    @Value("classpath:/sql.queries/population_urbancore_v2.sql")
+    private Resource populationUrbanCoreV2;
+
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
 
@@ -201,7 +204,14 @@ public class PopulationRepository {
     public UrbanCore calculateUrbanCore(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(populationUrbanCore), StringUtils.join(queryList, ", "));
+        var query = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            var transformedGeometry = helper.transformGeometryToWkt(geojson);
+            paramSource.addValue("transformed_polygon", transformedGeometry);
+            query = String.format(queryFactory.getSql(populationUrbanCoreV2), bivariateIndicatorsTableName);
+        } else {
+            query = String.format(queryFactory.getSql(populationUrbanCore), StringUtils.join(queryList, ", "));
+        }
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     UrbanCore.builder()
