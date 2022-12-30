@@ -31,6 +31,15 @@ public class FunctionsRepository implements FunctionsService {
     @Value("classpath:/sql.queries/function_intersect.sql")
     private Resource functionIntersect;
 
+    @Value("classpath:/sql.queries/function_intersect_v2.sql")
+    private Resource functionIntersectV2;
+
+    @Value("${calculations.useStatSeparateTables:false}")
+    private Boolean useStatSeparateTables;
+
+    @Value("${calculations.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
     private final Logger logger = LoggerFactory.getLogger(FunctionsRepository.class);
@@ -46,7 +55,15 @@ public class FunctionsRepository implements FunctionsService {
                 .map(this::createFunctionsForSelect)
                 .toList();
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(functionIntersect), StringUtils.join(params, ", "));
+        var query = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            query = String.format(queryFactory.getSql(functionIntersectV2), bivariateIndicatorsTableName, bivariateIndicatorsTableName,
+                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName,
+                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName,
+                    bivariateIndicatorsTableName, StringUtils.join(params, ", "));
+        } else {
+            query = String.format(queryFactory.getSql(functionIntersect), StringUtils.join(params, ", "));
+        }
         List<FunctionResult> result = new ArrayList<>();
         try {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
