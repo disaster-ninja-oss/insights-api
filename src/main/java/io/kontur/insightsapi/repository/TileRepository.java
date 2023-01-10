@@ -29,6 +29,12 @@ public class TileRepository {
     @Value("classpath:/sql.queries/get_tile_mvt.sql")
     private Resource getTileMvtResource;
 
+    @Value("classpath:/sql.queries/get_tile_mvt_indicators_list_v2.sql")
+    private Resource getTileMvtIndicatorsListResourceV2;
+
+    @Value("${calculations.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
     public byte[] getBivariateTileMvt(Integer z, Integer x, Integer y, List<String> bivariateIndicators) {
         var bivariateIndicatorsForQuery = Lists.newArrayList();
         for (String current : bivariateIndicators) {
@@ -38,6 +44,19 @@ public class TileRepository {
         paramSource.addValue("x", x);
         paramSource.addValue("y", y);
         var query = String.format(queryFactory.getSql(getTileMvtResource), StringUtils.join(bivariateIndicatorsForQuery, ", "));
+        return namedParameterJdbcTemplate.queryForObject(query, paramSource,
+                (rs, rowNum) -> rs.getBytes("tile"));
+    }
+
+    public byte[] getBivariateTileMvtIndicatorsListV2(Integer z, Integer x, Integer y, List<String> bivariateIndicators){
+        var paramSource = new MapSqlParameterSource("z", z);
+        paramSource.addValue("x", x);
+        paramSource.addValue("y", y);
+        paramSource.addValue("ind0", bivariateIndicators.get(0));
+        paramSource.addValue("ind1", bivariateIndicators.get(1));
+        paramSource.addValue("ind2", bivariateIndicators.get(2));
+        paramSource.addValue("ind3", bivariateIndicators.get(3));
+        var query = String.format(queryFactory.getSql(getTileMvtIndicatorsListResourceV2), bivariateIndicatorsTableName);
         return namedParameterJdbcTemplate.queryForObject(query, paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
     }

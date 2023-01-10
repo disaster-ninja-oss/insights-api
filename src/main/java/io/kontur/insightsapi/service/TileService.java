@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,6 +15,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class TileService {
+
+    @Value("${calculations.useStatSeparateTables:false}")
+    private Boolean useStatSeparateTables;
 
     private final Logger logger = LoggerFactory.getLogger(TileService.class);
 
@@ -47,6 +51,9 @@ public class TileService {
                 logger.error(error);
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error);
             }
+        }
+        if (useStatSeparateTables){
+            return tileRepository.getBivariateTileMvtIndicatorsListV2(z, x, y, indicators);
         }
         return tileRepository.getBivariateTileMvt(z, x, y, indicators);
     }
