@@ -6,8 +6,6 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.BivariateIndicatorsPRViolationException;
-import io.kontur.insightsapi.exception.ConnectionException;
-import io.kontur.insightsapi.exception.TableDataCopyException;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import io.kontur.insightsapi.service.auth.AuthService;
 import lombok.AllArgsConstructor;
@@ -19,14 +17,12 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -44,6 +40,18 @@ public class IndicatorService {
 
     private final AuthService authService;
 
+    private final AxisService axisService;
+
+    public ResponseEntity<String> processIndicator(HttpServletRequest request) {
+
+        //BivariateIndicatorDto incomingBivariateIndicatorDto = uploadIndicatorData(HttpServletRequest request){}
+
+        BivariateIndicatorDto incomingBivariateIndicatorDto = new BivariateIndicatorDto();
+        axisService.createAxis(incomingBivariateIndicatorDto);
+
+        return null;
+    }
+
     @Transactional
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         String uuid = "";
@@ -52,6 +60,7 @@ public class IndicatorService {
 
         try {
 
+            BivariateIndicatorDto incomingBivariateIndicatorDto = new BivariateIndicatorDto();
             FileItemIterator itemIterator = upload.getItemIterator(request);
             int itemIndex = 0;
 
@@ -65,7 +74,7 @@ public class IndicatorService {
 
                 } else if ("parameters".equals(name) && itemIndex == 0) {
 
-                    BivariateIndicatorDto incomingBivariateIndicatorDto = parseRequestFormDataParameters(item);
+                    incomingBivariateIndicatorDto = parseRequestFormDataParameters(item);
                     validateParameters(incomingBivariateIndicatorDto);
 
                     String owner = authService.getCurrentUsername().orElseThrow();

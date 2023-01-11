@@ -22,4 +22,8 @@ public class BivariativeAxisDto {
 
     private List<String> calculations;
 
+    public BivariativeAxisDto(String numerator, String denominator) {
+        this.numerator = numerator;
+        this.denominator = denominator;
+    }
 }

@@ -195,4 +195,9 @@ public class IndicatorRepository {
 
     }
 
+    //TODO: possibly will be added something about owner field here
+    public List<BivariateIndicatorDto> getAllBivariateIndicators() {
+        return jdbcTemplate.query(String.format("SELECT * FROM %s", bivariateIndicatorsTableName), bivariateIndicatorRowMapper);
+    }
+
 }

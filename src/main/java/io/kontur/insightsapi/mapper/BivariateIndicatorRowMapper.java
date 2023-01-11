@@ -21,6 +21,7 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
 
     @SneakyThrows
     @Override
+    //TODO: update after merging wrk  and test tables of bivariate_indicators
     public BivariateIndicatorDto mapRow(ResultSet resultSet, int rowNum) {
         BivariateIndicatorDto bivariateIndicatorDto = new BivariateIndicatorDto();
         bivariateIndicatorDto.setId(resultSet.getString(BivariateIndicatorsColumns.param_id.name()));
