@@ -1,6 +1,7 @@
 package io.kontur.insightsapi.service.cacheable.impl;
 
 import io.kontur.insightsapi.dto.AdvancedAnalyticsRequest;
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.model.AdvancedAnalytics;
 import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
@@ -53,8 +54,22 @@ public class AdvancedAnalyticsFacade implements AdvancedAnalyticsService, CacheE
         return repository.getFilteredAdvancedAnalytics(argQuery, argGeometry, axisDtos);
     }
 
+    @SneakyThrows
     @Override
-    @CacheEvict(value = {"advanced-analytics-all", "advanced-analytics"}, allEntries = true)
+    @Cacheable(value = "advanced-analytics-v2", keyGenerator = "listKeyGenerator")
+    public List<AdvancedAnalytics> getAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, String argGeometry) {
+        return repository.getAdvancedAnalyticsV2(indicators, argGeometry);
+    }
+
+    @SneakyThrows
+    @Override
+    @Cacheable(value = "advanced-analytics-v2", keyGenerator = "listKeyGenerator")
+    public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<AdvancedAnalyticsRequest> argRequests, String argGeometry) {
+        return repository.getFilteredAdvancedAnalyticsV2(indicators, argRequests, argGeometry);
+    }
+
+    @Override
+    @CacheEvict(value = {"advanced-analytics-all", "advanced-analytics", "advanced-analytics-v2"}, allEntries = true)
     public void evict() {
     }
 }

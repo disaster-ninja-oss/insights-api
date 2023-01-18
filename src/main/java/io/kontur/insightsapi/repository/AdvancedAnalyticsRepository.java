@@ -2,11 +2,13 @@ package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.AdvancedAnalyticsQualitySortDto;
 import io.kontur.insightsapi.dto.AdvancedAnalyticsRequest;
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.model.AdvancedAnalytics;
 import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
 import io.kontur.insightsapi.service.cacheable.AdvancedAnalyticsService;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,15 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     @Value("classpath:/sql.queries/advanced_analytics_intersect.sql")
     private Resource advancedAnalyticsIntersect;
 
+    @Value("classpath:/sql.queries/advanced_analytics_intersect_all_indicators.sql")
+    private Resource advancedAnalyticsIntersectAllIndicators;
+
+    @Value("classpath:/sql.queries/advanced_analytics_intersect_filtered_indicators.sql")
+    private Resource advancedAnalyticsIntersectFilteredIndicators;
+
+    @Value("${calculations.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
         return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis), (rs, rowNum) -> BivariativeAxisDto.builder()
@@ -66,9 +77,9 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     }
 
     public String getQueryWithGeom(List<BivariativeAxisDto> argAxisDto) {
-        List<String> bivariativeAxisDistincList = argAxisDto.stream().flatMap(dto -> Stream.of(dto.getNumerator(), dto.getDenominator())).distinct().toList();
+        List<String> bivariativeAxisDistinctList = argAxisDto.stream().flatMap(dto -> Stream.of(dto.getNumerator(), dto.getDenominator())).distinct().toList();
 
-        return String.format(queryFactory.getSql(advancedAnalyticsIntersect), StringUtils.join(bivariativeAxisDistincList, ","));
+        return String.format(queryFactory.getSql(advancedAnalyticsIntersect), StringUtils.join(bivariativeAxisDistinctList, ","));
     }
 
     public String getUnionQuery(BivariativeAxisDto numDen) {
@@ -162,6 +173,55 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         return result;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<AdvancedAnalytics> getAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, String argGeometry) {
+        var paramSource = new MapSqlParameterSource();
+        paramSource.addValue("polygon", argGeometry);
+
+        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectAllIndicators), bivariateIndicatorsTableName);
+
+        List<AdvancedAnalytics> result = new ArrayList<>();
+
+        try {
+            namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
+                result.add(mapAdvancedAnalyticsWithAxis(rs, indicators));
+            }));
+        } catch (DataAccessResourceFailureException e) {
+            String error = String.format(DatabaseUtil.ERROR_TIMEOUT, argGeometry);
+            logger.error(error, e);
+            throw new DataAccessResourceFailureException(error, e);
+        } catch (EmptyResultDataAccessException e) {
+            String error = String.format(DatabaseUtil.ERROR_EMPTY_RESULT, argGeometry);
+            logger.error(error, e);
+            throw new EmptyResultDataAccessException(error, 1);
+        } catch (Exception e) {
+            String error = String.format(DatabaseUtil.ERROR_SQL, argGeometry);
+            logger.error(error, e);
+            throw new IllegalArgumentException(error, e);
+        }
+        return result;
+    }
+
+    private AdvancedAnalytics mapAdvancedAnalyticsWithAxis(ResultSet rs, List<BivariateIndicatorDto> indicators) {
+        BivariateIndicatorDto numerator = indicators.stream()
+                .filter(i -> i.getUuid().equals(DatabaseUtil.getStringValueByColumnName(rs, "numerator_uuid")))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of numerator"));
+        BivariateIndicatorDto denominator = indicators.stream()
+                .filter(i -> i.getUuid().equals(DatabaseUtil.getStringValueByColumnName(rs, "denominator_uuid")))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of denominator"));
+        return AdvancedAnalytics.builder()
+                .numerator(numerator.getId())
+                .numeratorLabel(numerator.getLabel())
+                .denominator(denominator.getId())
+                .denominatorLabel(denominator.getLabel())
+                .analytics(createValuesList(rs))
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public List<List<AdvancedAnalyticsValues>> getFilteredAdvancedAnalytics(String argQuery, String argGeometry, List<BivariativeAxisDto> axisDtos) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", argGeometry);
@@ -175,6 +235,25 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
             throw new IllegalArgumentException(error, e);
         }
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<AdvancedAnalyticsRequest> argRequests, String argGeometry) {
+        var paramSource = new MapSqlParameterSource();
+        paramSource.addValue("polygon", argGeometry);
+
+        StringBuilder uuidsToRetrieveAnalyticsFor = new StringBuilder();
+
+        for (AdvancedAnalyticsRequest advancedAnalyticsRequest : argRequests) {
+            //TODO: create table from uuids
+        }
+
+        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectFilteredIndicators), bivariateIndicatorsTableName);
+
+        List<AdvancedAnalytics> result = new ArrayList<>();
+
+        return null;
     }
 
     private List<AdvancedAnalyticsValues> createFilteredValuesList(ResultSet rs, List<String> argCalculations) {
@@ -238,6 +317,26 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         return returnList.stream()
                 .sorted(Comparator.comparing(AdvancedAnalyticsQualitySortDto::getMinQuality, Comparator.nullsLast(Comparator.naturalOrder())))
                 .toList();
+    }
+
+    public List<AdvancedAnalytics> sortResultList(List<AdvancedAnalytics> unsortedResultList) {
+        List<BivariativeAxisDto> argAxis = new ArrayList<>();
+        List<List<AdvancedAnalyticsValues>> argValues = new ArrayList<>();
+
+        for (AdvancedAnalytics analytics : unsortedResultList) {
+            argAxis.add(BivariativeAxisDto
+                    .builder()
+                    .numerator(analytics.getNumerator())
+                    .numeratorLabel(analytics.getNumeratorLabel())
+                    .denominator(analytics.getDenominator())
+                    .denominatorLabel(analytics.getDenominatorLabel())
+                    .build());
+            argValues.add(analytics.getAnalytics());
+        }
+
+        List<AdvancedAnalyticsQualitySortDto> argQualitySortedList = createSortedList(argAxis, argValues);
+
+        return getAdvancedAnalyticsResult(argQualitySortedList, argAxis, argValues);
     }
 
     public List<AdvancedAnalytics> getAdvancedAnalyticsResult(List<AdvancedAnalyticsQualitySortDto> argQualitySortedList, List<BivariativeAxisDto> argAxis, List<List<AdvancedAnalyticsValues>> argValues) {

@@ -24,5 +24,14 @@ public class DatabaseUtil {
             return null;
         }
     }
+
+    public static String getStringValueByColumnName(ResultSet rs, String columnName) {
+        try {
+            return rs.getString(columnName);
+        } catch (SQLException e) {
+            logger.error("Can't get value from result set", e);
+            return null;
+        }
+    }
 }
 
