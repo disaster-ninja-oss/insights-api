@@ -20,6 +20,5 @@ public interface AdvancedAnalyticsService {
 
     List<AdvancedAnalytics> getAdvancedAnalyticsV2(List<BivariateIndicatorDto> axisDtos, String argGeometry);
 
-    List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<AdvancedAnalyticsRequest> argRequests, String argGeometry);
-
+    List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos, String argGeometry);
 }

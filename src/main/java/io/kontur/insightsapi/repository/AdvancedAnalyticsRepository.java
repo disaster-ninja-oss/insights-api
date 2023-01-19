@@ -22,6 +22,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -185,7 +186,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
         try {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
-                result.add(mapAdvancedAnalyticsWithAxis(rs, indicators));
+                result.add(mapAdvancedAnalyticsWithAxis(rs, indicators, null));
             }));
         } catch (DataAccessResourceFailureException e) {
             String error = String.format(DatabaseUtil.ERROR_TIMEOUT, argGeometry);
@@ -203,7 +204,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         return result;
     }
 
-    private AdvancedAnalytics mapAdvancedAnalyticsWithAxis(ResultSet rs, List<BivariateIndicatorDto> indicators) {
+    private AdvancedAnalytics mapAdvancedAnalyticsWithAxis(ResultSet rs, List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos) {
         BivariateIndicatorDto numerator = indicators.stream()
                 .filter(i -> i.getUuid().equals(DatabaseUtil.getStringValueByColumnName(rs, "numerator_uuid")))
                 .findFirst()
@@ -212,12 +213,22 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
                 .filter(i -> i.getUuid().equals(DatabaseUtil.getStringValueByColumnName(rs, "denominator_uuid")))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of denominator"));
+
+        List<String> argCalculations = new ArrayList<>();
+
+        if (axisDtos != null && !axisDtos.isEmpty()) {
+            argCalculations = axisDtos.stream()
+                    .filter(a -> a.getNumerator().equals(numerator.getId()) && a.getDenominator().equals(denominator.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new NoSuchElementException("No corresponding axis for returned pair of numerator uuid and denominator uuid"))
+                    .getCalculations();
+        }
         return AdvancedAnalytics.builder()
                 .numerator(numerator.getId())
                 .numeratorLabel(numerator.getLabel())
                 .denominator(denominator.getId())
                 .denominatorLabel(denominator.getLabel())
-                .analytics(createValuesList(rs))
+                .analytics(createFilteredValuesList(rs, argCalculations))
                 .build();
     }
 
@@ -239,21 +250,43 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<AdvancedAnalyticsRequest> argRequests, String argGeometry) {
+    public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos, String argGeometry) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", argGeometry);
 
-        StringBuilder uuidsToRetrieveAnalyticsFor = new StringBuilder();
+        List<String> uuidsAsPairsForRequest = new ArrayList<>();
 
-        for (AdvancedAnalyticsRequest advancedAnalyticsRequest : argRequests) {
-            //TODO: create table from uuids
+        for (BivariativeAxisDto advancedAnalyticsRequest : axisDtos) {
+
+            //TODO: add owner in future
+            String pair = "('" +
+                    indicators.stream()
+                            .filter(i -> i.getId().equals(advancedAnalyticsRequest.getNumerator()))
+                            .findFirst()
+                            .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of numerator"))
+                            .getUuid() +
+                    "', '" +
+                    indicators.stream()
+                            .filter(i -> i.getId().equals(advancedAnalyticsRequest.getDenominator()))
+                            .findFirst()
+                            .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of denominator"))
+                            .getUuid() +
+                    "')";
+
+            uuidsAsPairsForRequest.add(pair);
         }
 
-        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectFilteredIndicators), bivariateIndicatorsTableName);
+        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectFilteredIndicators), StringUtils.join(uuidsAsPairsForRequest, ", "));
 
         List<AdvancedAnalytics> result = new ArrayList<>();
-
-        return null;
+        try {
+            namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) -> result.add(mapAdvancedAnalyticsWithAxis(rs, indicators, axisDtos)));
+        } catch (Exception e) {
+            String error = String.format("Sql exception for geometry %s. Exception: %s", argGeometry, e.getMessage());
+            logger.error(error);
+            throw new IllegalArgumentException(error, e);
+        }
+        return result;
     }
 
     private List<AdvancedAnalyticsValues> createFilteredValuesList(ResultSet rs, List<String> argCalculations) {

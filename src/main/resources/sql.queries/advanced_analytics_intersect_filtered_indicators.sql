@@ -1,4 +1,7 @@
-with validated_input as (select (:polygon)::geometry as geom),
+with pairs as (select *
+               from (values %s) as q (nominator, denominator)),
+     validated_input
+         as (select (:polygon)::geometry as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
      subdivision as (select st_subdivide(v.geom) geom from validated_input v),
      res as (select st.h3, indicator_uuid, indicator_value
@@ -14,12 +17,11 @@ with validated_input as (select (:polygon)::geometry as geom),
                                       h3_get_resolution(a.h3)                 as resolution
                                from res a,
                                     res b,
-                                    %s as bi_b
+                                    pairs p
                                where b.indicator_value != 0
-                                 and bi_b.is_base
-                                 and bi_b.param_uuid = b.indicator_uuid
+                                 and p.nominator::uuid = a.indicator_uuid
+                                 and p.denominator::uuid = b.indicator_uuid
                                  and a.h3 = b.h3
-                                 and a.indicator_uuid in (%s)
                                order by a.h3)
 select h.numerator_uuid,
        h.denominator_uuid,

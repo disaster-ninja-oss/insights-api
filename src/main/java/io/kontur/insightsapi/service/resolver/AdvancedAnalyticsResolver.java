@@ -77,9 +77,9 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
 
     private List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<AdvancedAnalyticsRequest> argRequests, String transformedGeometryAsWkt) {
         List<BivariateIndicatorDto> indicators = indicatorRepository.getAllIndicators();
+        List<BivariativeAxisDto> axisDtos = createAxisDtosFromRequest(argRequests);
 
-        List<AdvancedAnalytics> unsortedResultList = advancedAnalyticsService.getFilteredAdvancedAnalyticsV2(indicators, argRequests, transformedGeometryAsWkt);
-        //TODO: check sort
+        List<AdvancedAnalytics> unsortedResultList = advancedAnalyticsService.getFilteredAdvancedAnalyticsV2(indicators, axisDtos, transformedGeometryAsWkt);
         return advancedAnalyticsRepository.sortResultList(unsortedResultList);
     }
 
@@ -99,17 +99,11 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
         return advancedAnalyticsRepository.getAdvancedAnalyticsResult(qualitySortedList, axisDtos, advancedAnalyticsValues);
     }
 
+    //TODO: have to be adjusted with an 'owner' field in future as indicators can have same names: unique are pairs of indicator + owner
     private List<AdvancedAnalytics> getFilteredAdvancedAnalytics(List<AdvancedAnalyticsRequest> argRequests, String argGeometry) {
-        List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getFilteredBivariativeAxis(argRequests);
-        if (!axisDtos.isEmpty()) {
-            axisDtos.forEach(a -> {
-                AdvancedAnalyticsRequest request = argRequests.stream().filter(r -> r.getNumerator().equals(a.getNumerator()) && r.getDenominator().equals(a.getDenominator()))
-                        .findFirst().orElse(null);
-                if (request != null) {
-                    a.setCalculations(request.getCalculations());
-                }
-            });
+        List<BivariativeAxisDto> axisDtos = createAxisDtosFromRequest(argRequests);
 
+        if (!axisDtos.isEmpty()) {
             String queryWithGeom = advancedAnalyticsRepository.getQueryWithGeom(axisDtos);
             String queryUnionAll = StringUtils.join(axisDtos.stream().map(advancedAnalyticsRepository::getUnionQuery).collect(Collectors.toList()), " union all ");
 
@@ -120,6 +114,20 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
         } else {
             return null;
         }
+    }
+
+    private List<BivariativeAxisDto> createAxisDtosFromRequest(List<AdvancedAnalyticsRequest> argRequests) {
+        List<BivariativeAxisDto> axisDtos = advancedAnalyticsRepository.getFilteredBivariativeAxis(argRequests);
+        if (!axisDtos.isEmpty()) {
+            axisDtos.forEach(a -> {
+                AdvancedAnalyticsRequest request = argRequests.stream().filter(r -> r.getNumerator().equals(a.getNumerator()) && r.getDenominator().equals(a.getDenominator()))
+                        .findFirst().orElse(null);
+                if (request != null) {
+                    a.setCalculations(request.getCalculations());
+                }
+            });
+        }
+        return axisDtos;
     }
 
     private List<AdvancedAnalytics> getWorldData(List<AdvancedAnalyticsRequest> argRequest) {
