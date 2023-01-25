@@ -72,4 +72,16 @@ public class CacheConfig extends CachingConfigurerSupport {
         };
     }
 
+    @Bean("stringListListKeyGenerator")
+    public KeyGenerator customStringListListKeyGenerator() {
+        return (Object target, Method method, Object... params) -> {
+            if (params.length == 3 && params[0] instanceof String && params[1] instanceof List && params[2] instanceof List) {
+                return hashFunction.hashString((String) params[0], StandardCharsets.UTF_8) + "_"
+                        + hashFunction.hashString(params[1].toString(), StandardCharsets.UTF_8) + "_"
+                        + hashFunction.hashString(params[2].toString(), StandardCharsets.UTF_8);
+            }
+            throw new IllegalArgumentException("Wrong params for StringListListKeyGenerator");
+        };
+    }
+
 }

@@ -11,7 +11,7 @@ import java.util.Optional;
 public class DatabaseUtil {
 
     public static final String ERROR_EMPTY_RESULT = "Empty result error for geometry %s";
-    public static final String ERROR_TIMEOUT = "Query timeout error for geometry %s";
+    public static final String ERROR_TIMEOUT = "Connection to database issue or query timeout error for geometry %s";
     public static final String ERROR_SQL = "Sql exception for geometry %s";
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseUtil.class);

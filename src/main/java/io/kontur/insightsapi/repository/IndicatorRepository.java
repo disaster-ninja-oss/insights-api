@@ -57,7 +57,7 @@ public class IndicatorRepository {
     private final BivariateIndicatorRowMapper bivariateIndicatorRowMapper;
 
     //TODO: temporary field, remove when we have final version of transposed stat_h3 table
-    @Value("${database.transposed.table}")
+    @Value("${calculations.bivariate.transposed.table}")
     private String transposedTableName;
 
     @Value("${calculations.bivariate.indicators.table}")

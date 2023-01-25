@@ -18,7 +18,7 @@ public interface AdvancedAnalyticsService {
 
     List<List<AdvancedAnalyticsValues>> getFilteredAdvancedAnalytics(String argQuery, String argGeometry, List<BivariativeAxisDto> axisDtos);
 
-    List<AdvancedAnalytics> getAdvancedAnalyticsV2(List<BivariateIndicatorDto> axisDtos, String argGeometry);
+    List<AdvancedAnalytics> getAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> axisDtos);
 
-    List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos, String argGeometry);
+    List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos);
 }

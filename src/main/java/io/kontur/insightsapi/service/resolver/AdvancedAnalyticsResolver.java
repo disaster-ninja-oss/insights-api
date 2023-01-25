@@ -71,7 +71,7 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
     private List<AdvancedAnalytics> getAdvancedAnalyticsV2(String transformedGeometryAsWkt) {
         List<BivariateIndicatorDto> indicators = indicatorRepository.getAllIndicators();
 
-        List<AdvancedAnalytics> unsortedResultList = advancedAnalyticsService.getAdvancedAnalyticsV2(indicators, transformedGeometryAsWkt);
+        List<AdvancedAnalytics> unsortedResultList = advancedAnalyticsService.getAdvancedAnalyticsV2(transformedGeometryAsWkt, indicators);
         return advancedAnalyticsRepository.sortResultList(unsortedResultList);
     }
 
@@ -79,7 +79,7 @@ public class AdvancedAnalyticsResolver implements GraphQLResolver<Analytics> {
         List<BivariateIndicatorDto> indicators = indicatorRepository.getAllIndicators();
         List<BivariativeAxisDto> axisDtos = createAxisDtosFromRequest(argRequests);
 
-        List<AdvancedAnalytics> unsortedResultList = advancedAnalyticsService.getFilteredAdvancedAnalyticsV2(indicators, axisDtos, transformedGeometryAsWkt);
+        List<AdvancedAnalytics> unsortedResultList = advancedAnalyticsService.getFilteredAdvancedAnalyticsV2(transformedGeometryAsWkt, indicators, axisDtos);
         return advancedAnalyticsRepository.sortResultList(unsortedResultList);
     }
 

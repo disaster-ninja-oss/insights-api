@@ -176,7 +176,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdvancedAnalytics> getAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, String argGeometry) {
+    public List<AdvancedAnalytics> getAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", argGeometry);
 
@@ -250,7 +250,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos, String argGeometry) {
+    public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", argGeometry);
 
@@ -280,7 +280,9 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
         List<AdvancedAnalytics> result = new ArrayList<>();
         try {
-            namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) -> result.add(mapAdvancedAnalyticsWithAxis(rs, indicators, axisDtos)));
+            namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
+                result.add(mapAdvancedAnalyticsWithAxis(rs, indicators, axisDtos));
+            }));
         } catch (Exception e) {
             String error = String.format("Sql exception for geometry %s. Exception: %s", argGeometry, e.getMessage());
             logger.error(error);

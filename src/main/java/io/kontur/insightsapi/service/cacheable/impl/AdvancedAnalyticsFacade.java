@@ -56,16 +56,16 @@ public class AdvancedAnalyticsFacade implements AdvancedAnalyticsService, CacheE
 
     @SneakyThrows
     @Override
-    @Cacheable(value = "advanced-analytics-v2", keyGenerator = "listKeyGenerator")
-    public List<AdvancedAnalytics> getAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, String argGeometry) {
-        return repository.getAdvancedAnalyticsV2(indicators, argGeometry);
+    @Cacheable(value = "advanced-analytics-v2", keyGenerator = "stringListKeyGenerator")
+    public List<AdvancedAnalytics> getAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators) {
+        return repository.getAdvancedAnalyticsV2(argGeometry, indicators);
     }
 
     @SneakyThrows
     @Override
-    @Cacheable(value = "advanced-analytics-v2", keyGenerator = "listKeyGenerator")
-    public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos, String argGeometry) {
-        return repository.getFilteredAdvancedAnalyticsV2(indicators, axisDtos, argGeometry);
+    @Cacheable(value = "advanced-analytics-v2", keyGenerator = "stringListListKeyGenerator")
+    public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos) {
+        return repository.getFilteredAdvancedAnalyticsV2(argGeometry, indicators, axisDtos);
     }
 
     @Override
