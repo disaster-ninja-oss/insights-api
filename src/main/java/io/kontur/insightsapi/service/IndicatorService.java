@@ -40,18 +40,6 @@ public class IndicatorService {
 
     private final AuthService authService;
 
-    private final AxisService axisService;
-
-    public ResponseEntity<String> processIndicator(HttpServletRequest request) {
-
-        //BivariateIndicatorDto incomingBivariateIndicatorDto = uploadIndicatorData(HttpServletRequest request){}
-
-        BivariateIndicatorDto incomingBivariateIndicatorDto = new BivariateIndicatorDto();
-        axisService.createAxis(incomingBivariateIndicatorDto);
-
-        return null;
-    }
-
     @Transactional
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         String uuid = "";

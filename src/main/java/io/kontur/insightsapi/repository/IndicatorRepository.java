@@ -200,4 +200,7 @@ public class IndicatorRepository {
         return jdbcTemplate.query(String.format("SELECT * FROM %s", bivariateIndicatorsTableName), bivariateIndicatorRowMapper);
     }
 
+    public BivariateIndicatorDto getIndicatorByUuid(String uuid) {
+        return jdbcTemplate.queryForObject(String.format("SELECT * FROM %s where param_uuid = '%s'", bivariateIndicatorsTableName, uuid), bivariateIndicatorRowMapper);
+    }
 }
