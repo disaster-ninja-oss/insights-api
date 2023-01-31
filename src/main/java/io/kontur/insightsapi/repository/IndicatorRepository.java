@@ -3,6 +3,7 @@ package io.kontur.insightsapi.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
+import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.BivariateIndicatorsPRViolationException;
 import io.kontur.insightsapi.exception.ConnectionException;
@@ -23,6 +24,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -55,10 +57,10 @@ public class IndicatorRepository {
     private final BivariateIndicatorRowMapper bivariateIndicatorRowMapper;
 
     //TODO: temporary field, remove when we have final version of transposed stat_h3 table
-    @Value("${database.transposed.table}")
+    @Value("${calculations.bivariate.transposed.table}")
     private String transposedTableName;
 
-    @Value("${database.bivariate.indicators.table}")
+    @Value("${calculations.bivariate.indicators.table}")
     private String bivariateIndicatorsTableName;
 
     public String createOrUpdateIndicator(BivariateIndicatorDto bivariateIndicatorDto, String owner, boolean update) throws JsonProcessingException {
@@ -193,6 +195,12 @@ public class IndicatorRepository {
                 .addValue("unitId", bivariateIndicatorDto.getUnitId())
                 .addValue("lastUpdated", bivariateIndicatorDto.getLastUpdated());
 
+    }
+
+    @Transactional(readOnly = true)
+    public List<BivariateIndicatorDto> getAllIndicators() {
+        String query = String.format("select * from %s", bivariateIndicatorsTableName);
+        return jdbcTemplate.query(query, bivariateIndicatorRowMapper);
     }
 
 }
