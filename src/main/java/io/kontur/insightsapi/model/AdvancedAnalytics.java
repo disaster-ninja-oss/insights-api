@@ -1,7 +1,6 @@
 package io.kontur.insightsapi.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -9,6 +8,9 @@ import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AdvancedAnalytics implements Serializable {
 
     @Serial

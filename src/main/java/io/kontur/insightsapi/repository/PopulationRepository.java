@@ -37,11 +37,20 @@ public class PopulationRepository {
     @Value("classpath:/sql.queries/population_humanitarian_impact.sql")
     private Resource populationHumanitarianImpact;
 
+    @Value("classpath:/sql.queries/population_humanitarian_impact_v2.sql")
+    private Resource populationHumanitarianImpactV2;
+
     @Value("classpath:/sql.queries/population_osm.sql")
     private Resource populationOsm;
 
+    @Value("classpath:/sql.queries/population_osm_v2.sql")
+    private Resource populationOsmV2;
+
     @Value("classpath:/sql.queries/population_urbancore.sql")
     private Resource populationUrbanCore;
+
+    @Value("classpath:/sql.queries/population_urbancore_v2.sql")
+    private Resource populationUrbanCoreV2;
 
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
@@ -120,8 +129,16 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public List<HumanitarianImpactDto> calculateHumanitarianImpact(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
+        var queryString = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            var transformedGeometry = helper.transformGeometryToWkt(geometry);
+            paramSource.addValue("transformed_geometry", transformedGeometry);
+            queryString = String.format(queryFactory.getSql(populationHumanitarianImpactV2), bivariateIndicatorsTableName);
+        } else {
+            queryString = queryFactory.getSql(populationHumanitarianImpact);
+        }
         try {
-            return namedParameterJdbcTemplate.query(queryFactory.getSql(populationHumanitarianImpact), paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.query(queryString, paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))
@@ -149,7 +166,14 @@ public class PopulationRepository {
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(populationOsm), StringUtils.join(queryList, ", "));
+        var query = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            query = String.format(queryFactory.getSql(populationOsmV2), bivariateIndicatorsTableName, bivariateIndicatorsTableName,
+                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName,
+                    bivariateIndicatorsTableName, StringUtils.join(queryList, ", "));
+        } else {
+            query = String.format(queryFactory.getSql(populationOsm), StringUtils.join(queryList, ", "));
+        }
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     OsmQuality.builder()
@@ -180,7 +204,14 @@ public class PopulationRepository {
     public UrbanCore calculateUrbanCore(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, urbanCoreQueryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(populationUrbanCore), StringUtils.join(queryList, ", "));
+        var query = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            var transformedGeometry = helper.transformGeometryToWkt(geojson);
+            paramSource.addValue("transformed_polygon", transformedGeometry);
+            query = String.format(queryFactory.getSql(populationUrbanCoreV2), bivariateIndicatorsTableName);
+        } else {
+            query = String.format(queryFactory.getSql(populationUrbanCore), StringUtils.join(queryList, ", "));
+        }
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     UrbanCore.builder()

@@ -116,6 +116,9 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
     }
 
     public OsmQuality calculateOsmQuality(String geojson, List<String> osmRequestFields) {
+        if (useStatSeparateTables) {
+            geojson = helper.transformGeometryToWkt(geojson);
+        }
         return populationRepository.calculateOsmQuality(geojson, osmRequestFields);
     }
 
