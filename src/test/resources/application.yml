@@ -43,3 +43,5 @@ calculations:
       table: stat_h3_transposed
     indicators:
       table: bivariate_indicators_wrk
+    axis:
+      table: bivariate_axis_test

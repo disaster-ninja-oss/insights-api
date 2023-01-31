@@ -36,7 +36,7 @@ public class AxisRepository {
     @Value("classpath:/sql.queries/insert_axis.sql")
     private Resource insertAxis;
 
-    @Value("${database.bivariate.axis.table}")
+    @Value("${calculations.bivariate.axis.table}")
     private String bivariateAxisTableName;
 
     private final QueryFactory queryFactory;
