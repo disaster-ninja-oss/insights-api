@@ -6,8 +6,10 @@ import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.repository.AxisRepository;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +28,7 @@ public class AxisService {
     private final AxisRepository axisRepository;
 
     @Transactional
-    public void createAxis(@NotNull List<BivariateIndicatorDto> indicatorsForAxis) {
+    public ResponseEntity<String> createAxis(@NotNull List<BivariateIndicatorDto> indicatorsForAxis) {
 
         List<BivariativeAxisDto> axisForCurrentIndicators = new ArrayList<>();
 
@@ -61,12 +63,20 @@ public class AxisService {
                     .toList());
         }
 
-        axisRepository.deleteAxisIfExist(indicatorsForAxis);
+        try {
+            axisRepository.deleteAxisIfExist(indicatorsForAxis);
 
-        axisRepository.uploadAxis(axisForCurrentIndicators);
+            axisRepository.uploadAxis(axisForCurrentIndicators);
 
-        calculateStopsAndQuality(axisForCurrentIndicators);
+            calculateStopsAndQuality(axisForCurrentIndicators);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Indicator data is stored in stat_h3_transposed but error occurred during estimation of axis parameters: " +
+                    e.getMessage() +
+                    ". Indicator UUID(s) = " +
+                    StringUtils.join(indicatorsForAxis.stream().map(BivariateIndicatorDto::getUuid).toList(), ", "));
+        }
 
+        return ResponseEntity.ok().body(StringUtils.join(indicatorsForAxis.stream().map(BivariateIndicatorDto::getUuid).toList(), ", "));
     }
 
     private void calculateStopsAndQuality(List<BivariativeAxisDto> axisForCurrentIndicators) {

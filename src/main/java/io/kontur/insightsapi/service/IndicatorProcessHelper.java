@@ -30,7 +30,7 @@ public class IndicatorProcessHelper {
             List<BivariateIndicatorDto> incomingBivariateIndicatorDtoAsList =
                     List.of(indicatorRepository.getIndicatorByUuid(response.getBody().substring(response.getBody().length() - UUID_STRING_LENGTH)));
 
-            axisService.createAxis(incomingBivariateIndicatorDtoAsList);
+            response = axisService.createAxis(incomingBivariateIndicatorDtoAsList);
         }
 
         return response;
