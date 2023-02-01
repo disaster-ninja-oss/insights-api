@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.controller;
 
+import io.kontur.insightsapi.service.IndicatorProcessHelper;
 import io.kontur.insightsapi.service.IndicatorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,7 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 @PreAuthorize("hasAuthority('uploadIndicators')")
 public class IndicatorController {
 
-    private final IndicatorService indicatorService;
+    private final IndicatorProcessHelper indicatorProcessHelper;
 
     @Operation(summary = "Creates or updates data about specific indicator.",
             tags = {"Indicators"},
@@ -34,6 +35,6 @@ public class IndicatorController {
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @PostMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
-        return indicatorService.uploadIndicatorData(request);
+        return indicatorProcessHelper.processIndicator(request);
     }
 }
