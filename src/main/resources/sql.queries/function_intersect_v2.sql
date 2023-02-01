@@ -54,7 +54,6 @@ from (select a.h3,
     and bi_g.param_id = 'wildfires'
     and bi_i.param_id = 'volcanos_count'
     and bi_j.param_id = 'forest'
-    and d.indicator_value > 0
     order by h3) h)
 select %s
 from stat_area st;
