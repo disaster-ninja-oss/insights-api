@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -23,6 +24,8 @@ public class AxisRepository {
     private static final Logger logger = LoggerFactory.getLogger(IndicatorRepository.class);
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    private final JdbcTemplate jdbcTemplate;
 
     @Value("classpath:/sql.queries/direct_quality_estimation.sql")
     private Resource qualityEstimation;
@@ -46,13 +49,11 @@ public class AxisRepository {
                 .map(bivariateIndicatorDto -> "'" + bivariateIndicatorDto.getUuid() + "'")
                 .toList();
         String paramsAsString = StringUtils.join(params, ", ");
-        var paramSource = new MapSqlParameterSource();
-        paramSource.addValue("bivariate_axis", bivariateAxisTableName);
 
-        var query = String.format(queryFactory.getSql(deleteAxis), paramsAsString, paramsAsString);
+        var query = String.format(queryFactory.getSql(deleteAxis), bivariateAxisTableName, paramsAsString, paramsAsString);
 
         try {
-            namedParameterJdbcTemplate.update(query, paramSource);
+            jdbcTemplate.update(query);
         } catch (Exception e) {
             String error = String.format("Exception while deleting axis: %s", paramsAsString);
             logger.error(error, e);
@@ -66,7 +67,6 @@ public class AxisRepository {
         int count = 0;
         for (BivariativeAxisDto bivariativeAxisDto : axisForCurrentIndicators) {
             Map<String, Object> map = new HashMap<>();
-            map.put("bivariate_axis", bivariateAxisTableName);
             map.put("numerator", bivariativeAxisDto.getNumerator());
             map.put("numerator_uuid", bivariativeAxisDto.getNumerator_uuid());
             map.put("denominator", bivariativeAxisDto.getDenominator());
@@ -75,7 +75,7 @@ public class AxisRepository {
         }
 
         try {
-            namedParameterJdbcTemplate.batchUpdate(queryFactory.getSql(insertAxis), batchOfInputs);
+            namedParameterJdbcTemplate.batchUpdate(String.format(queryFactory.getSql(insertAxis), bivariateAxisTableName), batchOfInputs);
         } catch (Exception e) {
             logger.error("Could not insert axis.", e);
             throw new IllegalArgumentException("Could not insert axis.", e);
@@ -84,15 +84,14 @@ public class AxisRepository {
 
     public void calculateStopsAndQuality(BivariativeAxisDto bivariativeAxisDto) {
         var paramSource = new MapSqlParameterSource();
-        paramSource.addValue("numerator_uuid", "'" + bivariativeAxisDto.getNumerator_uuid() + "'");
-        paramSource.addValue("denominator_uuid", "'" + bivariativeAxisDto.getDenominator_uuid() + "'");
-        paramSource.addValue("bivariate_axis", bivariateAxisTableName);
+        paramSource.addValue("numerator_uuid", bivariativeAxisDto.getNumerator_uuid());
+        paramSource.addValue("denominator_uuid", bivariativeAxisDto.getDenominator_uuid());
 
-        String query = queryFactory.getSql(qualityEstimation);
+        String query = String.format(queryFactory.getSql(qualityEstimation), bivariateAxisTableName);
 
         calculateAndUpdate(query, paramSource);
 
-        query = queryFactory.getSql(axisStopsEstimation);
+        query = String.format(queryFactory.getSql(axisStopsEstimation), bivariateAxisTableName);
 
         calculateAndUpdate(query, paramSource);
     }

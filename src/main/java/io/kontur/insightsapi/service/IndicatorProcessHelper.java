@@ -25,7 +25,7 @@ public class IndicatorProcessHelper {
 
         ResponseEntity<String> response = indicatorService.uploadIndicatorData(request);
 
-//        @TODO: run this part async in future
+//        TODO: run this part async in future
         if (response.getStatusCode().is2xxSuccessful() && response.hasBody() && response.getBody().length() >= UUID_STRING_LENGTH) {
             List<BivariateIndicatorDto> incomingBivariateIndicatorDtoAsList =
                     List.of(indicatorRepository.getIndicatorByUuid(response.getBody().substring(response.getBody().length() - UUID_STRING_LENGTH)));

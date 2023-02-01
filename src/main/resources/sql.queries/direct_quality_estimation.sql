@@ -31,9 +31,9 @@ with indicators as (select :numerator_uuid::uuid   as indicator1,
                 and b.indicator_uuid = i.indicator1
                 and c.indicator_uuid = i.indicator2
                 and d.indicator_uuid = i.indicator2)
-update :bivariate_axis
+update %s
 set quality =
-        (select (1.0::float - avg(
+        coalesce((select (1.0::float - avg(
             -- if we zoom in one step, will current zoom values be the same as next zoom values?
                     abs((s.numerator_value / nullif(s.denominator_value, 0)) -
                         (s.numerator_agg_value / nullif(s.denominator_agg_value, 0))) / nullif(
@@ -41,7 +41,7 @@ set quality =
                                 abs(s.numerator_agg_value / nullif(s.denominator_agg_value, 0)), 0)))
                     -- does the denominator cover all of the cells where numerator is present?
                     * ((count(*) filter (where s.numerator_value != 0 and s.denominator_value != 0))::float
-                / (count(*) filter (where s.numerator_value != 0))) as quality
-         from stat s)
+                / nullif((count(*) filter (where s.numerator_value != 0)),0)) as quality
+         from stat s), 0)
 where numerator_uuid = :numerator_uuid::uuid
   and denominator_uuid = :denominator_uuid::uuid

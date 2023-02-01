@@ -48,7 +48,7 @@ public class IndicatorService {
 
         try {
 
-            BivariateIndicatorDto incomingBivariateIndicatorDto = new BivariateIndicatorDto();
+            BivariateIndicatorDto incomingBivariateIndicatorDto;
             FileItemIterator itemIterator = upload.getItemIterator(request);
             int itemIndex = 0;
 

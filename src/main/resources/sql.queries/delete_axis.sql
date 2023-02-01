@@ -1,4 +1,4 @@
 delete
-from :bivariate_axis
+from %s
 where numerator_uuid in (%s)
-   or denominator_uuid in (%s);
+   or denominator_uuid in (%s)

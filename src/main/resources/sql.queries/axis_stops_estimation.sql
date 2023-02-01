@@ -14,7 +14,7 @@ with pairs as (select a.indicator_value as numerator_value, b.indicator_value as
                       where p.numerator_value != 0
                         and p.denominator_value != 0
                         and p.denominator_value > 0)
-update :bivariate_axis ba
+update %s ba
 set min = c.min,
     p25 = c.p25,
     p75 = c.p75,

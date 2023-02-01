@@ -82,7 +82,7 @@ public class IndicatorRepository {
 
         String tempTableName = generateTempTableName();
 
-        String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, value double precision, CONSTRAINT valid_cell CHECK (h3_is_valid_cell(h3::h3index)))", tempTableName);
+        String tempTableQuery = String.format("CREATE UNLOGGED TABLE %s (h3 h3index, indicator_value double precision, CONSTRAINT valid_cell CHECK (h3_is_valid_cell(h3::h3index)))", tempTableName);
         jdbcTemplate.update(tempTableQuery);
 
         var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ',' null 'NULL'", tempTableName);
@@ -124,9 +124,9 @@ public class IndicatorRepository {
     public ResponseEntity<String> copyDataToStatH3(FileUploadResultDto fileUploadResultDto, String uuid, boolean update) throws TableDataCopyException {
         try {
             if (update) {
-                jdbcTemplate.update(String.format("DELETE FROM %s WHERE indicator = '%s'", transposedTableName, uuid));
+                jdbcTemplate.update(String.format("DELETE FROM %s WHERE indicator_uuid = '%s'::uuid", transposedTableName, uuid));
             }
-            var copyDataFromTempToStatH3WithUuidQuery = String.format("INSERT INTO %s select h3, value, '%s' from %s", transposedTableName, uuid, fileUploadResultDto.getTempTableName());
+            var copyDataFromTempToStatH3WithUuidQuery = String.format("INSERT INTO %s select h3, '%s', indicator_value from %s", transposedTableName, uuid, fileUploadResultDto.getTempTableName());
             long numberOfCopiedRows = jdbcTemplate.update(copyDataFromTempToStatH3WithUuidQuery);
 
             deleteTempTable(fileUploadResultDto.getTempTableName());
@@ -149,7 +149,7 @@ public class IndicatorRepository {
     }
 
     public void deleteIndicator(String uuid) {
-        jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'", bivariateIndicatorsTableName, uuid));
+        jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'::uuid", bivariateIndicatorsTableName, uuid));
     }
 
     public void deleteTempTable(String tempTableName) {
@@ -204,6 +204,6 @@ public class IndicatorRepository {
     }
 
     public BivariateIndicatorDto getIndicatorByUuid(String uuid) {
-        return jdbcTemplate.queryForObject(String.format("SELECT * FROM %s where param_uuid = '%s'", bivariateIndicatorsTableName, uuid), bivariateIndicatorRowMapper);
+        return jdbcTemplate.queryForObject(String.format("SELECT * FROM %s where param_uuid = '%s'::uuid", bivariateIndicatorsTableName, uuid), bivariateIndicatorRowMapper);
     }
 }
