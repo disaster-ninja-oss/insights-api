@@ -9,12 +9,12 @@ select x.numerator                             as x_num,
        y_den_indicator.param_uuid              as y_den_param_uuid,
        y_num_indicator.param_uuid              as y_num_param_uuid,
        1 - ((1 - x.quality) * (1 - y.quality)) as quality
-from (bivariate_axis x
+from (%s x
          join %s x_den_indicator
               on (x.denominator = x_den_indicator.param_id)
          join %s x_num_indicator
               on (x.numerator = x_num_indicator.param_id)),
-     (bivariate_axis y
+     (%s y
          join %s y_den_indicator
               on (y.denominator = y_den_indicator.param_id)
          join %s y_num_indicator

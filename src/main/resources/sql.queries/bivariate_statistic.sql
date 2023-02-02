@@ -13,7 +13,7 @@ select
                                                                'unit', jsonb_build_object('id', bul.unit_id,
                                                                                           'shortName', bul.short_name,
                                                                                           'longName', bul.long_name)))
-                           from bivariate_indicators bi left join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
+                           from %s bi left join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
                        ),
                        'colors', jsonb_build_object(
                            'fallback', '#ccc',
@@ -96,7 +96,7 @@ from
                                      jsonb_build_object('value', p75, 'label', p75_label),
                                      jsonb_build_object('value', max, 'label', max_label)))) as axis
       from
-          bivariate_axis )                                                                      ba,
+          %s )                                                                      ba,
     ( select
           json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
                                       'colors', o.colors, 'order', o.ord,
@@ -160,13 +160,13 @@ from
                                                                       jsonb_build_object('value', ay.max, 'label', ay.max_label))))
                    order by ord) as overlay
       from
-          bivariate_axis     ax,
-          bivariate_axis     ay,
+          %s     ax,
+          %s     ay,
           bivariate_overlays o,
-          bivariate_indicators bix1 left join bivariate_unit_localization bulx1 on bix1.unit_id = bulx1.unit_id,
-          bivariate_indicators bix2 left join bivariate_unit_localization bulx2 on bix2.unit_id = bulx2.unit_id,
-          bivariate_indicators biy1 left join bivariate_unit_localization buly1 on biy1.unit_id = buly1.unit_id,
-          bivariate_indicators biy2 left join bivariate_unit_localization buly2 on biy2.unit_id = buly2.unit_id
+          %s bix1 left join bivariate_unit_localization bulx1 on bix1.unit_id = bulx1.unit_id,
+          %s bix2 left join bivariate_unit_localization bulx2 on bix2.unit_id = bulx2.unit_id,
+          %s biy1 left join bivariate_unit_localization buly1 on biy1.unit_id = buly1.unit_id,
+          %s biy2 left join bivariate_unit_localization buly2 on biy2.unit_id = buly2.unit_id
       where
             bix1.param_id = o.x_numerator
         and bix2.param_id = o.x_denominator
@@ -176,12 +176,12 @@ from
         and ax.numerator = o.x_numerator
         and ay.denominator = o.y_denominator
         and ay.numerator = o.y_numerator )                                                      ov,
-    bivariate_axis                                                                              x,
-    bivariate_axis                                                                              y,
-    bivariate_indicators bix1 left join bivariate_unit_localization bulx1 on bix1.unit_id = bulx1.unit_id,
-    bivariate_indicators bix2 left join bivariate_unit_localization bulx2 on bix2.unit_id = bulx2.unit_id,
-    bivariate_indicators biy1 left join bivariate_unit_localization buly1 on biy1.unit_id = buly1.unit_id,
-    bivariate_indicators biy2 left join bivariate_unit_localization buly2 on biy2.unit_id = buly2.unit_id
+    %s                                                                              x,
+    %s                                                                              y,
+    %s bix1 left join bivariate_unit_localization bulx1 on bix1.unit_id = bulx1.unit_id,
+    %s bix2 left join bivariate_unit_localization bulx2 on bix2.unit_id = bulx2.unit_id,
+    %s biy1 left join bivariate_unit_localization buly1 on biy1.unit_id = buly1.unit_id,
+    %s biy2 left join bivariate_unit_localization buly2 on biy2.unit_id = buly2.unit_id
 where
       x.numerator = 'count'
   and x.denominator = 'area_km2'

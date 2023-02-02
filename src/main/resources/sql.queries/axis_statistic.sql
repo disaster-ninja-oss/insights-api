@@ -27,9 +27,9 @@ select
                                jsonb_build_object('value', p75, 'label', p75_label),
                                jsonb_build_object('value', max, 'label', max_label))) as axis
 from
-    bivariate_axis,
-    bivariate_indicators bi1 left join bivariate_unit_localization bul1 on bi1.unit_id = bul1.unit_id,
-    bivariate_indicators bi2 left join bivariate_unit_localization bul2 on bi2.unit_id = bul2.unit_id
+    %s,
+    %s bi1 left join bivariate_unit_localization bul1 on bi1.unit_id = bul1.unit_id,
+    %s bi2 left join bivariate_unit_localization bul2 on bi2.unit_id = bul2.unit_id
 where
     numerator = bi1.param_id
   and denominator = bi2.param_id

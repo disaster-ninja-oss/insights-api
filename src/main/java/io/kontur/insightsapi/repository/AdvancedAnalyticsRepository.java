@@ -8,7 +8,6 @@ import io.kontur.insightsapi.model.AdvancedAnalytics;
 import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
 import io.kontur.insightsapi.service.cacheable.AdvancedAnalyticsService;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -55,12 +53,26 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     @Value("classpath:/sql.queries/advanced_analytics_intersect_filtered_indicators.sql")
     private Resource advancedAnalyticsIntersectFilteredIndicators;
 
+    @Value("${calculations.bivariate.indicators.test.table}")
+    private String bivariateIndicatorsTestTableName;
+
     @Value("${calculations.bivariate.indicators.table}")
     private String bivariateIndicatorsTableName;
 
+    @Value("${calculations.bivariate.axis.test.table}")
+    private String bivariateAxisTestTableName;
+
+    @Value("${calculations.bivariate.axis.table}")
+    private String bivariateAxisTableName;
+
+    @Value("${calculations.useStatSeparateTables:false}")
+    private Boolean useStatSeparateTables;
+
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
-        return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis), (rs, rowNum) -> BivariativeAxisDto.builder()
+        return namedParameterJdbcTemplate.query(String.format(queryFactory.getSql(bivariateAxis),
+                        bivariateAxisTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName),
+                (rs, rowNum) -> BivariativeAxisDto.builder()
                 .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
                 .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
                 .numeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()))
@@ -69,8 +81,12 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getFilteredBivariativeAxis(List<AdvancedAnalyticsRequest> argRequests) {
+        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsTestTableName : bivariateIndicatorsTableName;
+        String bivariateAxisTable = useStatSeparateTables ? bivariateAxisTestTableName : bivariateAxisTableName;
         String filterQuery = getBivariateAxisFilter(argRequests);
-        return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis) + filterQuery, (rs, rowNum) -> BivariativeAxisDto.builder()
+        return namedParameterJdbcTemplate.query(String.format(queryFactory.getSql(bivariateAxis),
+                        bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable) + filterQuery,
+                (rs, rowNum) -> BivariativeAxisDto.builder()
                 .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
                 .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
                 .numeratorLabel(rs.getString(BivariateAxisColumns.numerator_label.name()))
@@ -180,7 +196,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", argGeometry);
 
-        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectAllIndicators), bivariateIndicatorsTableName);
+        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectAllIndicators), bivariateIndicatorsTestTableName);
 
         List<AdvancedAnalytics> result = new ArrayList<>();
 

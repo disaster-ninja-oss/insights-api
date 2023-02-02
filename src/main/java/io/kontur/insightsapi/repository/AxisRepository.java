@@ -39,8 +39,8 @@ public class AxisRepository {
     @Value("classpath:/sql.queries/insert_axis.sql")
     private Resource insertAxis;
 
-    @Value("${calculations.bivariate.axis.table}")
-    private String bivariateAxisTableName;
+    @Value("${calculations.bivariate.axis.test.table}")
+    private String bivariateAxisTestTableName;
 
     private final QueryFactory queryFactory;
 
@@ -50,7 +50,7 @@ public class AxisRepository {
                 .toList();
         String paramsAsString = StringUtils.join(params, ", ");
 
-        var query = String.format(queryFactory.getSql(deleteAxis), bivariateAxisTableName, paramsAsString, paramsAsString);
+        var query = String.format(queryFactory.getSql(deleteAxis), bivariateAxisTestTableName, paramsAsString, paramsAsString);
 
         try {
             jdbcTemplate.update(query);
@@ -75,7 +75,7 @@ public class AxisRepository {
         }
 
         try {
-            namedParameterJdbcTemplate.batchUpdate(String.format(queryFactory.getSql(insertAxis), bivariateAxisTableName), batchOfInputs);
+            namedParameterJdbcTemplate.batchUpdate(String.format(queryFactory.getSql(insertAxis), bivariateAxisTestTableName), batchOfInputs);
         } catch (Exception e) {
             logger.error("Could not insert axis.", e);
             throw new IllegalArgumentException("Could not insert axis.", e);
@@ -87,11 +87,11 @@ public class AxisRepository {
         paramSource.addValue("numerator_uuid", bivariativeAxisDto.getNumerator_uuid());
         paramSource.addValue("denominator_uuid", bivariativeAxisDto.getDenominator_uuid());
 
-        String query = String.format(queryFactory.getSql(qualityEstimation), bivariateAxisTableName);
+        String query = String.format(queryFactory.getSql(qualityEstimation), bivariateAxisTestTableName);
 
         calculateAndUpdate(query, paramSource);
 
-        query = String.format(queryFactory.getSql(axisStopsEstimation), bivariateAxisTableName);
+        query = String.format(queryFactory.getSql(axisStopsEstimation), bivariateAxisTestTableName);
 
         calculateAndUpdate(query, paramSource);
     }

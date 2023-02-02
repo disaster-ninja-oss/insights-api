@@ -55,8 +55,8 @@ public class PopulationRepository {
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
 
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
+    @Value("${calculations.bivariate.indicators.test.table}")
+    private String bivariateIndicatorsTestTableName;
 
     private final QueryFactory queryFactory;
 
@@ -86,8 +86,8 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var queryString = StringUtils.EMPTY;
         if (useStatSeparateTables) {
-            queryString = String.format(queryFactory.getSql(calculatePopulationAndAGdpV2), bivariateIndicatorsTableName,
-                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName);
+            queryString = String.format(queryFactory.getSql(calculatePopulationAndAGdpV2), bivariateIndicatorsTestTableName,
+                    bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName);
         } else {
             queryString = queryFactory.getSql(calculatePopulationAndAGdp);
         }
@@ -133,7 +133,7 @@ public class PopulationRepository {
         if (useStatSeparateTables) {
             var transformedGeometry = helper.transformGeometryToWkt(geometry);
             paramSource.addValue("transformed_geometry", transformedGeometry);
-            queryString = String.format(queryFactory.getSql(populationHumanitarianImpactV2), bivariateIndicatorsTableName);
+            queryString = String.format(queryFactory.getSql(populationHumanitarianImpactV2), bivariateIndicatorsTestTableName);
         } else {
             queryString = queryFactory.getSql(populationHumanitarianImpact);
         }
@@ -168,9 +168,9 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = StringUtils.EMPTY;
         if (useStatSeparateTables) {
-            query = String.format(queryFactory.getSql(populationOsmV2), bivariateIndicatorsTableName, bivariateIndicatorsTableName,
-                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName,
-                    bivariateIndicatorsTableName, StringUtils.join(queryList, ", "));
+            query = String.format(queryFactory.getSql(populationOsmV2), bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName,
+                    bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName,
+                    bivariateIndicatorsTestTableName, StringUtils.join(queryList, ", "));
         } else {
             query = String.format(queryFactory.getSql(populationOsm), StringUtils.join(queryList, ", "));
         }
@@ -208,7 +208,7 @@ public class PopulationRepository {
         if (useStatSeparateTables) {
             var transformedGeometry = helper.transformGeometryToWkt(geojson);
             paramSource.addValue("transformed_polygon", transformedGeometry);
-            query = String.format(queryFactory.getSql(populationUrbanCoreV2), bivariateIndicatorsTableName);
+            query = String.format(queryFactory.getSql(populationUrbanCoreV2), bivariateIndicatorsTestTableName);
         } else {
             query = String.format(queryFactory.getSql(populationUrbanCore), StringUtils.join(queryList, ", "));
         }
