@@ -89,13 +89,4 @@ public class AxisService {
         axisRepository.calculateStopsAndQuality(bivariativeAxisDto);
 
     }
-
-    //TODO: #13934
-    @Deprecated
-    private void calculateQualityForPartition(List<BivariativeAxisDto> axisForCurrentIndicatorsBatch) {
-        for (BivariativeAxisDto bivariativeAxisDto : axisForCurrentIndicatorsBatch) {
-            axisRepository.calculateStopsAndQuality(bivariativeAxisDto);
-        }
-    }
-
 }

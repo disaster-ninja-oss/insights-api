@@ -1,6 +1,7 @@
 package io.kontur.insightsapi.repository;
 
 import com.google.common.collect.Lists;
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +12,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +41,8 @@ public class TileRepository {
 
     @Value("${calculations.bivariate.indicators.table}")
     private String bivariateIndicatorsTableName;
+
+    private final IndicatorRepository indicatorRepository;
 
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
@@ -91,35 +93,19 @@ public class TileRepository {
 
     private String generateSqlQuery(List<String> bivariateIndicators) {
         if (useStatSeparateTables) {
-            String firstIndicator = bivariateIndicators.get(0);
+            List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getAllBivariateIndicators();
 
             List<String> outerFilter = Lists.newArrayList();
             List<String> columns = Lists.newArrayList();
-            List<String> innerFilter = Lists.newArrayList();
-            List<String> firstCondition = Lists.newArrayList();
-            List<String> secondCondition = Lists.newArrayList();
-            List<String> thirdCondition = Lists.newArrayList();
 
-            for (String indicator : bivariateIndicators) {
-                outerFilter.add(String.format("'%s'", indicator));
-                columns.add(String.format("coalesce(res_%s.indicator_value, 0) as %s", indicator, indicator));
-                innerFilter.add(String.format("res res_%s, %s bi_%s", indicator, bivariateIndicatorsTestTableName, indicator));
-                if (!indicator.equals(firstIndicator)) {
-                    firstCondition.add(String.format("res_%s.h3 = res_%s.h3", firstIndicator, indicator));
-                }
-                secondCondition.add(String.format("res_%s.indicator_uuid = bi_%s.param_uuid", indicator, indicator));
-                thirdCondition.add(String.format("bi_%s.param_id = '%s'", indicator, indicator));
+            for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
+                outerFilter.add(String.format("'%s'", indicator.getUuid()));
+                columns.add(String.format("avg(indicator_value) filter (where indicator_uuid = '%s') as %s", indicator.getUuid(), indicator.getId()));
             }
 
             return String.format(queryFactory.getSql(getTileMvtGenerateOnTheFly),
-                    bivariateIndicatorsTestTableName,
                     StringUtils.join(outerFilter, ", "),
-                    StringUtils.join(columns, ", "),
-                    firstIndicator,
-                    StringUtils.join(innerFilter, ", "),
-                    StringUtils.join(firstCondition, " AND "),
-                    StringUtils.join(secondCondition, " AND "),
-                    StringUtils.join(thirdCondition, " AND "));
+                    StringUtils.join(columns, ", "));
 
         } else {
             return String.format(queryFactory.getSql(getTileMvtResource),
