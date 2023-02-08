@@ -37,8 +37,8 @@ public class FunctionsRepository implements FunctionsService {
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
 
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
+    @Value("${calculations.bivariate.indicators.test.table}")
+    private String bivariateIndicatorsTestTableName;
 
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
@@ -57,10 +57,10 @@ public class FunctionsRepository implements FunctionsService {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = StringUtils.EMPTY;
         if (useStatSeparateTables) {
-            query = String.format(queryFactory.getSql(functionIntersectV2), bivariateIndicatorsTableName, bivariateIndicatorsTableName,
-                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName,
-                    bivariateIndicatorsTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName,
-                    bivariateIndicatorsTableName, StringUtils.join(params, ", "));
+            query = String.format(queryFactory.getSql(functionIntersectV2), bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName,
+                    bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName,
+                    bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName,
+                    bivariateIndicatorsTestTableName, StringUtils.join(params, ", "));
         } else {
             query = String.format(queryFactory.getSql(functionIntersect), StringUtils.join(params, ", "));
         }

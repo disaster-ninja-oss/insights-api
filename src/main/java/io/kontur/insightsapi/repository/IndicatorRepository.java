@@ -3,7 +3,6 @@ package io.kontur.insightsapi.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
-import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.dto.FileUploadResultDto;
 import io.kontur.insightsapi.exception.BivariateIndicatorsPRViolationException;
 import io.kontur.insightsapi.exception.ConnectionException;
@@ -60,8 +59,8 @@ public class IndicatorRepository {
     @Value("${calculations.bivariate.transposed.table}")
     private String transposedTableName;
 
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
+    @Value("${calculations.bivariate.indicators.test.table}")
+    private String bivariateIndicatorsTestTableName;
 
     public String createOrUpdateIndicator(BivariateIndicatorDto bivariateIndicatorDto, String owner, boolean update) throws JsonProcessingException {
 
@@ -70,9 +69,9 @@ public class IndicatorRepository {
 
         //TODO: change state in future
         if (update) {
-            bivariateIndicatorsQuery = String.format(queryFactory.getSql(updateBivariateIndicators), bivariateIndicatorsTableName, owner);
+            bivariateIndicatorsQuery = String.format(queryFactory.getSql(updateBivariateIndicators), bivariateIndicatorsTestTableName, owner);
         } else {
-            bivariateIndicatorsQuery = String.format(queryFactory.getSql(insertBivariateIndicators), bivariateIndicatorsTableName);
+            bivariateIndicatorsQuery = String.format(queryFactory.getSql(insertBivariateIndicators), bivariateIndicatorsTestTableName);
         }
 
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
@@ -149,7 +148,7 @@ public class IndicatorRepository {
     }
 
     public void deleteIndicator(String uuid) {
-        jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'::uuid", bivariateIndicatorsTableName, uuid));
+        jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'::uuid", bivariateIndicatorsTestTableName, uuid));
     }
 
     public void deleteTempTable(String tempTableName) {
@@ -159,7 +158,7 @@ public class IndicatorRepository {
     public BivariateIndicatorDto getIndicatorByIdAndOwner(String id, String owner) throws BivariateIndicatorsPRViolationException {
         List<BivariateIndicatorDto> bivariateIndicatorDtos = jdbcTemplate.query(
                 String.format("SELECT * FROM %s WHERE param_id = '%s' AND owner = '%s'",
-                        bivariateIndicatorsTableName,
+                        bivariateIndicatorsTestTableName,
                         id,
                         owner),
                 bivariateIndicatorRowMapper);
@@ -200,10 +199,10 @@ public class IndicatorRepository {
     //TODO: possibly will be added something about owner field here
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getAllBivariateIndicators() {
-        return jdbcTemplate.query(String.format("SELECT * FROM %s", bivariateIndicatorsTableName), bivariateIndicatorRowMapper);
+        return jdbcTemplate.query(String.format("SELECT * FROM %s", bivariateIndicatorsTestTableName), bivariateIndicatorRowMapper);
     }
 
     public BivariateIndicatorDto getIndicatorByUuid(String uuid) {
-        return jdbcTemplate.queryForObject(String.format("SELECT * FROM %s where param_uuid = '%s'::uuid", bivariateIndicatorsTableName, uuid), bivariateIndicatorRowMapper);
+        return jdbcTemplate.queryForObject(String.format("SELECT * FROM %s where param_uuid = '%s'::uuid", bivariateIndicatorsTestTableName, uuid), bivariateIndicatorRowMapper);
     }
 }

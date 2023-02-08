@@ -18,10 +18,10 @@ from (
               res b,
               res c,
               res d,
-              bivariate_indicators_wrk bi_a,
-              bivariate_indicators_wrk bi_b,
-              bivariate_indicators_wrk bi_c,
-              bivariate_indicators_wrk bi_d
+              %s bi_a,
+              %s bi_b,
+              %s bi_c,
+              %s bi_d
          where a.h3 = b.h3
            and a.h3 = c.h3
            and a.h3 = d.h3

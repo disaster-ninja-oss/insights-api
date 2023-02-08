@@ -79,16 +79,14 @@ public class AxisService {
         return ResponseEntity.ok().body(StringUtils.join(indicatorsForAxis.stream().map(BivariateIndicatorDto::getUuid).toList(), ", "));
     }
 
+    //TODO: think further here about parallel calculation in terms of story #13934
     private void calculateStopsAndQuality(List<BivariativeAxisDto> axisForCurrentIndicators) {
-        Lists.partition(axisForCurrentIndicators, 10).parallelStream()
-                .forEach(this::calculateQualityForPartition);
+        axisForCurrentIndicators.forEach(this::calculateQuality);
 
     }
 
-    private void calculateQualityForPartition(List<BivariativeAxisDto> axisForCurrentIndicatorsBatch) {
-        for (BivariativeAxisDto bivariativeAxisDto : axisForCurrentIndicatorsBatch) {
-            axisRepository.calculateStopsAndQuality(bivariativeAxisDto);
-        }
-    }
+    private void calculateQuality(BivariativeAxisDto bivariativeAxisDto) {
+        axisRepository.calculateStopsAndQuality(bivariativeAxisDto);
 
+    }
 }

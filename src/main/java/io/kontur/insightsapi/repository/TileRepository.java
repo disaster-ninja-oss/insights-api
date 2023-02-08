@@ -1,6 +1,7 @@
 package io.kontur.insightsapi.repository;
 
 import com.google.common.collect.Lists;
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,23 +33,33 @@ public class TileRepository {
     @Value("classpath:/sql.queries/get_tile_mvt_indicators_list_v2.sql")
     private Resource getTileMvtIndicatorsListResourceV2;
 
+    @Value("classpath:/sql.queries/get_tile_mvt_generate_on_the_fly.sql")
+    private Resource getTileMvtGenerateOnTheFly;
+
+    @Value("${calculations.bivariate.indicators.test.table}")
+    private String bivariateIndicatorsTestTableName;
+
     @Value("${calculations.bivariate.indicators.table}")
     private String bivariateIndicatorsTableName;
 
+    private final IndicatorRepository indicatorRepository;
+
+    @Value("${calculations.useStatSeparateTables:false}")
+    private Boolean useStatSeparateTables;
+
     public byte[] getBivariateTileMvt(Integer z, Integer x, Integer y, List<String> bivariateIndicators) {
-        var bivariateIndicatorsForQuery = Lists.newArrayList();
-        for (String current : bivariateIndicators) {
-            bivariateIndicatorsForQuery.add("coalesce(" + current + ", 0) as " + current);
-        }
+
+        String query = generateSqlQuery(bivariateIndicators);
+
         var paramSource = new MapSqlParameterSource("z", z);
         paramSource.addValue("x", x);
         paramSource.addValue("y", y);
-        var query = String.format(queryFactory.getSql(getTileMvtResource), StringUtils.join(bivariateIndicatorsForQuery, ", "));
+
         return namedParameterJdbcTemplate.queryForObject(query, paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
     }
 
-    public byte[] getBivariateTileMvtIndicatorsListV2(Integer z, Integer x, Integer y, List<String> bivariateIndicators){
+    public byte[] getBivariateTileMvtIndicatorsListV2(Integer z, Integer x, Integer y, List<String> bivariateIndicators) {
         var paramSource = new MapSqlParameterSource("z", z);
         paramSource.addValue("x", x);
         paramSource.addValue("y", y);
@@ -56,13 +67,16 @@ public class TileRepository {
         paramSource.addValue("ind1", bivariateIndicators.get(1));
         paramSource.addValue("ind2", bivariateIndicators.get(2));
         paramSource.addValue("ind3", bivariateIndicators.get(3));
-        var query = String.format(queryFactory.getSql(getTileMvtIndicatorsListResourceV2), bivariateIndicatorsTableName);
+        var query = String.format(queryFactory.getSql(getTileMvtIndicatorsListResourceV2),
+                bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName,
+                bivariateIndicatorsTestTableName, bivariateIndicatorsTestTableName);
         return namedParameterJdbcTemplate.queryForObject(query, paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
     }
 
     public List<String> getAllBivariateIndicators() {
-        var query = "select param_id from bivariate_indicators";
+        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsTestTableName : bivariateIndicatorsTableName;
+        var query = String.format("select param_id from %s", bivariateIndicatorsTable);
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
     }
 
@@ -75,5 +89,27 @@ public class TileRepository {
                         rs.getString("y_numerator"),
                         rs.getString("y_denominator"))));
         return result.stream().toList();
+    }
+
+    private String generateSqlQuery(List<String> bivariateIndicators) {
+        if (useStatSeparateTables) {
+            List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getAllBivariateIndicators();
+
+            List<String> outerFilter = Lists.newArrayList();
+            List<String> columns = Lists.newArrayList();
+
+            for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
+                outerFilter.add(String.format("'%s'", indicator.getUuid()));
+                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as %s", indicator.getUuid(), indicator.getId()));
+            }
+
+            return String.format(queryFactory.getSql(getTileMvtGenerateOnTheFly),
+                    StringUtils.join(outerFilter, ", "),
+                    StringUtils.join(columns, ", "));
+
+        } else {
+            return String.format(queryFactory.getSql(getTileMvtResource),
+                    StringUtils.join(bivariateIndicators.stream().map(current -> String.format("coalesce(%s, 0) as %s", current, current)).toList(), ", "));
+        }
     }
 }
