@@ -23,4 +23,8 @@ public class FunctionResult implements Serializable {
     private BigDecimal result;
 
     private Unit unit;
+
+    private String xLabel;
+
+    private String yLabel;
 }

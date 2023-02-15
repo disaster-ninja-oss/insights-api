@@ -6,6 +6,7 @@ import io.kontur.insightsapi.model.Unit;
 import io.kontur.insightsapi.service.cacheable.FunctionsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,8 @@ public class FunctionsRepository implements FunctionsService {
     private final JdbcTemplate jdbcTemplate;
 
     private final QueryFactory queryFactory;
+
+    private final IndicatorRepository indicatorRepository;
 
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
         List<String> params = args.stream()
@@ -95,12 +98,18 @@ public class FunctionsRepository implements FunctionsService {
     private List<FunctionResult> createFunctionResultList(List<FunctionArgs> args, ResultSet rs) {
         return args.stream().map(arg -> {
             try {
-                return new FunctionResult(arg.getId(), rs.getBigDecimal("result" + arg.getId()), getUnit(arg));
+                //TODO: in future getLabel should consume UUID
+                return new FunctionResult(arg.getId(), rs.getBigDecimal("result" + arg.getId()), getUnit(arg), getLabel(arg.getX()), getLabel(arg.getY()));
             } catch (SQLException e) {
                 logger.error("Can't get BigDecimal value from result set", e);
                 return null;
             }
         }).toList();
+    }
+
+    //TODO: change deprecated method to 'getIndicatorByUuid' after transition from param_ir to param_uuid as indicator identifier
+    private String getLabel(String paramId) {
+        return Strings.isEmpty(paramId) ? null : indicatorRepository.getLabelByParamId(paramId);
     }
 
     private Unit getUnit(FunctionArgs arg) {

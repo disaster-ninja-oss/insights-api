@@ -62,6 +62,9 @@ public class IndicatorRepository {
     @Value("${calculations.bivariate.indicators.test.table}")
     private String bivariateIndicatorsTestTableName;
 
+    @Value("${calculations.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
     public String createOrUpdateIndicator(BivariateIndicatorDto bivariateIndicatorDto, String owner, boolean update) throws JsonProcessingException {
 
         var paramSource = initParams(bivariateIndicatorDto, owner);
@@ -204,5 +207,11 @@ public class IndicatorRepository {
 
     public BivariateIndicatorDto getIndicatorByUuid(String uuid) {
         return jdbcTemplate.queryForObject(String.format("SELECT * FROM %s where param_uuid = '%s'::uuid", bivariateIndicatorsTestTableName, uuid), bivariateIndicatorRowMapper);
+    }
+
+    //TODO: remove after transition from param_id to uuid as an identifier for indicator. Use 'getIndicatorByUuid' method in future instead
+    @Deprecated
+    public String getLabelByParamId(String paramId) {
+        return jdbcTemplate.queryForObject(String.format("SELECT param_label FROM %s where param_id = '%s'", bivariateIndicatorsTableName, paramId), String.class);
     }
 }
