@@ -1,5 +1,7 @@
 type FunctionResult {
     id: String,
-    result: Float
-    unit: Unit
+    result: Float,
+    unit: Unit,
+    x_label: String,
+    y_label: String
 }
