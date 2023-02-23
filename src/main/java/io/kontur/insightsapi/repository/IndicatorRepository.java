@@ -70,7 +70,7 @@ public class IndicatorRepository {
         var paramSource = initParams(bivariateIndicatorDto, owner);
         String bivariateIndicatorsQuery;
 
-        //TODO: change state in future
+        //TODO: change 'state' column probably here in future
         if (update) {
             bivariateIndicatorsQuery = String.format(queryFactory.getSql(updateBivariateIndicators), bivariateIndicatorsTestTableName, owner);
         } else {
@@ -80,6 +80,7 @@ public class IndicatorRepository {
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
     }
 
+    //TODO: get rid of intermediate table. InputStream with a CSV file from request have to be adjusted with an UUID of indicator for every row and have to be uploaded to stat_h3_transposed straightaway
     public FileUploadResultDto uploadCSVFileIntoTempTable(FileItemStream file) throws SQLException, IOException, ConnectionException {
 
         String tempTableName = generateTempTableName();

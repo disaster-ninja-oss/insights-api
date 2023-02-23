@@ -25,7 +25,7 @@ public class IndicatorProcessHelper {
 
         ResponseEntity<String> response = indicatorService.uploadIndicatorData(request);
 
-//        TODO: run this part async in future
+//        TODO: this part have to be run async in background. Response have to be returned right after the CSV file was uploaded, all calculations in parallel
         if (response.getStatusCode().is2xxSuccessful() && response.hasBody() && response.getBody().length() >= UUID_STRING_LENGTH) {
             List<BivariateIndicatorDto> incomingBivariateIndicatorDtoAsList =
                     List.of(indicatorRepository.getIndicatorByUuid(response.getBody().substring(response.getBody().length() - UUID_STRING_LENGTH)));
