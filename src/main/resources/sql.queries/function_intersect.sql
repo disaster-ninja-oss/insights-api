@@ -10,15 +10,7 @@ with validated_input as (
                 cross join
             lateral (
                 select h3,
-                       population,
-                       populated_area_km2,
-                       count,
-                       building_count,
-                       highway_length,
-                       industrial_area,
-                       wildfires,
-                       volcanos_count,
-                       forest
+                       %s
                 from stat_h3 sh
                 where ST_Intersects(sh.geom, p.geom)
                     and sh.zoom = 8
