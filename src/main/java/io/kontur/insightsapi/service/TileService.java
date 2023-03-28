@@ -52,7 +52,7 @@ public class TileService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error);
             }
         }
-        if (useStatSeparateTables){
+        if (useStatSeparateTables) {
             return tileRepository.getBivariateTileMvtIndicatorsListV2(z, x, y, indicators);
         }
         return tileRepository.getBivariateTileMvt(z, x, y, indicators);
@@ -62,5 +62,4 @@ public class TileService {
         var bivariateIndicators = tileRepository.getAllBivariateIndicators();
         return bivariateIndicators.containsAll(indicatorsList);
     }
-
 }
