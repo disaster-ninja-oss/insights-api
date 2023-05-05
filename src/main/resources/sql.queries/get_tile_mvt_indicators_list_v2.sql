@@ -7,13 +7,14 @@ with res as (select sg.geom, sg.h3, st.indicator_uuid, st.indicator_value
     from %s
     where param_id IN
     (:ind0, :ind1, :ind2, :ind3)))
-select ST_AsMVT(q, 'stats', 8192, 'geom') as tile
+select ST_AsMVT(q, 'stats', 8192, 'geom', 'h3ind') as tile
 from (
          select coalesce(a.indicator_value, 0)                                                 as var1,
                 coalesce(b.indicator_value, 0)                                                 as var2,
                 coalesce(c.indicator_value, 0)                                                 as var3,
                 coalesce(d.indicator_value, 0)                                                 as var4,
-                ST_AsMVTGeom(a.geom, ST_TileEnvelope(:z, :x, :y), 8192, 64, true) as geom
+                ST_AsMVTGeom(a.geom, ST_TileEnvelope(:z, :x, :y), 8192, 64, true) as geom,
+                h3index_to_bigint(a.h3) as h3ind
          from res a,
               res b,
               res c,
