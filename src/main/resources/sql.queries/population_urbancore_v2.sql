@@ -8,7 +8,7 @@ with resolution as (select calculate_area_resolution(ST_SetSRID(:polygon::geomet
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
                       join stat_h3_transposed st on (sh.h3 = st.h3)
-             where sh.zoom = (select resolution from resolution)
+             where sh.resolution = (select resolution from resolution)
                and indicator_uuid = (select param_uuid from %s where param_id = 'population')
                and indicator_value > 0),
      stat_pop as (select s.*, sum(population) over (order by population desc) as sum_pop
