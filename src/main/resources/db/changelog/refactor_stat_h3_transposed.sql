@@ -30,7 +30,7 @@ create table bivariate_indicators_metadata
     state            text,
     is_public        boolean,
     allowed_users    json,
-    date             timestamp,
+    date             timestamp with time zone,
     description      text,
     coverage         text,
     update_frequency text,
