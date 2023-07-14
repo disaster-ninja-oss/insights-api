@@ -15,6 +15,7 @@ create index stat_h3_transposed_indicator_uuid_h3_idx
 
 
 drop table if exists bivariate_indicators_wrk;
+drop table if exists bivariate_indicators_metadata;
 
 create table bivariate_indicators_metadata
 (
