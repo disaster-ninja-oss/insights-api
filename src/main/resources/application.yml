@@ -119,7 +119,7 @@ calculations:
     indicators:
       table: bivariate_indicators
       test:
-        table: bivariate_indicators_wrk
+        table: bivariate_indicators_metadata
   # TODO: temp configuration, delete when we have final version of transposed table
     axis:
       table: bivariate_axis
