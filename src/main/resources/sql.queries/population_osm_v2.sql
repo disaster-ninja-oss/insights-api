@@ -7,7 +7,7 @@ with validated_input
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
                       join stat_h3_transposed st on (sh.h3 = st.h3)
-             where sh.zoom = 8
+             where sh.resolution = 8
                and indicator_uuid IN (select param_uuid
                                       from %s
                                       where param_id IN ('count', 'building_count', 'highway_length', 'population',
