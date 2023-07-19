@@ -107,8 +107,11 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     public List<AdvancedAnalytics> getWorldData() {
         List<BivariativeAxisDto> axisDtos = new ArrayList<>();
         List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = new ArrayList<>();
+        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsTestTableName : bivariateIndicatorsTableName;
+        String bivariateAxisTable = useStatSeparateTables ? bivariateAxisTestTableName : bivariateAxisTableName;
         try {
-            namedParameterJdbcTemplate.query(queryFactory.getSql(advancedAnalyticsWorld), (rs -> {
+            namedParameterJdbcTemplate.query(String.format(queryFactory.getSql(advancedAnalyticsWorld),
+                    bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable), (rs -> {
                 BivariativeAxisDto bivariativeAxisDto = new BivariativeAxisDto();
                 bivariativeAxisDto.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
                 bivariativeAxisDto.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));
@@ -134,8 +137,11 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         List<BivariativeAxisDto> axisDtos = new ArrayList<>();
         List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = new ArrayList<>();
         String filterQuery = getBivariateAxisFilter(argRequests);
+        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsTestTableName : bivariateIndicatorsTableName;
+        String bivariateAxisTable = useStatSeparateTables ? bivariateAxisTestTableName : bivariateAxisTableName;
         try {
-            namedParameterJdbcTemplate.query(queryFactory.getSql(advancedAnalyticsWorld) + filterQuery, (rs -> {
+            namedParameterJdbcTemplate.query(String.format(queryFactory.getSql(advancedAnalyticsWorld),
+                    bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable) + filterQuery, (rs -> {
                 BivariativeAxisDto bivariativeAxisDto = new BivariativeAxisDto();
                 bivariativeAxisDto.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
                 bivariativeAxisDto.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));

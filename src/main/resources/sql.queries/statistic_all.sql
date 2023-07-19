@@ -11,7 +11,7 @@ select
                                                                'unit', jsonb_build_object('id', bul.unit_id,
                                                                                           'shortName', bul.short_name,
                                                                                           'longName', bul.long_name)))
-                           from bivariate_indicators bi join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
+                           from %s bi join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
                        ),
                        'colors', jsonb_build_object(
                            'fallback', '#ccc',
@@ -39,7 +39,7 @@ select
                                              avg(abs(correlation)) over (partition by x_num, x_den) * avg(abs(correlation)) over (partition by y_num, y_den) mult
                                          order by mult desc)
                            from
-                               bivariate_axis_correlation, bivariate_indicators xcopy, bivariate_indicators ycopy
+                               %s, %s xcopy, %s ycopy
                            where xcopy.param_id = x_num and ycopy.param_id = y_num
                        ),
                        'initAxis',
@@ -73,7 +73,7 @@ from
                                      jsonb_build_object('value', p75, 'label', p75_label),
                                      jsonb_build_object('value', max, 'label', max_label)))) as axis
       from
-          bivariate_axis )                                                                      ba,
+          %s )                                                                      ba,
     ( select
           json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
                                       'colors', o.colors, 'order', o.ord,
@@ -103,13 +103,13 @@ from
                                                                   jsonb_build_object('value', ay.max, 'label', ay.max_label))))
                    order by ord) as overlay
       from
-          bivariate_axis     ax,
-          bivariate_axis     ay,
+          %s     ax,
+          %s     ay,
           bivariate_overlays o,
-          bivariate_indicators bix1,
-          bivariate_indicators bix2,
-          bivariate_indicators biy1,
-          bivariate_indicators biy2
+          %s bix1,
+          %s bix2,
+          %s biy1,
+          %s biy2
       where
             bix1.param_id = o.x_numerator
         and bix2.param_id = o.x_denominator
@@ -119,8 +119,8 @@ from
         and ax.numerator = o.x_numerator
         and ay.denominator = o.y_denominator
         and ay.numerator = o.y_numerator )                                                      ov,
-    bivariate_axis                                                                              x,
-    bivariate_axis                                                                              y
+    %s                                                                              x,
+    %s                                                                              y
 where
       x.numerator = 'count'
   and x.denominator = 'area_km2'
