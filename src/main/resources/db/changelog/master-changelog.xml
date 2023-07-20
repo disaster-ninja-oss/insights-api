@@ -10,4 +10,12 @@
     <include  file="create_function_zoom_to_h3_resolution.sql" relativeToChangelogFile="true"/>
     <include  file="refactor_stat_h3_transposed.sql" relativeToChangelogFile="true"/>
 
+    <include  file="add_table_bivariate_unit.sql" relativeToChangelogFile="true"/>
+    <include  file="add_table_bivariate_unit_localization.sql" relativeToChangelogFile="true"/>
+    <include  file="add_table_bivariate_colors.sql" relativeToChangelogFile="true"/>
+    <include  file="add_table_bivariate_overlays.sql" relativeToChangelogFile="true"/>
+    <include  file="add_table_bivariate_axis_v2.sql" relativeToChangelogFile="true"/>
+    <include  file="add_table_bivariate_axis_correlation_v2.sql" relativeToChangelogFile="true"/>
+    <include  file="add_table_bivariate_axis_stats_v2.sql" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

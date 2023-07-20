@@ -41,6 +41,10 @@ public class FunctionsRepository implements FunctionsService {
     @Value("${calculations.bivariate.indicators.test.table}")
     private String bivariateIndicatorsTestTableName;
 
+    @Value("${calculations.bivariate.indicators.table}")
+    private String bivariateIndicatorsTableName;
+
+
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
     private final Logger logger = LoggerFactory.getLogger(FunctionsRepository.class);
@@ -141,6 +145,7 @@ public class FunctionsRepository implements FunctionsService {
     }
 
     private Unit getUnit(FunctionArgs arg) {
+        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsTestTableName : bivariateIndicatorsTableName;
         String query;
         //TODO: localization for units can be added to this request in future
         try {
@@ -153,10 +158,10 @@ public class FunctionsRepository implements FunctionsService {
             } else {
                 query = String.format("""
                         select bivariate_unit_localization.unit_id, short_name, long_name
-                        from bivariate_indicators bi
+                        from %s bi
                         left join bivariate_unit_localization on bi.unit_id = bivariate_unit_localization.unit_id
                         where bi.param_id = '%s';
-                        """, arg.getX());
+                        """, bivariateIndicatorsTable, arg.getX());
             }
             return jdbcTemplate.queryForObject(query, (rs, rowNum) ->
                     Unit.builder()

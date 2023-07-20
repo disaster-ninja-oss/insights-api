@@ -5,7 +5,7 @@ import psycopg2
 with closing(psycopg2.connect(dbname='insights-api', user='insights-api',
                               password='', host='localhost', port=5432)) as conn_pg:
     with conn_pg.cursor() as cursor_pg:
-        cursor_pg.execute('select param_id, param_uuid from bivariate_indicators_wrk')
+        cursor_pg.execute('select param_id, param_uuid from bivariate_indicators_metadata')
         rows_pg = cursor_pg.fetchall()
         for ind_name in rows_pg:
             print(ind_name[0])
