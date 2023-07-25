@@ -1,8 +1,8 @@
 --liquibase formatted sql
 --changeset insights-api:add_table_bivariate_axis_correlation_v2 splitStatements:false stripComments:false endDelimiter:; runOnChange:true
-drop function if exists correlate_bivariate_axes(text, text, text, text, text
+drop function if exists correlate_bivariate_axes_v2(text, text, text, text, text
     );
-create or replace function correlate_bivariate_axes
+create or replace function correlate_bivariate_axes_v2
 (
     table_name text, x_num text, x_den text, y_num text, y_den text
 )
@@ -30,7 +30,7 @@ create table bivariate_axis_correlation_v2 as (
         x.denominator as x_den,
         y.numerator as y_num,
         y.denominator as y_den,
-        correlate_bivariate_axes('stat_h3_quality', x.numerator, x.denominator, y.numerator, y.denominator) as correlation,
+        correlate_bivariate_axes_v2('stat_h3_quality', x.numerator, x.denominator, y.numerator, y.denominator) as correlation,
         1 - ((1 - x.quality) * (1 - y.quality)) as quality
     from
         (bivariate_axis_v2 x
