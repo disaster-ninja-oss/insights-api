@@ -10,6 +10,7 @@ import io.kontur.insightsapi.exception.IndicatorDataProcessingException;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import io.kontur.insightsapi.service.auth.AuthService;
 import lombok.AllArgsConstructor;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -137,6 +140,26 @@ public class IndicatorService {
 
     public void updateIndicatorState(String uuid, IndicatorState state) {
         indicatorRepository.updateIndicatorState(uuid, state);
+    }
+
+    @Transactional
+    @Scheduled(cron = "0 0 18 * * ?")
+    @SchedulerLock(name = "IndicatorService_updateStatH3Geom", lockAtLeastFor = "PT5M", lockAtMostFor = "PT6H")
+    public void updateStatH3Geom() {
+        try {
+            logger.info("Start geometry update job");
+            Instant executionStartTime = Instant.now();
+
+            indicatorRepository.updateStatH3Geom();
+
+            Instant executionEndTime = Instant.now();
+            Duration executionTime = Duration.between(executionStartTime, executionEndTime);
+            logger.info("Geometry update job has been executed successfully and took {}",
+                    String.format("%d hours %02d minutes %02d seconds",
+                            executionTime.toHours(), executionTime.toMinutesPart(), executionTime.toSecondsPart()));
+        } catch (Exception e) {
+            logger.error("Error executing geometry update job", e);
+        }
     }
 
     private void validateParameters(BivariateIndicatorDto bivariateIndicatorDto) {
