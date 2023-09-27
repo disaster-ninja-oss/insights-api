@@ -119,6 +119,9 @@ public class FunctionsRepository implements FunctionsService {
             case "percentageXWhereNoY" -> "(sum(" + validX + " * (1 - sign(" + validY + ")))/sum(" +
                     validX + ") filter (where " + validX + " != 0)) * 100 as result" + validId;
             case "maxX" -> "max(" + validX + ") as result" + validId;
+            case "minX" -> "min(" + validX + ") as result" + validId;
+            case "avgX" -> "avg(" + validX + ") as result" + validId;
+            case "countX" -> "count(" + validX + ") as result" + validId;
             default -> null;
         };
     }
