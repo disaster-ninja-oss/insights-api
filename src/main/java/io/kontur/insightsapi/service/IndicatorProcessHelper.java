@@ -43,26 +43,26 @@ public class IndicatorProcessHelper {
                     String.format("%02d hours %02d minutes %02d seconds", uploadTimeInSeconds / 3600,
                             (uploadTimeInSeconds % 3600) / 60, (uploadTimeInSeconds % 60)));
 
-//            calculationExecutor.submit(() -> {
-//                List<BivariateIndicatorDto> incomingBivariateIndicatorDtoAsList =
-//                        List.of(indicatorService.getIndicatorByUuid(uuid));
-//
-//                indicatorService.updateIndicatorState(uuid, IndicatorState.CALCULATING);
-//
-//                logger.info("Start calculations for indicator with uuid {}", uuid);
-//                long calculationStartTime = System.currentTimeMillis();
-//
-//                axisService.createAxis(incomingBivariateIndicatorDtoAsList);
-//
-//                long calculationEndTime = System.currentTimeMillis();
-//                long calculationTimeInSeconds = (calculationEndTime - calculationStartTime) / 1000;
-//                logger.info("Calculations for indicator with uuid {} have been done successfully and took {}", uuid,
-//                        String.format("%02d hours %02d minutes %02d seconds", calculationTimeInSeconds / 3600,
-//                                (calculationTimeInSeconds % 3600) / 60, (calculationTimeInSeconds % 60)));
-//                indicatorService.updateIndicatorState(uuid, IndicatorState.READY);
-//            });
+            calculationExecutor.submit(() -> {
+                List<BivariateIndicatorDto> incomingBivariateIndicatorDtoAsList =
+                        List.of(indicatorService.getIndicatorByUuid(uuid));
+
+                indicatorService.updateIndicatorState(uuid, IndicatorState.CALCULATING);
+
+                logger.info("Start calculations for indicator with uuid {}", uuid);
+                long calculationStartTime = System.currentTimeMillis();
+
+                axisService.createAxis(incomingBivariateIndicatorDtoAsList);
+
+                long calculationEndTime = System.currentTimeMillis();
+                long calculationTimeInSeconds = (calculationEndTime - calculationStartTime) / 1000;
+                logger.info("Calculations for indicator with uuid {} have been done successfully and took {}", uuid,
+                        String.format("%02d hours %02d minutes %02d seconds", calculationTimeInSeconds / 3600,
+                                (calculationTimeInSeconds % 3600) / 60, (calculationTimeInSeconds % 60)));
+                indicatorService.updateIndicatorState(uuid, IndicatorState.READY);
+            });
         }
-//        logger.info("Current queue size with indicators to process: {}", calculationExecutor.getQueue().size());
+        logger.info("Current queue size with indicators to process: {}", calculationExecutor.getQueue().size());
 
         return response;
     }
