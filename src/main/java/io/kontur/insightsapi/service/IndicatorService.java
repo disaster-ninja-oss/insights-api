@@ -103,16 +103,14 @@ public class IndicatorService {
             return logAndReturnErrorWithMessage(HttpStatus.UNAUTHORIZED,
                     "Incorrect authentication data: could not get username", e);
         } catch (IndicatorDataProcessingException e) {
-            if (!update) {
-                indicatorRepository.deleteIndicator(newUuid);
-            }
+            indicatorRepository.deleteIndicator(newUuid);
             return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (Exception e) {
+            indicatorRepository.deleteIndicator(newUuid);
             if (update) {
                 return logAndReturnErrorWithMessage(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Could not update indicator", e);
             } else {
-                indicatorRepository.deleteIndicator(newUuid);
                 return logAndReturnErrorWithMessage(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Could not process request, neither indicator nor h3 indexes were created", e);
             }
