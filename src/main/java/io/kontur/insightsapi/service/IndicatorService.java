@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -61,9 +62,9 @@ public class IndicatorService {
             60, TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(MAX_QUEUE_SIZE));
 
-    @Transactional
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
-        String uuid = "";
+        String oldUuid = "";
+        String newUuid = "";
         boolean update = false;
 
         try {
@@ -81,17 +82,21 @@ public class IndicatorService {
 
                     String owner = authService.getCurrentUsername().orElseThrow();
                     BivariateIndicatorDto savedBivariateIndicator =
-                            indicatorRepository.getIndicatorByIdAndOwner(incomingBivariateIndicatorDto.getId(), owner);
+                            indicatorRepository.getLatestIndicatorByIdAndOwner(incomingBivariateIndicatorDto.getId(), owner);
                     if (savedBivariateIndicator != null) {
                         update = true;
+                        oldUuid = savedBivariateIndicator.getUuid();
                     }
 
-                    uuid = indicatorRepository.createOrUpdateIndicator(incomingBivariateIndicatorDto, owner, update);
+                    newUuid = indicatorRepository.createIndicator(incomingBivariateIndicatorDto, owner);
                     itemIndex++;
                 } else if (!item.isFormField() && "file".equals(name) && itemIndex == 1) {
-                    if (Strings.isNotEmpty(uuid)) {
-                        processAndUploadCsvFile(item, uuid, update);
-                        return ResponseEntity.ok().body(uuid);
+                    if (Strings.isNotEmpty(newUuid)) {
+                        processAndUploadCsvFile(item, newUuid);
+                        if (update) {
+                            deleteOutdatedIndicator(oldUuid);
+                        }
+                        return ResponseEntity.ok().body(newUuid);
                     }
                 } else {
                     return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, "Wrong field parameter or " +
@@ -102,26 +107,24 @@ public class IndicatorService {
 
             return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST,
                     "Could not process request, neither indicator nor h3 indexes were created");
-        } catch (FileUploadException | IOException | ValidationException exception) {
-            return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, exception.getMessage());
-        } catch (NoSuchElementException exception) {
+        } catch (FileUploadException | IOException | ValidationException e) {
+            return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        } catch (NoSuchElementException e) {
             return logAndReturnErrorWithMessage(HttpStatus.UNAUTHORIZED,
-                    "Incorrect authentication data: could not get username");
-        } catch (BivariateIndicatorsPRViolationException exception) {
-            return logAndReturnErrorWithMessage(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
-        } catch (IndicatorDataProcessingException exception) {
+                    "Incorrect authentication data: could not get username", e);
+        } catch (IndicatorDataProcessingException e) {
             if (!update) {
-                indicatorRepository.deleteIndicator(uuid);
+                indicatorRepository.deleteIndicator(newUuid);
             }
-            return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, exception.getMessage());
-        } catch (Exception exception) {
+            return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        } catch (Exception e) {
             if (update) {
                 return logAndReturnErrorWithMessage(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Could not update indicator");
+                        "Could not update indicator", e);
             } else {
-                indicatorRepository.deleteIndicator(uuid);
+                indicatorRepository.deleteIndicator(newUuid);
                 return logAndReturnErrorWithMessage(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Could not process request, neither indicator nor h3 indexes were created");
+                        "Could not process request, neither indicator nor h3 indexes were created", e);
             }
         }
     }
@@ -140,6 +143,14 @@ public class IndicatorService {
 
     public void updateIndicatorState(String uuid, IndicatorState state) {
         indicatorRepository.updateIndicatorState(uuid, state);
+    }
+
+    public void deleteOutdatedIndicator(String uuid) {
+        try {
+            indicatorRepository.deleteIndicator(uuid);
+        } catch (Exception e) {
+            logger.error("Failed to delete outdated indicator {}", uuid, e);
+        }
     }
 
     @Transactional
@@ -189,27 +200,42 @@ public class IndicatorService {
         }
     }
 
-    private void processAndUploadCsvFile(FileItemStream file, String uuid, boolean update) throws IOException {
+    private void processAndUploadCsvFile(FileItemStream file, String uuid) throws IOException {
         PipedInputStream pipedInputStream = new PipedInputStream();
         PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
 
-        uploadExecutor.submit(() -> {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.openStream(),
-                    StandardCharsets.UTF_8));
-                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(pipedOutputStream,
-                         StandardCharsets.UTF_8))) {
+        Future<Long> uploadTask = submitUploadTask(file, uuid, pipedOutputStream);
+
+        indicatorRepository.uploadCsvFileIntoStatH3Table(pipedInputStream);
+
+        try {
+            uploadTask.get();
+        } catch (Exception e) {
+            throw new IndicatorDataProcessingException(e.getCause().getMessage(), e);
+        }
+    }
+
+    private Future<Long> submitUploadTask(FileItemStream file, String uuid, PipedOutputStream pipedOutputStream) {
+        return uploadExecutor.submit(() -> {
+            long rowNumber = 0;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.openStream(), StandardCharsets.UTF_8));
+                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(pipedOutputStream, StandardCharsets.UTF_8))) {
                 String row;
                 while ((row = reader.readLine()) != null) {
                     String[] rowValues = row.split(",");
                     writer.write(String.join(",", rowValues[0], uuid, rowValues[1]));
                     writer.newLine();
+                    rowNumber++;
                 }
+                return rowNumber;
+            } catch (EOFException e) {
+                throw new IndicatorDataProcessingException(String.format(
+                        "Failed to adjust incoming csv stream with uuid %s after reading %d rows due to unexpected end of file.", uuid, rowNumber), e);
             } catch (IOException e) {
-                throw new IndicatorDataProcessingException("Unable to adjust incoming csv stream with uuid", e);
+                throw new IndicatorDataProcessingException(String.format(
+                        "Failed to adjust incoming csv stream with uuid %s after reading %d rows", uuid, rowNumber), e);
             }
         });
-
-        indicatorRepository.uploadCsvFileIntoStatH3Table(pipedInputStream, uuid, update);
     }
 
     private String generateExceptionMessage(String fieldName) {
@@ -228,6 +254,11 @@ public class IndicatorService {
 
     private ResponseEntity<String> logAndReturnErrorWithMessage(HttpStatus status, String message) {
         logger.error(message);
+        return ResponseEntity.status(status).body(message);
+    }
+
+    private ResponseEntity<String> logAndReturnErrorWithMessage(HttpStatus status, String message, Exception e) {
+        logger.error(message, e);
         return ResponseEntity.status(status).body(message);
     }
 

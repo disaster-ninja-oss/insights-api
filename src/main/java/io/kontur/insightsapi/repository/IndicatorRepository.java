@@ -28,6 +28,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 
+import static java.util.Comparator.comparing;
+
 @Repository
 @RequiredArgsConstructor
 public class IndicatorRepository {
@@ -68,31 +70,19 @@ public class IndicatorRepository {
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
 
-    public String createOrUpdateIndicator(BivariateIndicatorDto bivariateIndicatorDto, String owner, boolean update)
+    public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto, String owner)
             throws JsonProcessingException {
 
         var paramSource = initParams(bivariateIndicatorDto, owner);
-        String bivariateIndicatorsQuery;
 
-        if (update) {
-            bivariateIndicatorsQuery = String.format(queryFactory.getSql(updateBivariateIndicators),
-                    bivariateIndicatorsMetadataTableName, owner);
-        } else {
-            bivariateIndicatorsQuery = String.format(queryFactory.getSql(insertBivariateIndicators),
-                    bivariateIndicatorsMetadataTableName);
-        }
+        String bivariateIndicatorsQuery = String.format(queryFactory.getSql(insertBivariateIndicators),
+                bivariateIndicatorsMetadataTableName);
 
         return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
     }
 
     // TODO: optimize copying large files to PostgreSQL in #15737
-    @Transactional
-    public void uploadCsvFileIntoStatH3Table(InputStream inputStream, String uuid, boolean update) {
-        if (update) {
-            jdbcTemplate.update(String.format("DELETE FROM %s WHERE indicator_uuid = '%s'::uuid",
-                    transposedTableName, uuid));
-        }
-
+    public void uploadCsvFileIntoStatH3Table(InputStream inputStream) {
         var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ',' null 'NULL'", transposedTableName);
 
         try {
@@ -111,27 +101,32 @@ public class IndicatorRepository {
     }
 
     private String adjustMessageForKnownExceptions(String message) {
-        String tempMessage = message.substring(message.indexOf(", line") + 2, message.indexOf(", column",
-                message.indexOf(", line")));
         if (message.contains("stringToH3")) {
-            return String.format("Unable to represent %s from the file as H3", tempMessage);
+            return String.format("Unable to represent %s from the file as H3", parseIncorrectValue(message));
         } else if (message.contains("valid_cell")) {
             return String.format("Incorrect H3index found in the file: %s", message.substring(message.indexOf(", line")
                     + 2, message.indexOf(": \"", message.indexOf(", line"))));
         } else if (message.contains("double precision")) {
-            return String.format("Incorrect value found in the file: %s", tempMessage);
+            return String.format("Incorrect value found in the file: %s", parseIncorrectValue(message));
         } else {
             return message;
         }
     }
 
+    private String parseIncorrectValue(String message) {
+        return message.substring(message.indexOf(", line") + 2, message.indexOf(", column",
+                message.indexOf(", line")));
+    }
+
     public void deleteIndicator(String uuid) {
         jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'::uuid",
                 bivariateIndicatorsMetadataTableName, uuid));
+
+        jdbcTemplate.update(String.format("DELETE FROM %s WHERE indicator_uuid = '%s'::uuid",
+                transposedTableName, uuid));
     }
 
-    public BivariateIndicatorDto getIndicatorByIdAndOwner(String id, String owner)
-            throws BivariateIndicatorsPRViolationException {
+    public BivariateIndicatorDto getLatestIndicatorByIdAndOwner(String id, String owner) {
         List<BivariateIndicatorDto> bivariateIndicatorDtos = jdbcTemplate.query(
                 String.format("SELECT * FROM %s WHERE param_id = '%s' AND owner = '%s'",
                         bivariateIndicatorsMetadataTableName,
@@ -142,8 +137,7 @@ public class IndicatorRepository {
         return switch (bivariateIndicatorDtos.size()) {
             case 0 -> null;
             case 1 -> bivariateIndicatorDtos.get(0);
-            default -> throw new BivariateIndicatorsPRViolationException(String.format("More then one indicator " +
-                    "found with name: %s, for user: %s", id, owner));
+            default -> bivariateIndicatorDtos.stream().max(comparing(BivariateIndicatorDto::getDate)).orElseThrow();
         };
     }
 
