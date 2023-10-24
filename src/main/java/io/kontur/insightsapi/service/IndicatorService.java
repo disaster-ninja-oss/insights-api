@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.IndicatorState;
-import io.kontur.insightsapi.exception.BivariateIndicatorsPRViolationException;
 import io.kontur.insightsapi.exception.IndicatorDataProcessingException;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import io.kontur.insightsapi.service.auth.AuthService;
@@ -24,7 +23,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
 import java.io.*;
@@ -34,9 +32,7 @@ import java.time.Instant;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @AllArgsConstructor
@@ -52,15 +48,9 @@ public class IndicatorService {
 
     private final AuthService authService;
 
-    private static final int CORE_POOL_SIZE = 100;
+    private final ThreadPoolExecutor uploadExecutor;
 
-    private static final int MAX_POOL_SIZE = 150;
-
-    private static final int MAX_QUEUE_SIZE = 200;
-
-    private static final ThreadPoolExecutor uploadExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
-            60, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(MAX_QUEUE_SIZE));
+    private final ThreadPoolExecutor deleteExecutor;
 
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
         String oldUuid = "";
@@ -146,11 +136,13 @@ public class IndicatorService {
     }
 
     public void deleteOutdatedIndicator(String uuid) {
-        try {
-            indicatorRepository.deleteIndicator(uuid);
-        } catch (Exception e) {
-            logger.error("Failed to delete outdated indicator {}", uuid, e);
-        }
+        deleteExecutor.submit(() -> {
+            try {
+                indicatorRepository.deleteIndicator(uuid);
+            } catch (Exception e) {
+                logger.error("Failed to delete outdated indicator {}", uuid, e);
+            }
+        });
     }
 
     @Transactional
@@ -260,10 +252,5 @@ public class IndicatorService {
     private ResponseEntity<String> logAndReturnErrorWithMessage(HttpStatus status, String message, Exception e) {
         logger.error(message, e);
         return ResponseEntity.status(status).body(message);
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        uploadExecutor.shutdown();
     }
 }

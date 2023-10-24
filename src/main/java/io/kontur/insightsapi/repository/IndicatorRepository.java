@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.IndicatorState;
-import io.kontur.insightsapi.exception.BivariateIndicatorsPRViolationException;
 import io.kontur.insightsapi.exception.IndicatorDataProcessingException;
 import io.kontur.insightsapi.mapper.BivariateIndicatorRowMapper;
 import lombok.RequiredArgsConstructor;
