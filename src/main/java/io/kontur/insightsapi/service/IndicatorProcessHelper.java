@@ -8,12 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @AllArgsConstructor
@@ -27,15 +24,7 @@ public class IndicatorProcessHelper {
 
     private static final int UUID_STRING_LENGTH = 36;
 
-    private static final int CORE_POOL_SIZE = 10;
-
-    private static final int MAX_POOL_SIZE = 20;
-
-    private static final int MAX_QUEUE_SIZE = 200;
-
-    private static final ThreadPoolExecutor calculationExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
-            60, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(MAX_QUEUE_SIZE));
+    private final ThreadPoolExecutor calculationExecutor;
 
     public ResponseEntity<String> processIndicator(HttpServletRequest request) {
 
@@ -58,6 +47,8 @@ public class IndicatorProcessHelper {
                 List<BivariateIndicatorDto> incomingBivariateIndicatorDtoAsList =
                         List.of(indicatorService.getIndicatorByUuid(uuid));
 
+                indicatorService.updateIndicatorState(uuid, IndicatorState.CALCULATING);
+
                 logger.info("Start calculations for indicator with uuid {}", uuid);
                 long calculationStartTime = System.currentTimeMillis();
 
@@ -74,10 +65,5 @@ public class IndicatorProcessHelper {
         logger.info("Current queue size with indicators to process: {}", calculationExecutor.getQueue().size());
 
         return response;
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        calculationExecutor.shutdown();
     }
 }
