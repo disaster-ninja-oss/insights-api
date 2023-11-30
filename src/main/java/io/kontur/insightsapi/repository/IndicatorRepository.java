@@ -118,11 +118,11 @@ public class IndicatorRepository {
     }
 
     public void deleteIndicator(String uuid) {
-        jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'::uuid",
-                bivariateIndicatorsMetadataTableName, uuid));
-
         jdbcTemplate.update(String.format("DELETE FROM %s WHERE indicator_uuid = '%s'::uuid",
                 transposedTableName, uuid));
+
+        jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'::uuid",
+                bivariateIndicatorsMetadataTableName, uuid));
     }
 
     public BivariateIndicatorDto getLatestIndicatorByIdAndOwner(String id, String owner) {

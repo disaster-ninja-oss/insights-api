@@ -134,14 +134,12 @@ public class IndicatorService {
     }
 
     public void deleteOutdatedIndicator(String uuid) {
-        deleteExecutor.submit(() -> {
-            try {
-                updateIndicatorState(uuid, IndicatorState.OUTDATED);
-                indicatorRepository.deleteIndicator(uuid);
-            } catch (Exception e) {
-                logger.error("Failed to delete outdated indicator {}", uuid, e);
-            }
-        });
+        try {
+            updateIndicatorState(uuid, IndicatorState.OUTDATED);
+            indicatorRepository.deleteIndicator(uuid);
+        } catch (Exception e) {
+            logger.error("Failed to delete outdated indicator {}", uuid, e);
+        }
     }
 
     @Transactional
