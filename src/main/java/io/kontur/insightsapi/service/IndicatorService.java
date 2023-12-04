@@ -195,7 +195,7 @@ public class IndicatorService {
 
         Future<Long> uploadTask = submitUploadTask(file, uuid, pipedOutputStream);
 
-        indicatorRepository.uploadCsvFileIntoStatH3Table(pipedInputStream);
+        indicatorRepository.uploadCsvFileIntoStatH3Table(pipedInputStream, uuid);
 
         try {
             uploadTask.get();
@@ -220,7 +220,7 @@ public class IndicatorService {
             } catch (EOFException e) {
                 throw new IndicatorDataProcessingException(String.format(
                         "Failed to adjust incoming csv stream with uuid %s after reading %d rows due to unexpected end of file.", uuid, rowNumber), e);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new IndicatorDataProcessingException(String.format(
                         "Failed to adjust incoming csv stream with uuid %s after reading %d rows", uuid, rowNumber), e);
             }

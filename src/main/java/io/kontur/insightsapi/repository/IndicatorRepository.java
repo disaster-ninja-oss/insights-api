@@ -81,7 +81,7 @@ public class IndicatorRepository {
     }
 
     // TODO: optimize copying large files to PostgreSQL in #15737
-    public void uploadCsvFileIntoStatH3Table(InputStream inputStream) {
+    public void uploadCsvFileIntoStatH3Table(InputStream inputStream, String indicatorUUID) {
         var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ',' null 'NULL'", transposedTableName);
 
         try {
@@ -95,7 +95,7 @@ public class IndicatorRepository {
                         "Can not obtain connection for CopyManager");
             }
         } catch (Exception e) {
-            throw new IndicatorDataProcessingException(adjustMessageForKnownExceptions(e.getMessage()), e);
+            throw new IndicatorDataProcessingException(String.format("Failed to copy indicator %s. %s", indicatorUUID, e.getMessage()), e);
         }
     }
 
