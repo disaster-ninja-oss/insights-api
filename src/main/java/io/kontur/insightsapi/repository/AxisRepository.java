@@ -42,6 +42,9 @@ public class AxisRepository {
     @Value("classpath:/sql.queries/insert_axis.sql")
     private Resource insertAxis;
 
+    @Value("classpath:/sql.queries/bivariate_axis_update_labels_and_custom_stops.sql")
+    private Resource bivariateAxisLabelsCustomStops;
+
     @Value("${calculations.bivariate.axis.test.table}")
     private String bivariateAxisV2TableName;
 
@@ -99,6 +102,10 @@ public class AxisRepository {
         calculateAndUpdate(query, paramSource);
 
         query = String.format(queryFactory.getSql(bivariateAxisAnalytics), bivariateAxisV2TableName);
+        calculateAndUpdate(query, paramSource);
+
+        query = String.format(queryFactory.getSql(bivariateAxisLabelsCustomStops),
+                bivariateAxisV2TableName, bivariateAxisV2TableName);
         calculateAndUpdate(query, paramSource);
     }
 
