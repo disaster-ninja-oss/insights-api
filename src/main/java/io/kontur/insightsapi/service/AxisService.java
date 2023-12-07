@@ -46,7 +46,8 @@ public class AxisService {
                                 bivariateIndicatorDto.getId(),
                                 bivariateIndicatorDto.getUuid(),
                                 indicatorForAxis.getId(),
-                                indicatorForAxis.getUuid()))
+                                indicatorForAxis.getUuid(),
+                                indicatorForAxis.getOwner()))
                         .toList());
             }
 
@@ -58,7 +59,8 @@ public class AxisService {
                             indicatorForAxis.getId(),
                             indicatorForAxis.getUuid(),
                             bivariateIndicatorDto.getId(),
-                            bivariateIndicatorDto.getUuid()))
+                            bivariateIndicatorDto.getUuid(),
+                            bivariateIndicatorDto.getOwner()))
                     .toList());
         }
 

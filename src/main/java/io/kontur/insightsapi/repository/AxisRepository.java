@@ -42,8 +42,8 @@ public class AxisRepository {
     @Value("classpath:/sql.queries/insert_axis.sql")
     private Resource insertAxis;
 
-    @Value("classpath:/sql.queries/bivariate_axis_update_labels_and_custom_stops.sql")
-    private Resource bivariateAxisLabelsCustomStops;
+    @Value("classpath:/sql.queries/bivariate_axis_update_labels.sql")
+    private Resource bivariateAxisLabels;
 
     @Value("${calculations.bivariate.axis.test.table}")
     private String bivariateAxisV2TableName;
@@ -94,18 +94,18 @@ public class AxisRepository {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("numerator_uuid", bivariativeAxisDto.getNumerator_uuid());
         paramSource.addValue("denominator_uuid", bivariativeAxisDto.getDenominator_uuid());
+        paramSource.addValue("owner", bivariativeAxisDto.getOwner());
 
         String query = String.format(queryFactory.getSql(qualityEstimation), bivariateAxisV2TableName);
         calculateAndUpdate(query, paramSource);
 
-        query = String.format(queryFactory.getSql(axisStopsEstimation), bivariateAxisV2TableName);
+        query = String.format(queryFactory.getSql(axisStopsEstimation), bivariateAxisV2TableName, bivariateAxisV2TableName);
         calculateAndUpdate(query, paramSource);
 
         query = String.format(queryFactory.getSql(bivariateAxisAnalytics), bivariateAxisV2TableName);
         calculateAndUpdate(query, paramSource);
 
-        query = String.format(queryFactory.getSql(bivariateAxisLabelsCustomStops),
-                bivariateAxisV2TableName, bivariateAxisV2TableName);
+        query = String.format(queryFactory.getSql(bivariateAxisLabels), bivariateAxisV2TableName);
         calculateAndUpdate(query, paramSource);
     }
 
