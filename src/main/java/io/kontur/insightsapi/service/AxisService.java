@@ -1,7 +1,9 @@
 package io.kontur.insightsapi.service;
 
+import io.kontur.insightsapi.service.auth.AuthService;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
+import io.kontur.insightsapi.dto.AxisOverridesRequest;
 import io.kontur.insightsapi.repository.AxisRepository;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.AllArgsConstructor;
@@ -26,6 +28,8 @@ public class AxisService {
 
     private final AxisRepository axisRepository;
 
+    private final AuthService authService;
+
     @Transactional
     public ResponseEntity<String> createAxis(@NotNull List<BivariateIndicatorDto> indicatorsForAxis) {
 
@@ -46,8 +50,7 @@ public class AxisService {
                                 bivariateIndicatorDto.getId(),
                                 bivariateIndicatorDto.getUuid(),
                                 indicatorForAxis.getId(),
-                                indicatorForAxis.getUuid(),
-                                indicatorForAxis.getOwner()))
+                                indicatorForAxis.getUuid()))
                         .toList());
             }
 
@@ -59,8 +62,7 @@ public class AxisService {
                             indicatorForAxis.getId(),
                             indicatorForAxis.getUuid(),
                             bivariateIndicatorDto.getId(),
-                            bivariateIndicatorDto.getUuid(),
-                            bivariateIndicatorDto.getOwner()))
+                            bivariateIndicatorDto.getUuid()))
                     .toList());
         }
 
@@ -96,6 +98,11 @@ public class AxisService {
     private void calculateStopsAndQuality(List<BivariativeAxisDto> axisForCurrentIndicators) {
         axisForCurrentIndicators.forEach(this::calculateQuality);
 
+    }
+
+    public void insertOverrides(AxisOverridesRequest request) {
+        String owner = authService.getCurrentUsername().orElseThrow();
+        axisRepository.insertOverrides(request, owner);
     }
 
     private void calculateQuality(BivariativeAxisDto bivariativeAxisDto) {

@@ -18,17 +18,3 @@ from (
 ) c
 where ba.numerator_uuid = :numerator_uuid::uuid
     and ba.denominator_uuid = :denominator_uuid::uuid;
-
-update %s a
-set
-    min = coalesce(b.min, a.min),
-    max = coalesce(b.max, a.max),
-    p25 = coalesce(b.p25, a.p25),
-    p75 = coalesce(b.p75, a.p75)
-from bivariate_axis_overrides b
-where
-    a.numerator_uuid = :numerator_uuid::uuid and
-    a.denominator_uuid = :denominator_uuid::uuid and
-    b.owner = :owner and
-    a.numerator = b.numerator and
-    a.denominator = b.denominator;

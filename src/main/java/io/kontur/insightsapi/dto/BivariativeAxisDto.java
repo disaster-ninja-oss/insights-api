@@ -20,8 +20,6 @@ public class BivariativeAxisDto {
 
     private String denominator_uuid;
 
-    private String owner;
-
     private String numeratorLabel;
 
     private String denominatorLabel;
@@ -38,11 +36,10 @@ public class BivariativeAxisDto {
 
     private List<String> calculations;
 
-    public BivariativeAxisDto(String numerator, String numerator_uuid, String denominator, String denominator_uuid, String owner) {
+    public BivariativeAxisDto(String numerator, String numerator_uuid, String denominator, String denominator_uuid) {
         this.numerator = numerator;
         this.numerator_uuid = numerator_uuid;
         this.denominator = denominator;
         this.denominator_uuid = denominator_uuid;
-        this.owner = owner;
     }
 }

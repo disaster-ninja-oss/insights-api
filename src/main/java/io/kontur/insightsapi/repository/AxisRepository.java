@@ -2,6 +2,7 @@ package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
+import io.kontur.insightsapi.dto.AxisOverridesRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -27,6 +28,9 @@ public class AxisRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Value("${calculations.bivariate.indicators.test.table}")
+    private String bivariateIndicatorsMetadataTableName;
+
     @Value("classpath:/sql.queries/direct_quality_estimation.sql")
     private Resource qualityEstimation;
 
@@ -41,9 +45,6 @@ public class AxisRepository {
 
     @Value("classpath:/sql.queries/insert_axis.sql")
     private Resource insertAxis;
-
-    @Value("classpath:/sql.queries/bivariate_axis_update_labels.sql")
-    private Resource bivariateAxisLabels;
 
     @Value("${calculations.bivariate.axis.test.table}")
     private String bivariateAxisV2TableName;
@@ -65,6 +66,45 @@ public class AxisRepository {
             String error = String.format("Exception while deleting axis: %s", paramsAsString);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
+        }
+    }
+
+    public void insertOverrides(AxisOverridesRequest request, String owner)
+            throws IllegalArgumentException {
+        String numerator = request.getNumerator(), denominator = request.getDenominator();
+        String sql = String.format("select count(0) from %s where param_id = ? and owner = ?", bivariateIndicatorsMetadataTableName);
+        if (jdbcTemplate.queryForObject(sql, Integer.class, numerator, owner) == 0)
+            throw new IllegalArgumentException(String.format("no indicator with param_id=%s for owner %s", numerator, owner));
+        if (jdbcTemplate.queryForObject(sql, Integer.class, denominator, owner) == 0)
+            throw new IllegalArgumentException(String.format("no indicator with param_id=%s for owner %s", denominator, owner));
+
+        sql = """
+                insert into bivariate_axis_overrides
+                (numerator, denominator, label, min, max, p25, p75, owner)
+                values
+                (?, ?, ?, ?, ?, ?, ?, ?)
+                on conflict (numerator, denominator, owner) do update
+                set
+                    label = excluded.label,
+                    min = excluded.min,
+                    max = excluded.max,
+                    p25 = excluded.p25,
+                    p75 = excluded.p75
+        """;
+        try {
+            jdbcTemplate.update(
+                sql,
+                numerator,
+                denominator,
+                request.getLabel(),
+                request.getMin(),
+                request.getMax(),
+                request.getP25(),
+                request.getP75(),
+                owner);
+        } catch (Exception e) {
+            logger.error("Could not update bivariate_axis_overrides.", e);
+            throw new IllegalArgumentException("Could not update bivariate_axis_overrides.", e);
         }
     }
 
@@ -94,18 +134,14 @@ public class AxisRepository {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("numerator_uuid", bivariativeAxisDto.getNumerator_uuid());
         paramSource.addValue("denominator_uuid", bivariativeAxisDto.getDenominator_uuid());
-        paramSource.addValue("owner", bivariativeAxisDto.getOwner());
 
         String query = String.format(queryFactory.getSql(qualityEstimation), bivariateAxisV2TableName);
         calculateAndUpdate(query, paramSource);
 
-        query = String.format(queryFactory.getSql(axisStopsEstimation), bivariateAxisV2TableName, bivariateAxisV2TableName);
+        query = String.format(queryFactory.getSql(axisStopsEstimation), bivariateAxisV2TableName);
         calculateAndUpdate(query, paramSource);
 
         query = String.format(queryFactory.getSql(bivariateAxisAnalytics), bivariateAxisV2TableName);
-        calculateAndUpdate(query, paramSource);
-
-        query = String.format(queryFactory.getSql(bivariateAxisLabels), bivariateAxisV2TableName);
         calculateAndUpdate(query, paramSource);
     }
 
