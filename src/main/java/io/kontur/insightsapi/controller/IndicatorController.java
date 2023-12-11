@@ -72,8 +72,9 @@ public class IndicatorController {
     @Operation(
             summary = "Create or update custom labels and stops for bivariate axis.",
             tags = {"Indicators"},
-            description = "Provided numerator and denominator should exist as bivariate indicators for current owner. " +
-                     "Accepts overrides for the following params: label, min, max, p25, p75. " +
+            description = "Provided numerator and denominator UUIDs should exist as bivariate indicators for current owner. " +
+                     "Accepts overrides for the following params:<br>" +
+                     "label, min, p25, p75, max, min_label, p25_label, p75_label, max_label<br>" +
                      "curl example: curl -w \":::\"%{http_code} http://localhost:8625/insights-api/indicators/axis/custom --header 'Authorization: Bearer %TOKEN%' --data '{\"numerator\":\"population\",\"denominator\":\"area_km2\",\"min\":0.0}'  -H \"Content-Type: application/json\"",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),

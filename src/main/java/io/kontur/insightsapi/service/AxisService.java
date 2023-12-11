@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.service;
 
-import io.kontur.insightsapi.service.auth.AuthService;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
@@ -27,8 +26,6 @@ public class AxisService {
     private final IndicatorRepository indicatorRepository;
 
     private final AxisRepository axisRepository;
-
-    private final AuthService authService;
 
     @Transactional
     public ResponseEntity<String> createAxis(@NotNull List<BivariateIndicatorDto> indicatorsForAxis) {
@@ -101,8 +98,7 @@ public class AxisService {
     }
 
     public void insertOverrides(AxisOverridesRequest request) {
-        String owner = authService.getCurrentUsername().orElseThrow();
-        axisRepository.insertOverrides(request, owner);
+        axisRepository.insertOverrides(request);
     }
 
     private void calculateQuality(BivariativeAxisDto bivariativeAxisDto) {

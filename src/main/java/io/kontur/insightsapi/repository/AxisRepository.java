@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -69,27 +70,27 @@ public class AxisRepository {
         }
     }
 
-    public void insertOverrides(AxisOverridesRequest request, String owner)
+    public void insertOverrides(AxisOverridesRequest request)
             throws IllegalArgumentException {
-        String numerator = request.getNumerator(), denominator = request.getDenominator();
-        String sql = String.format("select count(0) from %s where param_id = ? and owner = ?", bivariateIndicatorsMetadataTableName);
-        if (jdbcTemplate.queryForObject(sql, Integer.class, numerator, owner) == 0)
-            throw new IllegalArgumentException(String.format("no indicator with param_id=%s for owner %s", numerator, owner));
-        if (jdbcTemplate.queryForObject(sql, Integer.class, denominator, owner) == 0)
-            throw new IllegalArgumentException(String.format("no indicator with param_id=%s for owner %s", denominator, owner));
-
-        sql = """
+        String numerator = request.getNumerator_uuid(), denominator = request.getDenominator_uuid();
+        if (numerator == null || denominator == null)
+            throw new IllegalArgumentException("Numerator and denominator UUIDs cannot be null");
+        String sql = """
                 insert into bivariate_axis_overrides
-                (numerator, denominator, label, min, max, p25, p75, owner)
+                (numerator_uuid, denominator_uuid, label, min, max, p25, p75, min_label, p25_label, p75_label, max_label)
                 values
-                (?, ?, ?, ?, ?, ?, ?, ?)
-                on conflict (numerator, denominator, owner) do update
+                (?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                on conflict (numerator_uuid, denominator_uuid) do update
                 set
                     label = excluded.label,
                     min = excluded.min,
                     max = excluded.max,
                     p25 = excluded.p25,
-                    p75 = excluded.p75
+                    p75 = excluded.p75,
+                    min_label = excluded.min_label,
+                    max_label = excluded.max_label,
+                    p25_label = excluded.p25_label,
+                    p75_label = excluded.p75_label
         """;
         try {
             jdbcTemplate.update(
@@ -101,7 +102,17 @@ public class AxisRepository {
                 request.getMax(),
                 request.getP25(),
                 request.getP75(),
-                owner);
+                request.getMinLabel(),
+                request.getP25Label(),
+                request.getP75Label(),
+                request.getMaxLabel()
+                );
+        } catch (DataIntegrityViolationException e) {
+            logger.error("Could not update bivariate_axis_overrides due to FK constraint", e);
+            // not-null constraint violation is also DataIntegrityViolationException, but we catch it earlier
+            throw new IllegalArgumentException(
+                    String.format("Could not update bivariate_axis_overrides: no indicator with uuis=%s found",
+                                  e.getMessage().contains("fk_ba_overrides_denominator_uuid") ? denominator : numerator));
         } catch (Exception e) {
             logger.error("Could not update bivariate_axis_overrides.", e);
             throw new IllegalArgumentException("Could not update bivariate_axis_overrides.", e);

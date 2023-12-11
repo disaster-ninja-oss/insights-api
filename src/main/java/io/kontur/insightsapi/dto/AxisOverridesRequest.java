@@ -9,19 +9,28 @@ import javax.validation.constraints.NotNull;
 @Setter
 public class AxisOverridesRequest {
 
-    @NotNull(message = "Numerator cannot be null or empty")
-    private String numerator;
+    @NotNull(message = "Numerator uuid cannot be null or empty")
+    private String numerator_uuid;
 
-    @NotNull(message = "Denominator cannot be null or empty")
-    private String denominator;
+    @NotNull(message = "Denominator uuid cannot be null or empty")
+    private String denominator_uuid;
 
     private String label;
 
-    private double min;
+    private Double min;
 
-    private double max;
+    private Double max;
 
-    private double p25;
+    private Double p25;
 
-    private double p75;
+    private Double p75;
+
+    private String minLabel;
+
+    private String maxLabel;
+
+    private String p25Label;
+
+    private String p75Label;
+
 }
