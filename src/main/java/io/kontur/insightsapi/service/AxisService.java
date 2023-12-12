@@ -2,6 +2,7 @@ package io.kontur.insightsapi.service;
 
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
+import io.kontur.insightsapi.dto.AxisOverridesRequest;
 import io.kontur.insightsapi.repository.AxisRepository;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.AllArgsConstructor;
@@ -94,6 +95,10 @@ public class AxisService {
     private void calculateStopsAndQuality(List<BivariativeAxisDto> axisForCurrentIndicators) {
         axisForCurrentIndicators.forEach(this::calculateQuality);
 
+    }
+
+    public void insertOverrides(AxisOverridesRequest request) {
+        axisRepository.insertOverrides(request);
     }
 
     private void calculateQuality(BivariativeAxisDto bivariativeAxisDto) {

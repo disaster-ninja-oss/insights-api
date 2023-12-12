@@ -2,6 +2,7 @@ package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.BivariativeAxisDto;
+import io.kontur.insightsapi.dto.AxisOverridesRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +64,53 @@ public class AxisRepository {
             String error = String.format("Exception while deleting axis: %s", paramsAsString);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
+        }
+    }
+
+    public void insertOverrides(AxisOverridesRequest request)
+            throws IllegalArgumentException {
+        String numerator = request.getNumerator_id();
+        String denominator = request.getDenominator_id();
+        String sql = """
+                insert into bivariate_axis_overrides
+                (numerator_id, denominator_id, label, min, max, p25, p75, min_label, p25_label, p75_label, max_label)
+                values
+                (?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                on conflict (numerator_id, denominator_id) do update
+                set
+                    label = excluded.label,
+                    min = excluded.min,
+                    max = excluded.max,
+                    p25 = excluded.p25,
+                    p75 = excluded.p75,
+                    min_label = excluded.min_label,
+                    max_label = excluded.max_label,
+                    p25_label = excluded.p25_label,
+                    p75_label = excluded.p75_label
+        """;
+        try {
+            jdbcTemplate.update(
+                sql,
+                numerator,
+                denominator,
+                request.getLabel(),
+                request.getMin(),
+                request.getMax(),
+                request.getP25(),
+                request.getP75(),
+                request.getMinLabel(),
+                request.getP25Label(),
+                request.getP75Label(),
+                request.getMaxLabel()
+                );
+        } catch (DataIntegrityViolationException e) {
+            logger.error("Could not update bivariate_axis_overrides due to FK constraint", e);
+            // not-null constraint violation is also DataIntegrityViolationException, but we catch it earlier
+            throw new IllegalArgumentException(
+                    String.format("Could not apply overrides: some provided indicator IDs are missing in DB."));
+        } catch (Exception e) {
+            logger.error("Could not update bivariate_axis_overrides.", e);
+            throw new IllegalArgumentException("Could not update bivariate_axis_overrides.", e);
         }
     }
 
