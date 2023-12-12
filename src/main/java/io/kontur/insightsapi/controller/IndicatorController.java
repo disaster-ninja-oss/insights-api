@@ -15,9 +15,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.validation.BindingResult;
 
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 
 @Tag(name = "Indicators", description = "Indicators API")
 @RestController
@@ -72,16 +75,18 @@ public class IndicatorController {
     @Operation(
             summary = "Create or update custom labels and stops for bivariate axis.",
             tags = {"Indicators"},
-            description = "Provided numerator and denominator UUIDs should exist as bivariate indicators for current owner. " +
+            description = "Provided numerator and denominator ids should exist as bivariate indicators for current owner. " +
                      "Accepts overrides for the following params:<br>" +
-                     "label, min, p25, p75, max, min_label, p25_label, p75_label, max_label<br>" +
-                     "curl example: curl -w \":::\"%{http_code} http://localhost:8625/insights-api/indicators/axis/custom --header 'Authorization: Bearer %TOKEN%' --data '{\"numerator\":\"population\",\"denominator\":\"area_km2\",\"min\":0.0}'  -H \"Content-Type: application/json\"",
+                     "label, min, p25, p75, max, min_label, p25_label, p75_label, max_label",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @PostMapping(value = "/axis/custom")
-    public ResponseEntity<String> uploadLabels(@RequestBody AxisOverridesRequest request) {
+    public ResponseEntity<String> uploadLabels(@Valid @RequestBody AxisOverridesRequest request, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body("Validation error: " + bindingResult.getFieldError().getDefaultMessage());
+        }
         try {
             axisService.insertOverrides(request);
         } catch (Exception e) {

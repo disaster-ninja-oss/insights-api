@@ -3,17 +3,17 @@ package io.kontur.insightsapi.dto;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 
 @Getter
 @Setter
 public class AxisOverridesRequest {
 
-    @NotNull(message = "Numerator uuid cannot be null or empty")
-    private String numerator_uuid;
+    @NotEmpty(message = "Numerator id cannot be null or empty")
+    private String numerator_id;
 
-    @NotNull(message = "Denominator uuid cannot be null or empty")
-    private String denominator_uuid;
+    @NotEmpty(message = "Denominator id cannot be null or empty")
+    private String denominator_id;
 
     private String label;
 

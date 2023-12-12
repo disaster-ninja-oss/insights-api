@@ -29,9 +29,6 @@ public class AxisRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    @Value("${calculations.bivariate.indicators.test.table}")
-    private String bivariateIndicatorsMetadataTableName;
-
     @Value("classpath:/sql.queries/direct_quality_estimation.sql")
     private Resource qualityEstimation;
 
@@ -72,15 +69,14 @@ public class AxisRepository {
 
     public void insertOverrides(AxisOverridesRequest request)
             throws IllegalArgumentException {
-        String numerator = request.getNumerator_uuid(), denominator = request.getDenominator_uuid();
-        if (numerator == null || denominator == null)
-            throw new IllegalArgumentException("Numerator and denominator UUIDs cannot be null");
+        String numerator = request.getNumerator_id();
+        String denominator = request.getDenominator_id();
         String sql = """
                 insert into bivariate_axis_overrides
-                (numerator_uuid, denominator_uuid, label, min, max, p25, p75, min_label, p25_label, p75_label, max_label)
+                (numerator_id, denominator_id, label, min, max, p25, p75, min_label, p25_label, p75_label, max_label)
                 values
                 (?::uuid, ?::uuid, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                on conflict (numerator_uuid, denominator_uuid) do update
+                on conflict (numerator_id, denominator_id) do update
                 set
                     label = excluded.label,
                     min = excluded.min,
@@ -111,8 +107,7 @@ public class AxisRepository {
             logger.error("Could not update bivariate_axis_overrides due to FK constraint", e);
             // not-null constraint violation is also DataIntegrityViolationException, but we catch it earlier
             throw new IllegalArgumentException(
-                    String.format("Could not update bivariate_axis_overrides: no indicator with uuis=%s found",
-                                  e.getMessage().contains("fk_ba_overrides_denominator_uuid") ? denominator : numerator));
+                    String.format("Could not apply overrides: some provided indicator IDs are missing in DB."));
         } catch (Exception e) {
             logger.error("Could not update bivariate_axis_overrides.", e);
             throw new IllegalArgumentException("Could not update bivariate_axis_overrides.", e);
