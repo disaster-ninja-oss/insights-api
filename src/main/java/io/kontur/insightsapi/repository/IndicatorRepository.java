@@ -83,9 +83,9 @@ public class IndicatorRepository {
     // TODO: optimize copying large files to PostgreSQL in #15737
     public void uploadCsvFileIntoStatH3Table(InputStream inputStream, String indicatorUUID) {
         var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ',' null 'NULL'", transposedTableName);
-
+        Connection connection = null;
         try {
-            Connection connection = DataSourceUtils.getConnection(dataSource);
+            connection = DataSourceUtils.getConnection(dataSource);
             if (connection.isWrapperFor(Connection.class)) {
                 CopyManager copyManager = new CopyManager((BaseConnection) connection.unwrap(Connection.class));
                 copyManager.copyIn(copyManagerQuery, inputStream);
@@ -96,6 +96,10 @@ public class IndicatorRepository {
             }
         } catch (Exception e) {
             throw new IndicatorDataProcessingException(String.format("Failed to copy indicator %s. %s", indicatorUUID, e.getMessage()), e);
+        } finally {
+            if (connection != null) {
+                DataSourceUtils.releaseConnection(connection, dataSource);
+            }
         }
     }
 
