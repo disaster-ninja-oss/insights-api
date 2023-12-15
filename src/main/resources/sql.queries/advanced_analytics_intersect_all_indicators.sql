@@ -17,7 +17,7 @@ with validated_input as (select (:polygon)::geometry as geom),
                                     %s as bi_b
                                where b.indicator_value != 0
                                  and bi_b.is_base
-                                 and bi_b.param_uuid = b.indicator_uuid
+                                 and bi_b.internal_id = b.indicator_uuid
                                  and a.h3 = b.h3
                                order by a.h3)
 select h.numerator_uuid,

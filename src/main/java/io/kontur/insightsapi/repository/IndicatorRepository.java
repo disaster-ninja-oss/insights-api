@@ -3,10 +3,10 @@ package io.kontur.insightsapi.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
-import io.kontur.insightsapi.dto.IndicatorState;
 import io.kontur.insightsapi.exception.IndicatorDataProcessingException;
 import io.kontur.insightsapi.mapper.BivariateIndicatorRowMapper;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.fileupload.FileItemStream;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
@@ -14,20 +14,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.Timestamp;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.sql.*;
 import java.time.Instant;
 import java.util.List;
-
-import static java.util.Comparator.comparing;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Repository
 @RequiredArgsConstructor
@@ -37,8 +35,6 @@ public class IndicatorRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-
     private final ObjectMapper objectMapper;
 
     private final DataSource dataSource;
@@ -46,17 +42,10 @@ public class IndicatorRepository {
     @Value("classpath:/sql.queries/insert_bivariate_indicators.sql")
     private Resource insertBivariateIndicators;
 
-    @Value("classpath:/sql.queries/update_bivariate_indicators.sql")
-    private Resource updateBivariateIndicators;
-
-    @Value("classpath:/sql.queries/14855_update_stat_h3_geom.sql")
-    private Resource updateStatH3Geom;
-
     private final QueryFactory queryFactory;
 
     private final BivariateIndicatorRowMapper bivariateIndicatorRowMapper;
 
-    //TODO: temporary field, remove when we have final version of transposed stat_h3 table
     @Value("${calculations.bivariate.transposed.table}")
     private String transposedTableName;
 
@@ -69,103 +58,116 @@ public class IndicatorRepository {
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
 
-    public String createIndicator(BivariateIndicatorDto bivariateIndicatorDto, String owner)
-            throws JsonProcessingException {
+    private final ThreadPoolExecutor uploadExecutor;
 
-        var paramSource = initParams(bivariateIndicatorDto, owner);
+    public void uploadCsvFile(FileItemStream file, BivariateIndicatorDto bivariateIndicatorDto) throws IndicatorDataProcessingException {
+        Connection connection = null;
 
-        String bivariateIndicatorsQuery = String.format(queryFactory.getSql(insertBivariateIndicators),
-                bivariateIndicatorsMetadataTableName);
+        try (PipedInputStream pipedInputStream = new PipedInputStream();
+             PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream)) {
 
-        return namedParameterJdbcTemplate.queryForObject(bivariateIndicatorsQuery, paramSource, String.class);
-    }
+            connection = DataSourceUtils.getConnection(dataSource);
+            connection.setAutoCommit(false);
 
-    // TODO: optimize copying large files to PostgreSQL in #15737
-    public void uploadCsvFileIntoStatH3Table(InputStream inputStream, String indicatorUUID) {
-        var copyManagerQuery = String.format("COPY %s FROM STDIN DELIMITER ',' null 'NULL'", transposedTableName);
+            String internalId = createIndicator(connection, bivariateIndicatorDto);
 
-        try {
-            Connection connection = DataSourceUtils.getConnection(dataSource);
-            if (connection.isWrapperFor(Connection.class)) {
-                CopyManager copyManager = new CopyManager((BaseConnection) connection.unwrap(Connection.class));
-                copyManager.copyIn(copyManagerQuery, inputStream);
-            } else {
-                logger.error("Could not connect to Copy Manager");
-                throw new IndicatorDataProcessingException("Connection was closed unpredictably. " +
-                        "Can not obtain connection for CopyManager");
+            Future<?> uploadTask = submitUploadTask(file, internalId, pipedOutputStream);
+
+            copyFile(connection, pipedInputStream);
+
+            try {
+                uploadTask.get();
+            } catch (Exception e) {
+                throw new IndicatorDataProcessingException(e.getCause().getMessage(), e);
             }
+            connection.commit();
         } catch (Exception e) {
-            throw new IndicatorDataProcessingException(String.format("Failed to copy indicator %s. %s", indicatorUUID, e.getMessage()), e);
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (Exception e1) {
+                    throw new IndicatorDataProcessingException("Failed to rollback indicator upload transaction", e);
+                }
+            }
+            throw new IndicatorDataProcessingException(String.format("Failed to copy indicator. %s", e.getMessage()), e);
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.setAutoCommit(true);
+                } catch (Exception e1) {
+                    logger.error("Failed to reset auto-commit behavior after indicator upload", e1);
+                }
+                DataSourceUtils.releaseConnection(connection, dataSource);
+            }
         }
     }
 
-    private String adjustMessageForKnownExceptions(String message) {
-        if (message.contains("stringToH3")) {
-            return String.format("Unable to represent %s from the file as H3", parseIncorrectValue(message));
-        } else if (message.contains("valid_cell")) {
-            return String.format("Incorrect H3index found in the file: %s", message.substring(message.indexOf(", line")
-                    + 2, message.indexOf(": \"", message.indexOf(", line"))));
-        } else if (message.contains("double precision")) {
-            return String.format("Incorrect value found in the file: %s", parseIncorrectValue(message));
+    public String createIndicator(Connection connection, BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException, SQLException {
+        String insertQuery = String.format(queryFactory.getSql(insertBivariateIndicators), bivariateIndicatorsMetadataTableName);
+
+        try (PreparedStatement ps = connection.prepareStatement(insertQuery)) {
+            initParams(ps, bivariateIndicatorDto);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getObject("internal_id", String.class);
+                } else {
+                    throw new SQLException("Failed to retrieve internal_id after insert");
+                }
+            }
+        }
+    }
+
+    private void copyFile(Connection connection, InputStream inputStream) throws SQLException, IOException {
+        if (connection.isWrapperFor(Connection.class)) {
+            CopyManager copyManager = new CopyManager((BaseConnection) connection.unwrap(Connection.class));
+            copyManager.copyIn(String.format("COPY %s FROM STDIN DELIMITER ',' null 'NULL'", transposedTableName), inputStream);
         } else {
-            return message;
+            logger.error("Could not connect to Copy Manager");
+            throw new IndicatorDataProcessingException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
         }
     }
 
-    private String parseIncorrectValue(String message) {
-        return message.substring(message.indexOf(", line") + 2, message.indexOf(", column",
-                message.indexOf(", line")));
+    private Future<?> submitUploadTask(FileItemStream file, String internalId, PipedOutputStream pipedOutputStream) {
+        return uploadExecutor.submit(() -> {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.openStream(), StandardCharsets.UTF_8));
+                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(pipedOutputStream, StandardCharsets.UTF_8))) {
+                String row;
+                while ((row = reader.readLine()) != null) {
+                    String[] rowValues = row.split(",");
+                    writer.write(String.join(",", rowValues[0], internalId, rowValues[1]));
+                    writer.newLine();
+                }
+            } catch (Exception e) {
+                throw new IndicatorDataProcessingException("Failed to adjust incoming csv stream with uuid", e);
+            }
+        });
     }
 
-    public void deleteIndicator(String uuid) {
-        jdbcTemplate.update(String.format("DELETE FROM %s WHERE indicator_uuid = '%s'::uuid",
-                transposedTableName, uuid));
-
-        jdbcTemplate.update(String.format("DELETE FROM %s WHERE param_uuid = '%s'::uuid",
-                bivariateIndicatorsMetadataTableName, uuid));
-    }
-
-    public BivariateIndicatorDto getLatestIndicatorByIdAndOwner(String id, String owner) {
-        List<BivariateIndicatorDto> bivariateIndicatorDtos = jdbcTemplate.query(
-                String.format("SELECT * FROM %s WHERE param_id = '%s' AND owner = '%s'",
+    public List<BivariateIndicatorDto> getIndicatorsByExternalId(String externalId) {
+        return jdbcTemplate.query(
+                String.format("SELECT * FROM %s WHERE external_id = '%s'::uuid",
                         bivariateIndicatorsMetadataTableName,
-                        id,
-                        owner),
+                        externalId),
                 bivariateIndicatorRowMapper);
-
-        return switch (bivariateIndicatorDtos.size()) {
-            case 0 -> null;
-            case 1 -> bivariateIndicatorDtos.get(0);
-            default -> bivariateIndicatorDtos.stream().max(comparing(BivariateIndicatorDto::getDate)).orElseThrow();
-        };
     }
 
-    private MapSqlParameterSource initParams(BivariateIndicatorDto bivariateIndicatorDto, String owner)
-            throws JsonProcessingException {
-        return new MapSqlParameterSource()
-                .addValue("id", bivariateIndicatorDto.getId())
-                .addValue("label", bivariateIndicatorDto.getLabel())
-                .addValue("copyrights",
-                        bivariateIndicatorDto.getCopyrights() == null ? null :
-                                objectMapper.writeValueAsString(bivariateIndicatorDto.getCopyrights()))
-                .addValue("direction",
-                        bivariateIndicatorDto.getDirection() == null ? null :
-                                objectMapper.writeValueAsString(bivariateIndicatorDto.getDirection()))
-                .addValue("isBase", bivariateIndicatorDto.getIsBase())
-                .addValue("isPublic", bivariateIndicatorDto.getIsPublic())
-                .addValue("allowedUsers",
-                        bivariateIndicatorDto.getAllowedUsers() == null ? null :
-                                objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()))
-                .addValue("owner", owner)
-                //TODO: think about state and date
-                .addValue("description", bivariateIndicatorDto.getDescription())
-                .addValue("coverage", bivariateIndicatorDto.getCoverage())
-                //TODO: discuss these values, should be some default values if not specified
-                .addValue("updateFrequency", bivariateIndicatorDto.getUpdateFrequency())
-                .addValue("application", bivariateIndicatorDto.getApplication())
-                .addValue("unitId", bivariateIndicatorDto.getUnitId())
-                .addValue("lastUpdated", bivariateIndicatorDto.getLastUpdated());
-
+    private void initParams(PreparedStatement ps, BivariateIndicatorDto bivariateIndicatorDto) throws SQLException, JsonProcessingException {
+        ps.setString(1, bivariateIndicatorDto.getId());
+        ps.setString(2, bivariateIndicatorDto.getLabel());
+        ps.setString(3, bivariateIndicatorDto.getCopyrights() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getCopyrights()));
+        ps.setString(4, bivariateIndicatorDto.getDirection() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getDirection()));
+        ps.setBoolean(5, bivariateIndicatorDto.getIsBase());
+        ps.setString(6, bivariateIndicatorDto.getUuid());
+        ps.setString(7, bivariateIndicatorDto.getOwner());
+        ps.setBoolean(8, bivariateIndicatorDto.getIsPublic());
+        ps.setString(9, bivariateIndicatorDto.getAllowedUsers() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
+        ps.setString(10, bivariateIndicatorDto.getDescription());
+        ps.setString(11, bivariateIndicatorDto.getCoverage());
+        //TODO: discuss these values, should be some default values if not specified
+        ps.setString(12, bivariateIndicatorDto.getUpdateFrequency());
+        ps.setString(13, bivariateIndicatorDto.getApplication() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getApplication()));
+        ps.setString(14, bivariateIndicatorDto.getUnitId());
+        ps.setString(15, bivariateIndicatorDto.getLastUpdated().toString());
     }
 
     //TODO: possibly will be added something about owner field here
@@ -181,11 +183,6 @@ public class IndicatorRepository {
         return jdbcTemplate.query(String.format("SELECT * FROM %s WHERE param_id in ('%s')",
                         bivariateIndicatorsMetadataTableName, String.join("','", indicatorIds)),
                 bivariateIndicatorRowMapper);
-    }
-
-    public BivariateIndicatorDto getIndicatorByUuid(String uuid) {
-        return jdbcTemplate.queryForObject(String.format("SELECT * FROM %s where param_uuid = '%s'::uuid",
-                bivariateIndicatorsMetadataTableName, uuid), bivariateIndicatorRowMapper);
     }
 
     //TODO: remove after transition from param_id to uuid as an identifier for indicator. Use 'getIndicatorByUuid' method in future instead
@@ -206,16 +203,5 @@ public class IndicatorRepository {
         Timestamp lastUpdated = jdbcTemplate.queryForObject(String.format("SELECT MAX(last_updated) FROM %s",
                 bivariateIndicatorsMetadataTableName), Timestamp.class);
         return lastUpdated != null ? lastUpdated.toInstant() : null;
-    }
-
-    public void updateIndicatorState(String uuid, IndicatorState state) {
-        jdbcTemplate.update(String.format("UPDATE %s SET state = '%s' WHERE param_uuid = '%s'::uuid",
-                bivariateIndicatorsMetadataTableName, state.name(), uuid));
-    }
-
-    public void updateStatH3Geom() {
-        jdbcTemplate.execute("SET enable_hashjoin = off");
-        jdbcTemplate.execute(queryFactory.getSql(updateStatH3Geom));
-        jdbcTemplate.execute("RESET enable_hashjoin");
     }
 }

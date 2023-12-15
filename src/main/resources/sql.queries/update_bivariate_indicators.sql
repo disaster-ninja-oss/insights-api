@@ -4,4 +4,4 @@ SET param_label = :label, copyrights = :copyrights::json,
     allowed_users = :allowedUsers::json, date = now(), description = :description,
     coverage = :coverage, update_frequency = :updateFrequency,
     application = :application, unit_id = :unitId, last_updated = :lastUpdated
-WHERE param_id = :id AND owner = '%s' RETURNING param_uuid
+WHERE param_id = :id AND owner = '%s' RETURNING internal_id

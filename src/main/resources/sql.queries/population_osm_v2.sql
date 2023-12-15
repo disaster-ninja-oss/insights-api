@@ -8,7 +8,7 @@ with validated_input
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
                       join stat_h3_transposed st on (sh.h3 = st.h3)
              where sh.resolution = 8
-               and indicator_uuid IN (select param_uuid
+               and indicator_uuid IN (select internal_id
                                       from %s
                                       where param_id IN ('count', 'building_count', 'highway_length', 'population',
                                                          'populated_area_km2', 'area_km2'))),
@@ -28,11 +28,11 @@ from (select a.h3,
     %s bi_e,
     %s bi_f
     where
-    a.h3 = b.h3 and a.h3= c.h3 and a.h3=d.h3 and a.h3=e.h3 and a.indicator_uuid = bi_a.param_uuid
-    and b.indicator_uuid = bi_b.param_uuid
-    and c.indicator_uuid = bi_c.param_uuid
-    and d.indicator_uuid = bi_d.param_uuid
-    and e.indicator_uuid = bi_e.param_uuid
+    a.h3 = b.h3 and a.h3= c.h3 and a.h3=d.h3 and a.h3=e.h3 and a.indicator_uuid = bi_a.internal_id
+    and b.indicator_uuid = bi_b.internal_id
+    and c.indicator_uuid = bi_c.internal_id
+    and d.indicator_uuid = bi_d.internal_id
+    and e.indicator_uuid = bi_e.internal_id
     and bi_a.param_id = 'count'
     and bi_b.param_id = 'building_count'
     and bi_c.param_id = 'highway_length'

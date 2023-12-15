@@ -11,11 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.BindingResult;
 
 import javax.servlet.annotation.MultipartConfig;
@@ -35,7 +31,7 @@ public class IndicatorController {
     private final AxisService axisService;
 
     @Operation(
-            summary = "Create or update data about specific indicator.",
+            summary = "Create indicator.",
             tags = {"Indicators"},
             description = "Upload data representing h3Index - indicatorValue pairs in the form of CSV file " +
                     "(no header) alongside indicator metadata. After data has been successfully uploaded, " +
@@ -68,8 +64,47 @@ public class IndicatorController {
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
                     @ApiResponse(responseCode = "500", description = "Internal error")})
     @PostMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request) {
-        return indicatorProcessHelper.processIndicator(request);
+    public ResponseEntity<String> createIndicator(HttpServletRequest request) {
+        return indicatorProcessHelper.processIndicator(request, false);
+    }
+
+    @Operation(
+            summary = "Update data about specific indicator.",
+            tags = {"Indicators"},
+            description = "Upload data representing h3Index - indicatorValue pairs in the form of CSV file " +
+                    "(no header) alongside indicator metadata. After data has been successfully uploaded, " +
+                    "the response with indicator unique identifier (uuid) is returned and calculations for " +
+                    "indicator start in the background." +
+
+                    "<br><br>Currently files can't be uploaded via Swagger due to endpoint " +
+                    "implementation specifics." +
+
+                    "<br><br>Curl general example: curl -w \":::\"%{http_code} --location --request POST " +
+                    "https://apps.kontur.io/insights-api/indicators/upload " +
+                    "--header 'Authorization: <ACCESS_TOKEN> " +
+                    "--form 'parameters=\"{\\\"id\\\": ${layer_id}, \\\"label\\\": ${layer_label}, \\\"uuid\\\": ${uuid}, " +
+                    "\\\"direction\\\": ${layer_direction}, \\\"isBase\\\": ${layer_isbase}, \\\"isPublic\\\": " +
+                    "${layer_ispublic}, \\\"copyrights\\\": ${layer_copyrights}, \\\"description\\\": " +
+                    "${layer_description}, \\\"coverage\\\": ${layer_coverage}, \\\"updateFrequency\\\": " +
+                    "${layer_update_freq}, \\\"unitId\\\": ${layer_unit_id}, \\\"lastUpdated\\\": " +
+                    "${layer_last_updated}}\" " +
+                    "--form 'file=@\"/path/to/file/indicator.csv\"'" +
+
+                    "<br><br>Curl example with parameters: curl -w \":::\"%{http_code} --location --request POST " +
+                    "https://apps.kontur.io/insights-api/indicators/upload --header " +
+                    "'Authorization: Bearer <ACCESS_TOKEN>' --form 'parameters={\"id\": \"area_km2\", \"label\": " +
+                    "\"Area\", \"uuid\": \"7efd9ba2-e7de-44b9-8140-26c89e8170d7\", \"direction\": [[\"neutral\"], [\"neutral\"]], \"isBase\": true, \"isPublic\": false, " +
+                    "\"copyrights\": [\"Concept of areas © Brahmagupta, René Descartes\"], \"description\": \"\", " +
+                    "\"coverage\": \"World\", \"updateFrequency\": \"static\", \"unitId\": \"km2\", \"lastUpdated\": " +
+                    "\"\"}' --form 'file=@\"data/area_km2.csv\"'",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful upload"),
+                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+                    @ApiResponse(responseCode = "404", description = "Not Found"),
+                    @ApiResponse(responseCode = "500", description = "Internal error")})
+    @PutMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<String> updateIndicator(HttpServletRequest request) {
+        return indicatorProcessHelper.processIndicator(request, true);
     }
 
     @Operation(

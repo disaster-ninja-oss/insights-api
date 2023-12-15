@@ -9,7 +9,7 @@ with validated_input as (
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
                       join stat_h3_transposed st on (sh.h3 = st.h3)
              where sh.resolution = 8
-               and indicator_uuid IN (select param_uuid
+               and indicator_uuid IN (select internal_id
                                       from %s
                                       where param_id IN ('%s'))),
      stat_area as (select distinct on (h.h3) h.*
