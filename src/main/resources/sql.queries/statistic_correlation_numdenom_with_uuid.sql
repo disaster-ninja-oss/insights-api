@@ -1,13 +1,13 @@
 select x.numerator                             as x_num,
        x.denominator                           as x_den,
        x_den_indicator.param_label             as x_param_label,
-       x_den_indicator.param_uuid              as x_den_param_uuid,
-       x_num_indicator.param_uuid              as x_num_param_uuid,
+       x_den_indicator.internal_id              as x_den_internal_id,
+       x_num_indicator.internal_id              as x_num_internal_id,
        y.numerator                             as y_num,
        y.denominator                           as y_den,
        y_den_indicator.param_label             as y_param_label,
-       y_den_indicator.param_uuid              as y_den_param_uuid,
-       y_num_indicator.param_uuid              as y_num_param_uuid,
+       y_den_indicator.internal_id              as y_den_internal_id,
+       y_num_indicator.internal_id              as y_num_internal_id,
        1 - ((1 - x.quality) * (1 - y.quality)) as quality
 from (%s x
          join %s x_den_indicator

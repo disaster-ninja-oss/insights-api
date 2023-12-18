@@ -3,7 +3,7 @@ with res as (select sg.geom, sg.h3, st.indicator_uuid, st.indicator_value
                       join stat_h3_transposed st on (sg.h3 = st.h3)
              where sg.geom && ST_TileEnvelope(:z, :x, :y)
     and sg.resolution = :resolution
-    and indicator_uuid IN (select param_uuid
+    and indicator_uuid IN (select internal_id
     from %s
     where param_id IN
     (:ind0, :ind1, :ind2, :ind3)))
@@ -26,10 +26,10 @@ from (
          where a.h3 = b.h3
            and a.h3 = c.h3
            and a.h3 = d.h3
-           and a.indicator_uuid = bi_a.param_uuid
-           and b.indicator_uuid = bi_b.param_uuid
-           and c.indicator_uuid = bi_c.param_uuid
-           and d.indicator_uuid = bi_d.param_uuid
+           and a.indicator_uuid = bi_a.internal_id
+           and b.indicator_uuid = bi_b.internal_id
+           and c.indicator_uuid = bi_c.internal_id
+           and d.indicator_uuid = bi_d.internal_id
            and bi_a.param_id = :ind0
            and bi_b.param_id = :ind1
            and bi_c.param_id = :ind2
