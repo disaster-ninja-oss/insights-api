@@ -14,3 +14,21 @@ alter table bivariate_axis_v2
     drop constraint if exists fk_bivariate_axis_v2_denominator_uuid,
     add constraint fk_bivariate_axis_v2_denominator_uuid foreign key (denominator_uuid)
         references bivariate_indicators_metadata (param_uuid) on delete cascade;
+
+alter table bivariate_axis_correlation_v2
+    add column if not exists x_num_uuid uuid,
+    drop constraint if exists fk_bivariate_axis_correlation_v2_x_num_uuid,
+    add constraint fk_bivariate_axis_correlation_v2_x_num_uuid foreign key (x_num_uuid)
+        references bivariate_indicators_metadata (param_uuid) on delete cascade,
+    add column if not exists x_den_uuid uuid,
+    drop constraint if exists fk_bivariate_axis_correlation_v2_x_den_uuid,
+    add constraint fk_bivariate_axis_correlation_v2_x_den_uuid foreign key (x_den_uuid)
+        references bivariate_indicators_metadata (param_uuid) on delete cascade,
+    add column if not exists y_num_uuid uuid,
+    drop constraint if exists fk_bivariate_axis_correlation_v2_y_num_uuid,
+    add constraint fk_bivariate_axis_correlation_v2_y_num_uuid foreign key (y_num_uuid)
+        references bivariate_indicators_metadata (param_uuid) on delete cascade,
+    add column if not exists y_den_uuid uuid,
+    drop constraint if exists fk_bivariate_axis_correlation_v2_y_den_uuid,
+    add constraint fk_bivariate_axis_correlation_v2_y_den_uuid foreign key (y_den_uuid)
+        references bivariate_indicators_metadata (param_uuid) on delete cascade;

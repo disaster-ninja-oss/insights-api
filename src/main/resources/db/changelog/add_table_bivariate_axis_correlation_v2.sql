@@ -23,34 +23,29 @@ end;
 $$
 language plpgsql stable parallel safe;
 
-
 drop table if exists bivariate_axis_correlation_v2;
-create table bivariate_axis_correlation_v2 (
-    x_num text,
-    x_den text,
-    y_num text,
-    y_den text,
-    correlation double precision,
-    quality double precision,
-    x_num_uuid uuid,
-    x_den_uuid uuid,
-    y_num_uuid uuid,
-    y_den_uuid uuid
+create table bivariate_axis_correlation_v2 as (
+    select
+        x.numerator as x_num,
+        x.denominator as x_den,
+        y.numerator as y_num,
+        y.denominator as y_den,
+        correlate_bivariate_axes_v2('stat_h3_quality', x.numerator, x.denominator, y.numerator, y.denominator) as correlation,
+        1 - ((1 - x.quality) * (1 - y.quality)) as quality
+    from
+        (bivariate_axis_v2 x
+            join bivariate_indicators_metadata x_den_indicator
+            on (x.denominator = x_den_indicator.param_id)
+            join bivariate_indicators_metadata x_num_indicator
+         on (x.numerator = x_num_indicator.param_id)),
+        (bivariate_axis_v2 y
+            join bivariate_indicators_metadata y_den_indicator
+         on (y.denominator = y_den_indicator.param_id))
+    where
+        x.numerator != y.numerator
+      and x.quality > 0.5
+      and y.quality > 0.5
+      and x_den_indicator.is_base
+      and y_den_indicator.is_base
+      and not x_num_indicator.is_base
 );
-
-alter table bivariate_axis_correlation_v2
-    drop constraint if exists fk_bivariate_axis_correlation_v2_x_num_uuid,
-    add constraint fk_bivariate_axis_correlation_v2_x_num_uuid foreign key (x_num_uuid)
-        references bivariate_indicators_metadata (param_uuid) on delete cascade,
-    drop constraint if exists fk_bivariate_axis_correlation_v2_x_den_uuid,
-    add constraint fk_bivariate_axis_correlation_v2_x_den_uuid foreign key (x_den_uuid)
-        references bivariate_indicators_metadata (param_uuid) on delete cascade,
-    drop constraint if exists fk_bivariate_axis_correlation_v2_y_num_uuid,
-    add constraint fk_bivariate_axis_correlation_v2_y_num_uuid foreign key (y_num_uuid)
-        references bivariate_indicators_metadata (param_uuid) on delete cascade,
-    drop constraint if exists fk_bivariate_axis_correlation_v2_y_den_uuid,
-    add constraint fk_bivariate_axis_correlation_v2_y_den_uuid foreign key (y_den_uuid)
-        references bivariate_indicators_metadata (param_uuid) on delete cascade,
-    drop constraint if exists bivariate_axis_correlation_v2_unique_key,
-    add constraint bivariate_axis_correlation_v2_unique_key
-        unique (x_num_uuid, x_den_uuid, y_num_uuid, y_den_uuid);
