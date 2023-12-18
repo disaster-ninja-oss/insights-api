@@ -79,7 +79,7 @@ public class IndicatorController {
                     "<br><br>Currently files can't be uploaded via Swagger due to endpoint " +
                     "implementation specifics." +
 
-                    "<br><br>Curl general example: curl -w \":::\"%{http_code} --location --request POST " +
+                    "<br><br>Curl general example: curl -w \":::\"%{http_code} --location --request PUT " +
                     "https://apps.kontur.io/insights-api/indicators/upload " +
                     "--header 'Authorization: <ACCESS_TOKEN> " +
                     "--form 'parameters=\"{\\\"id\\\": ${layer_id}, \\\"label\\\": ${layer_label}, \\\"uuid\\\": ${uuid}, " +
@@ -90,7 +90,7 @@ public class IndicatorController {
                     "${layer_last_updated}}\" " +
                     "--form 'file=@\"/path/to/file/indicator.csv\"'" +
 
-                    "<br><br>Curl example with parameters: curl -w \":::\"%{http_code} --location --request POST " +
+                    "<br><br>Curl example with parameters: curl -w \":::\"%{http_code} --location --request PUT " +
                     "https://apps.kontur.io/insights-api/indicators/upload --header " +
                     "'Authorization: Bearer <ACCESS_TOKEN>' --form 'parameters={\"id\": \"area_km2\", \"label\": " +
                     "\"Area\", \"uuid\": \"7efd9ba2-e7de-44b9-8140-26c89e8170d7\", \"direction\": [[\"neutral\"], [\"neutral\"]], \"isBase\": true, \"isPublic\": false, " +
