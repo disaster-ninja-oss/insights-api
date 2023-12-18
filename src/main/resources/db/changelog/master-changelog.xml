@@ -22,5 +22,8 @@
     <include  file="14855_add_table_shedlock.sql" relativeToChangelogFile="true"/>
     <include  file="16269_use_uuid_as_foreign_key.sql" relativeToChangelogFile="true"/>
     <include file="16981_update_bivariate_indicators_metadata_primary_key.sql" relativeToChangelogFile="true"/>
-    <include  file="rebuild_bivariate_axis_correlation_v2.sql" relativeToChangelogFile="true"/>
+    <include file="add-indicator-external-id.sql" relativeToChangelogFile="true"/>
+    <include file="add-indicator-internal-id.sql" relativeToChangelogFile="true"/>
+    <include file="add-task-queue-table.sql" relativeToChangelogFile="true"/>
+    <include file="rebuild_bivariate_axis_correlation_v2.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -83,7 +83,7 @@ public class FunctionsRepository implements FunctionsService {
                 columns.add(String.format("res_%s.indicator_value as %s", i, paramIds.get(i)));
                 fromRes.add(String.format("res_%s", i));
                 fromBivariateIndicators.add(String.format("%s bi_%s", bivariateIndicatorsMetadataTableName, i));
-                whereUuid.add(String.format("res_%s.indicator_uuid = bi_%s.param_uuid", i, i));
+                whereUuid.add(String.format("res_%s.indicator_uuid = bi_%s.internal_id", i, i));
                 whereParamId.add(String.format("bi_%s.param_id = '%s'", i, paramIds.get(i)));
             }
             if (paramIds.size() > 1) {
