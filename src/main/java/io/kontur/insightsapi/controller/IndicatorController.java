@@ -79,7 +79,7 @@ public class IndicatorController {
                     "<br><br>Currently files can't be uploaded via Swagger due to endpoint " +
                     "implementation specifics." +
 
-                    "<br><br>Curl general example: curl -w \":::\"%{http_code} --location --request POST " +
+                    "<br><br>Curl general example: curl -w \":::\"%{http_code} --location --request PUT " +
                     "https://apps.kontur.io/insights-api/indicators/upload " +
                     "--header 'Authorization: <ACCESS_TOKEN> " +
                     "--form 'parameters=\"{\\\"id\\\": ${layer_id}, \\\"label\\\": ${layer_label}, \\\"uuid\\\": ${uuid}, " +
