@@ -167,7 +167,7 @@ public class IndicatorRepository {
         ps.setString(12, bivariateIndicatorDto.getUpdateFrequency());
         ps.setString(13, bivariateIndicatorDto.getApplication() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getApplication()));
         ps.setString(14, bivariateIndicatorDto.getUnitId());
-        ps.setString(15, bivariateIndicatorDto.getLastUpdated().toString());
+        ps.setString(15, bivariateIndicatorDto.getLastUpdated() == null ? null : bivariateIndicatorDto.getLastUpdated().toString());
     }
 
     //TODO: possibly will be added something about owner field here

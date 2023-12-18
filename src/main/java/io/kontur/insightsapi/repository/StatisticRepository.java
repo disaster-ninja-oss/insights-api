@@ -168,13 +168,13 @@ public class StatisticRepository implements CorrelationRateService {
                         .xNumerator(rs.getString("x_num"))
                         .xDenominator(rs.getString("x_den"))
                         .xLabel(rs.getString("x_param_label"))
-                        .xNumUuid(rs.getObject("x_num_param_uuid", UUID.class))
-                        .xDenUuid(rs.getObject("x_den_param_uuid", UUID.class))
+                        .xNumUuid(rs.getObject("x_num_internal_id", UUID.class))
+                        .xDenUuid(rs.getObject("x_den_internal_id", UUID.class))
                         .yNumerator(rs.getString("y_num"))
                         .yDenominator(rs.getString("y_den"))
                         .yLabel(rs.getString("y_param_label"))
-                        .yNumUuid(rs.getObject("y_num_param_uuid", UUID.class))
-                        .yDenUuid(rs.getObject("y_den_param_uuid", UUID.class))
+                        .yNumUuid(rs.getObject("y_num_internal_id", UUID.class))
+                        .yDenUuid(rs.getObject("y_den_internal_id", UUID.class))
                         .quality(rs.getDouble("quality")).build());
     }
 
