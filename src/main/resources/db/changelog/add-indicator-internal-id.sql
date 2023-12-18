@@ -19,7 +19,7 @@ alter table bivariate_axis_overrides
 
 -- Drop param_uuid unique constraint on bivariate_indicators_metadata
 alter table bivariate_indicators_metadata
-    drop constraint param_uuid_unique_constraint;
+    drop constraint if exists param_uuid_unique_constraint;
 
 -- Rename param_uuid column to internal_id
 alter table bivariate_indicators_metadata
@@ -39,7 +39,3 @@ alter table bivariate_axis_correlation_v2
 alter table bivariate_axis_v2
     add constraint fk_bivariate_axis_v2_denominator_uuid foreign key (denominator_uuid) references bivariate_indicators_metadata(internal_id),
     add constraint fk_bivariate_axis_v2_numerator_uuid foreign key (numerator_uuid) references bivariate_indicators_metadata(internal_id);
-
-alter table bivariate_axis_overrides
-    add constraint fk_bivariate_axis_overrides_denominator_id foreign key (denominator_id) references bivariate_indicators_metadata(external_id),
-    add constraint fk_bivariate_axis_overrides_numerator_id foreign key (numerator_id) references bivariate_indicators_metadata(external_id);
