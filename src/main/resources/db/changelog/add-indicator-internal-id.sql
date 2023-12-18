@@ -41,5 +41,5 @@ alter table bivariate_axis_v2
     add constraint fk_bivariate_axis_v2_numerator_uuid foreign key (numerator_uuid) references bivariate_indicators_metadata(internal_id);
 
 alter table bivariate_axis_overrides
-    add constraint fk_bivariate_axis_overrides_denominator_id foreign key (denominator_id) references bivariate_indicators_metadata(internal_id),
-    add constraint fk_bivariate_axis_overrides_numerator_id foreign key (numerator_id) references bivariate_indicators_metadata(internal_id);
+    add constraint fk_bivariate_axis_overrides_denominator_id foreign key (denominator_id) references bivariate_indicators_metadata(external_id),
+    add constraint fk_bivariate_axis_overrides_numerator_id foreign key (numerator_id) references bivariate_indicators_metadata(external_id);
