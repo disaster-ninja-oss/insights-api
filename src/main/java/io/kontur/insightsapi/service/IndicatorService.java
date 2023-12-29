@@ -22,10 +22,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
 import java.io.*;
 import java.time.Instant;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import static io.kontur.insightsapi.service.IndicatorProcessHelper.UUID_STRING_LENGTH;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -43,7 +43,7 @@ public class IndicatorService {
 
     private final AuthService authService;
 
-
+    public static final int UUID_STRING_LENGTH = 36;
 
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request, boolean isUpdate) {
         try {
@@ -61,19 +61,18 @@ public class IndicatorService {
                     indicatorMetadata.setOwner(authService.getCurrentUsername().orElseThrow());
 
                     if (isUpdate) {
-                        if (isEmpty(indicatorMetadata.getUuid())
-                                || indicatorMetadata.getUuid().length() != UUID_STRING_LENGTH
-                                || indicatorRepository.getIndicatorsByExternalId(indicatorMetadata.getUuid()).isEmpty()) {
+                        if (invalidIndicatorExternalId(indicatorMetadata.getExternalId())) {
                             return logAndReturnErrorWithMessage(HttpStatus.NOT_FOUND,
-                                    "Indicator with uuid " + indicatorMetadata.getUuid() + " not found");
+                                    "Indicator with uuid " + indicatorMetadata.getExternalId() + " not found");
                         }
                     } else {
-                        indicatorMetadata.setUuid(randomUUID().toString());
+                        indicatorMetadata.setExternalId(randomUUID().toString());
                     }
                     itemIndex++;
                 } else if (!item.isFormField() && "file".equals(item.getFieldName()) && itemIndex == 1) {
                     indicatorRepository.uploadCsvFile(item, indicatorMetadata);
-                    return ResponseEntity.ok().body(indicatorMetadata.getUuid());
+                    logger.info("Upload of csv file for indicator with uuid {} has been done successfully", indicatorMetadata.getExternalId());
+                    return ResponseEntity.ok().body(indicatorMetadata.getExternalId());
                 } else {
                     return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, "Wrong field parameter or " +
                             "wrong parameters order in multipart request: please send a request with multipart data " +
@@ -97,6 +96,20 @@ public class IndicatorService {
 
     public Instant getIndicatorsLastUpdateDate() {
         return indicatorRepository.getIndicatorsLastUpdateDate();
+    }
+
+    public List<BivariateIndicatorDto> getAllIndicators() {
+        return indicatorRepository.getAllIndicators();
+    }
+
+    public List<BivariateIndicatorDto> getGeneralIndicators() {
+        return indicatorRepository.getGeneralIndicators();
+    }
+
+    public boolean invalidIndicatorExternalId(String externalId) {
+        return isEmpty(externalId)
+                || externalId.length() != UUID_STRING_LENGTH
+                || indicatorRepository.getIndicatorsByExternalId(externalId).isEmpty();
     }
 
     private void validateParameters(BivariateIndicatorDto bivariateIndicatorDto) {
