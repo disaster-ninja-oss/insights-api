@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.controller;
 
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.service.AxisService;
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
 import io.kontur.insightsapi.service.IndicatorService;
@@ -17,6 +18,7 @@ import org.springframework.validation.BindingResult;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 @Tag(name = "Indicators", description = "Indicators API")
 @RestController
@@ -105,6 +107,33 @@ public class IndicatorController {
     @PutMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<String> updateIndicator(HttpServletRequest request) {
         return indicatorService.uploadIndicatorData(request, true);
+    }
+
+    @Operation(
+            summary = "Get indicators metadata by owner.",
+            tags = {"Indicators"},
+            description = "Get indicators metadata by owner. Owner is obtained from the token.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "500", description = "Internal error")})
+    @GetMapping()
+    public ResponseEntity<List<BivariateIndicatorDto>> getIndicatorsByOwner() {
+        return indicatorService.getIndicatorsByOwnerAndParamId(null);
+    }
+
+    // TODO: later ID will be expected as external_id (UUID) not param_id
+    @Operation(
+            summary = "Get indicators metadata by owner and ID.",
+            tags = {"Indicators"},
+            description = "Get indicators metadata by owner and ID. Owner is obtained from the token.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "500", description = "Internal error")})
+    @GetMapping("/{id}")
+    public ResponseEntity<List<BivariateIndicatorDto>> getIndicatorsByOwner(@PathVariable String id) {
+        return indicatorService.getIndicatorsByOwnerAndParamId(id);
     }
 
     @Operation(

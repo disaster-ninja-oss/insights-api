@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,6 +39,7 @@ public class BivariateIndicatorDto {
     @JsonProperty(value = "uuid")
     private String externalId;
 
+    @JsonIgnore
     private String internalId;
 
     @JsonProperty(value = "owner")
