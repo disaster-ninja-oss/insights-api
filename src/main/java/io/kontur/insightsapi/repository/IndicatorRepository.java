@@ -151,6 +151,23 @@ public class IndicatorRepository {
                 bivariateIndicatorRowMapper);
     }
 
+    public List<BivariateIndicatorDto> getIndicatorsByOwner(String owner) {
+        return jdbcTemplate.query(
+                String.format("SELECT * FROM %s WHERE owner = '%s'",
+                        bivariateIndicatorsMetadataTableName,
+                        owner),
+                bivariateIndicatorRowMapper);
+    }
+
+    public List<BivariateIndicatorDto> getIndicatorsByOwnerAndParamId(String owner, String paramId) {
+        return jdbcTemplate.query(
+                String.format("SELECT * FROM %s WHERE owner = '%s' and param_id = '%s'",
+                        bivariateIndicatorsMetadataTableName,
+                        owner,
+                        paramId),
+                bivariateIndicatorRowMapper);
+    }
+
     // TODO: possibly will be added something about owner field here
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getAllBivariateIndicators() {

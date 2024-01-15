@@ -47,6 +47,8 @@ spring:
 
 springdoc:
   packages-to-scan: io.kontur.insightsapi.controller
+  swagger-ui:
+    path: 'doc'
 
 graphql:
   servlet:

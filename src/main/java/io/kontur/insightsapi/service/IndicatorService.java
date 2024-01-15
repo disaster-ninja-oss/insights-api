@@ -22,9 +22,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
 import java.io.*;
 import java.time.Instant;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static java.util.Collections.emptyList;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -86,6 +88,21 @@ public class IndicatorService {
             return logAndReturnErrorWithMessage(HttpStatus.UNAUTHORIZED, "Incorrect authentication data: could not get username", e);
         } catch (Exception e) {
             return logAndReturnErrorWithMessage(HttpStatus.INTERNAL_SERVER_ERROR, "Could not process request, neither indicator nor h3 indexes were created", e);
+        }
+    }
+
+    public ResponseEntity<List<BivariateIndicatorDto>> getIndicatorsByOwnerAndParamId(String paramId) {
+        try {
+            String owner = authService.getCurrentUsername().orElseThrow();
+            if (paramId == null) {
+                return ResponseEntity.ok(indicatorRepository.getIndicatorsByOwner(owner));
+            }
+            return ResponseEntity.ok(indicatorRepository.getIndicatorsByOwnerAndParamId(owner, paramId));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(emptyList());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(emptyList());
         }
     }
 
