@@ -230,11 +230,11 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     private AdvancedAnalytics mapAdvancedAnalyticsWithAxis(ResultSet rs, List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos) {
         BivariateIndicatorDto numerator = indicators.stream()
-                .filter(i -> i.getUuid().equals(DatabaseUtil.getStringValueByColumnName(rs, "numerator_uuid")))
+                .filter(i -> i.getExternalId().equals(DatabaseUtil.getStringValueByColumnName(rs, "numerator_uuid")))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of numerator"));
         BivariateIndicatorDto denominator = indicators.stream()
-                .filter(i -> i.getUuid().equals(DatabaseUtil.getStringValueByColumnName(rs, "denominator_uuid")))
+                .filter(i -> i.getExternalId().equals(DatabaseUtil.getStringValueByColumnName(rs, "denominator_uuid")))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of denominator"));
 
@@ -288,13 +288,13 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
                             .filter(i -> i.getId().equals(advancedAnalyticsRequest.getNumerator()))
                             .findFirst()
                             .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of numerator"))
-                            .getUuid() +
+                            .getExternalId() +
                     "', '" +
                     indicators.stream()
                             .filter(i -> i.getId().equals(advancedAnalyticsRequest.getDenominator()))
                             .findFirst()
                             .orElseThrow(() -> new NoSuchElementException("Incorrect UUID of denominator"))
-                            .getUuid() +
+                            .getExternalId() +
                     "')";
 
             uuidsAsPairsForRequest.add(pair);

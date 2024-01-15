@@ -151,33 +151,13 @@ public class IndicatorRepository {
                 bivariateIndicatorRowMapper);
     }
 
-    private void initParams(PreparedStatement ps, BivariateIndicatorDto bivariateIndicatorDto) throws SQLException, JsonProcessingException {
-        ps.setString(1, bivariateIndicatorDto.getId());
-        ps.setString(2, bivariateIndicatorDto.getLabel());
-        ps.setString(3, bivariateIndicatorDto.getCopyrights() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getCopyrights()));
-        ps.setString(4, bivariateIndicatorDto.getDirection() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getDirection()));
-        ps.setBoolean(5, bivariateIndicatorDto.getIsBase());
-        ps.setString(6, bivariateIndicatorDto.getUuid());
-        ps.setString(7, bivariateIndicatorDto.getOwner());
-        ps.setBoolean(8, bivariateIndicatorDto.getIsPublic());
-        ps.setString(9, bivariateIndicatorDto.getAllowedUsers() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
-        ps.setString(10, bivariateIndicatorDto.getDescription());
-        ps.setString(11, bivariateIndicatorDto.getCoverage());
-        //TODO: discuss these values, should be some default values if not specified
-        ps.setString(12, bivariateIndicatorDto.getUpdateFrequency());
-        ps.setString(13, bivariateIndicatorDto.getApplication() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getApplication()));
-        ps.setString(14, bivariateIndicatorDto.getUnitId());
-        ps.setString(15, bivariateIndicatorDto.getLastUpdated() == null ? null : bivariateIndicatorDto.getLastUpdated().toString());
-    }
-
-    //TODO: possibly will be added something about owner field here
+    // TODO: possibly will be added something about owner field here
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getAllBivariateIndicators() {
         return jdbcTemplate.query(String.format("SELECT * FROM %s", bivariateIndicatorsMetadataTableName),
                 bivariateIndicatorRowMapper);
     }
 
-    // TODO: use owner here as param_id alone is no longer considered to be unique
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getSelectedBivariateIndicators(List<String> indicatorIds) {
         return jdbcTemplate.query(String.format("SELECT * FROM %s WHERE param_id in ('%s')",
@@ -203,5 +183,24 @@ public class IndicatorRepository {
         Timestamp lastUpdated = jdbcTemplate.queryForObject(String.format("SELECT MAX(last_updated) FROM %s",
                 bivariateIndicatorsMetadataTableName), Timestamp.class);
         return lastUpdated != null ? lastUpdated.toInstant() : null;
+    }
+
+    private void initParams(PreparedStatement ps, BivariateIndicatorDto bivariateIndicatorDto) throws SQLException, JsonProcessingException {
+        ps.setString(1, bivariateIndicatorDto.getId());
+        ps.setString(2, bivariateIndicatorDto.getLabel());
+        ps.setString(3, bivariateIndicatorDto.getCopyrights() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getCopyrights()));
+        ps.setString(4, bivariateIndicatorDto.getDirection() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getDirection()));
+        ps.setBoolean(5, bivariateIndicatorDto.getIsBase());
+        ps.setString(6, bivariateIndicatorDto.getExternalId());
+        ps.setString(7, bivariateIndicatorDto.getOwner());
+        ps.setBoolean(8, bivariateIndicatorDto.getIsPublic());
+        ps.setString(9, bivariateIndicatorDto.getAllowedUsers() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getAllowedUsers()));
+        ps.setString(10, bivariateIndicatorDto.getDescription());
+        ps.setString(11, bivariateIndicatorDto.getCoverage());
+        //TODO: discuss these values, should be some default values if not specified
+        ps.setString(12, bivariateIndicatorDto.getUpdateFrequency());
+        ps.setString(13, bivariateIndicatorDto.getApplication() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getApplication()));
+        ps.setString(14, bivariateIndicatorDto.getUnitId());
+        ps.setString(15, bivariateIndicatorDto.getLastUpdated() == null ? null : bivariateIndicatorDto.getLastUpdated().toString());
     }
 }
