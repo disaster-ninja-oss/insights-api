@@ -23,7 +23,9 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -153,19 +155,14 @@ public class IndicatorRepository {
 
     public List<BivariateIndicatorDto> getIndicatorsByOwner(String owner) {
         return jdbcTemplate.query(
-                String.format("SELECT * FROM %s WHERE owner = '%s'",
-                        bivariateIndicatorsMetadataTableName,
-                        owner),
-                bivariateIndicatorRowMapper);
+                "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ?",
+                bivariateIndicatorRowMapper, owner);
     }
 
     public List<BivariateIndicatorDto> getIndicatorsByOwnerAndParamId(String owner, String paramId) {
         return jdbcTemplate.query(
-                String.format("SELECT * FROM %s WHERE owner = '%s' and param_id = '%s'",
-                        bivariateIndicatorsMetadataTableName,
-                        owner,
-                        paramId),
-                bivariateIndicatorRowMapper);
+                "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ? AND param_id = ?",
+                bivariateIndicatorRowMapper, owner, paramId);
     }
 
     // TODO: possibly will be added something about owner field here
