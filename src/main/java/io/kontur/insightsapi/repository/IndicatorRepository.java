@@ -145,23 +145,23 @@ public class IndicatorRepository {
 
     public List<BivariateIndicatorDto> getIndicatorsByExternalId(String externalId) {
         return jdbcTemplate.query(
-                String.format("SELECT * FROM bivariate_indicators_metadata WHERE external_id = '%s'::uuid", externalId),
+                String.format("SELECT * FROM %s WHERE external_id = '%s'::uuid",
+                        bivariateIndicatorsMetadataTableName,
+                        externalId),
                 bivariateIndicatorRowMapper);
     }
 
     // TODO: possibly will be added something about owner field here
     @Transactional(readOnly = true)
-    public List<BivariateIndicatorDto> getAllIndicators() {
-        return jdbcTemplate.query("select * from bivariate_indicators_metadata where state = 'READY'",
+    public List<BivariateIndicatorDto> getAllBivariateIndicators() {
+        return jdbcTemplate.query(String.format("SELECT * FROM %s", bivariateIndicatorsMetadataTableName),
                 bivariateIndicatorRowMapper);
     }
 
     @Transactional(readOnly = true)
-    public List<BivariateIndicatorDto> getGeneralIndicators() {
-        return jdbcTemplate.query(
-                "select bi.* from bivariate_indicators_metadata bi " +
-                        "where bi.state = 'READY' and " +
-                        "exists(select 1 from bivariate_overlays_v2 bo where bi.external_id in (bo.x_numerator_id, x_denominator_id, y_numerator_id, y_denominator_id))",
+    public List<BivariateIndicatorDto> getSelectedBivariateIndicators(List<String> indicatorIds) {
+        return jdbcTemplate.query(String.format("SELECT * FROM %s WHERE param_id in ('%s')",
+                        bivariateIndicatorsMetadataTableName, String.join("','", indicatorIds)),
                 bivariateIndicatorRowMapper);
     }
 

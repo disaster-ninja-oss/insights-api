@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
 import java.io.*;
 import java.time.Instant;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -96,14 +95,6 @@ public class IndicatorService {
 
     public Instant getIndicatorsLastUpdateDate() {
         return indicatorRepository.getIndicatorsLastUpdateDate();
-    }
-
-    public List<BivariateIndicatorDto> getAllIndicators() {
-        return indicatorRepository.getAllIndicators();
-    }
-
-    public List<BivariateIndicatorDto> getGeneralIndicators() {
-        return indicatorRepository.getGeneralIndicators();
     }
 
     public boolean invalidIndicatorExternalId(String externalId) {

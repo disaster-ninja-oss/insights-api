@@ -66,7 +66,12 @@ public class PopulationController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad input geometry");
         }
         try {
-            return populationTransformer.calculatePopulation(info.getPolygon());
+            ZonedDateTime start = ZonedDateTime.now(ZoneId.of("UTC"));
+            logger.debug("Start time: {}", start.toString());
+            StatisticDto statistic = populationTransformer.calculatePopulation(info.getPolygon());
+            ZonedDateTime end = ZonedDateTime.now(ZoneId.of("UTC"));
+            logger.debug("End time: {}. Duration: {} ms", end.toString(), (end.toInstant().toEpochMilli() - start.toInstant().toEpochMilli()));
+            return statistic;
         } catch (Exception e) {
             logger.error("Error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getCause() != null ? e.getCause().getMessage() : e.getMessage());
@@ -110,6 +115,9 @@ public class PopulationController {
         if (CollectionUtils.isEmpty(data)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty input geometry");
         }
+        Date start = new Date();
+        logger.debug("Start time: {}", start.toString());
+
         List<SeveralPolygonsCalculationOutputDto> result = new ArrayList<>();
         data.forEach(dto -> {
             try {
@@ -122,6 +130,8 @@ public class PopulationController {
             outputDTO.setStatistic(populationTransformer.calculatePopulation(dto.getGeometry()));
             result.add(outputDTO);
         });
+        Date end = new Date();
+        logger.debug("End time: {}. Duration: {} ms", end.toString(), (end.getTime() - start.getTime()));
         return CompletableFuture.completedFuture(result);
     }
 

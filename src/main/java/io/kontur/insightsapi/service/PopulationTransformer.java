@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.service;
 
-import io.kontur.insightsapi.configuration.logging.DebugExecutionTimeLogger;
 import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.dto.StatisticDto;
@@ -63,7 +62,6 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
         return populationRepository.calculateHumanitarianImpact(wkt);
     }
 
-    @DebugExecutionTimeLogger
     public StatisticDto calculatePopulation(String geometry) {
         if (StringUtils.isBlank(geometry)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empty input geometry");

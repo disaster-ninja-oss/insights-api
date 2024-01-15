@@ -84,6 +84,53 @@ public class TileController {
                 .body(tileService.getBivariateTileMvt(z, x, y, indicatorsClass));
     }
 
+    @Operation(summary = "Get bivariate mvt tile using z, x, y and list of indicators.",
+            tags = {"Tiles"},
+            description = "Get bivariate mvt tile using z, x, y and list of indicators.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful operation",
+                            content = @Content(mediaType = "application/vnd.mapbox-vector-tile")),
+                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+                    @ApiResponse(responseCode = "500", description = "Internal error")})
+    @GetMapping(value = "/bivariate/v2/{z}/{x}/{y}.mvt", produces = "application/vnd.mapbox-vector-tile")
+    public ResponseEntity<byte[]> getBivariateTileMvtV2(@PathVariable Integer z,
+                                                        @PathVariable Integer x,
+                                                        @PathVariable Integer y,
+                                                        @RequestParam(required = false) List<String> indicatorsList,
+                                                        WebRequest request) {
+        if (isRequestInvalid(z, x, y)) {
+            return ResponseEntity.ok()
+                    .body(new byte[0]);
+        }
+        Instant lastUpdated = indicatorService.getIndicatorsLastUpdateDate();
+        if (lastUpdated == null) {
+            return ResponseEntity.ok()
+                    .cacheControl(CacheControl.empty().cachePublic())
+                    .header("Expires", HTTP_TIME_FORMATTER.format(Instant.now()))
+                    .body(tileService.getBivariateTileMvtIndicatorsList(z, x, y, indicatorsList));
+        }
+
+        Instant expirationTime = lastUpdated.plus(Duration.ofDays(1));
+        String eTag = lastUpdated.toString();
+
+        // if If-None-Match header is present and set to the ETag that is still valid, return 304 Not Modified
+        String ifNoneMatch = request.getHeader("If-None-Match");
+        if (ifNoneMatch != null && ifNoneMatch.equals(eTag)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .cacheControl(CacheControl.empty().cachePublic())
+                    .header("Expires", HTTP_TIME_FORMATTER.format(expirationTime))
+                    .eTag(eTag)
+                    .build();
+        }
+
+        log.info("Data has been updated. Refreshing tiles");
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.empty().cachePublic())
+                .header("Expires", HTTP_TIME_FORMATTER.format(expirationTime))
+                .eTag(lastUpdated.toString())
+                .body(tileService.getBivariateTileMvtIndicatorsList(z, x, y, indicatorsList));
+    }
+
     // TODO remove z > 8 check once US 1386 is done
     private boolean isRequestInvalid(Integer z, Integer x, Integer y) {
         return (z < 0 || z > 24 || x < 0 || x > (Math.pow(2, z) - 1) || y < 0 || y > (Math.pow(2, z) - 1));
