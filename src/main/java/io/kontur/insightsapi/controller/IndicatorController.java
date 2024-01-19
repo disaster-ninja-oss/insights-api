@@ -157,9 +157,9 @@ public class IndicatorController {
             axisService.insertOverrides(request);
         } catch (DataIntegrityViolationException e) {
             // catch 'invalid syntax for type...' to hide plain SQL in error response
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid input data format");
+            return ResponseEntity.badRequest().body("Invalid input data format");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok().body("");
     }
@@ -185,9 +185,9 @@ public class IndicatorController {
             axisService.insertPreset(request);
         } catch (DataIntegrityViolationException e) {
             // catch 'invalid syntax for type...' to hide plain SQL in error response
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid input data format");
+            return ResponseEntity.badRequest().body("Invalid input data format");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok().body("");
     }

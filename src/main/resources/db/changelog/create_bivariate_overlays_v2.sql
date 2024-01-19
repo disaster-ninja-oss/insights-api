@@ -11,7 +11,7 @@ create table if not exists bivariate_overlays_v2
     y_numerator_id      uuid not null, -- horizontal axis on DN
     y_denominator_id    uuid not null, -- horizontal axis on DN
     active              boolean default true,
-    colors              jsonb not null,
+    colors              jsonb,
     application         json,
     is_public           boolean default false
 );
