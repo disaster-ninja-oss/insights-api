@@ -141,7 +141,7 @@ public class IndicatorController {
     @Operation(
             summary = "Create or update custom labels and stops for bivariate axis.",
             tags = {"Indicators"},
-            description = "Provided numerator and denominator ids should exist as bivariate indicators for current owner. " +
+            description = "Provided numerator and denominator UUIDs should exist as bivariate indicators for current user. " +
                      "Accepts overrides for the following params:<br>" +
                      "label, min, p25, p75, max, min_label, p25_label, p75_label, max_label",
             responses = {
@@ -167,13 +167,17 @@ public class IndicatorController {
     @Operation(
             summary = "Create or update bivariate presets.",
             tags = {"Indicators"},
-            description = "TODO",
+            description = """
+                Create bivariate presets by providing UUIDs for numerator/denominator pairs. Indicator UUIDs should exist for current user. x_numerator_id/x_denominator_id is vertical axis, y_numerator/y_denominator is horizontal one.
+                The "colors" field accepts escaped-json string for bivariate legend with 9 cells, example value:
+                "[{\\"id\\":\\"A1\\",\\"color\\":\\"rgb(232,232,157)\\"},{\\"id\\":\\"A2\\",\\"color\\":\\"rgb(239,163,127)\\"},{\\"id\\":\\"A3\\",\\"color\\":\\"rgb(228,26,28)\\"},{\\"id\\":\\"B1\\",\\"color\\":\\"rgb(186,226,153)\\"},{\\"id\\":\\"B2\\",\\"color\\":\\"rgb(161,173,88)\\"},{\\"id\\":\\"B3\\",\\"color\\":\\"rgb(191,108,63)\\"},{\\"id\\":\\"C1\\",\\"color\\":\\"rgb(90,200,127)\\"},{\\"id\\":\\"C2\\",\\"color\\":\\"rgb(112,186,128)\\"},{\\"id\\":\\"C3\\",\\"color\\":\\"rgb(83,152,106)\\"}]"
+            """,
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
                     @ApiResponse(responseCode = "500", description = "Internal error")})
-    @PostMapping(value = "/axis/presets")
-    public ResponseEntity<String> uploadLabels(@Valid @RequestBody PresetDto request, BindingResult bindingResult) {
+    @PostMapping(value = "/axis/preset")
+    public ResponseEntity<String> uploadPreset(@Valid @RequestBody PresetDto request, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body("Validation error: " + bindingResult.getFieldError().getDefaultMessage());
         }
