@@ -1,25 +1,80 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
+import io.kontur.insightsapi.dto.PresetDto;
+import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.dao.DataIntegrityViolationException;
 
 @Repository
 @RequiredArgsConstructor
 public class AxisRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(IndicatorRepository.class);
+    private static final Logger logger = LoggerFactory.getLogger(AxisRepository.class);
 
     private final JdbcTemplate jdbcTemplate;
+    private final IndicatorRepository indicatorRepository;
 
-    public void insertOverrides(AxisOverridesRequest request)
+    public void validateIndicators(List<String> uuids, String owner) {
+        for (String uuid : uuids)
+            if (indicatorRepository.getIndicatorByOwnerAndExternalId(owner, uuid) == null)
+                throw new IllegalArgumentException(String.format("No indicator %s for user %s", uuid, owner));
+    }
+
+    public void insertPreset(PresetDto preset, String owner)
+            throws IllegalArgumentException {
+        validateIndicators(List.of(
+            preset.getX_numerator_id(),
+            preset.getX_denominator_id(),
+            preset.getY_numerator_id(),
+            preset.getY_denominator_id()), owner);
+        String sql = """
+                insert into bivariate_overlays_v2
+                (ord, name, description, x_numerator_id, x_denominator_id, y_numerator_id, y_denominator_id,
+                 active, colors, application, is_public)
+                values
+                (?, ?, ?, ?::uuid, ?::uuid, ?::uuid, ?::uuid, ?, ?::jsonb, ?::json, ?)
+                on conflict (x_numerator_id, x_denominator_id, y_numerator_id, y_denominator_id) do update
+                set
+                    ord = excluded.ord,
+                    name = excluded.name,
+                    description = excluded.description,
+                    active = excluded.active,
+                    colors = excluded.colors,
+                    application = excluded.application,
+                    is_public = excluded.is_public
+        """;
+        try {
+            jdbcTemplate.update(
+                sql,
+                preset.getOrd(),
+                preset.getName(),
+                preset.getDescription(),
+                preset.getX_numerator_id(),
+                preset.getX_denominator_id(),
+                preset.getY_numerator_id(),
+                preset.getY_denominator_id(),
+                preset.getActive(),
+                preset.getColors(),
+                preset.getApplication(),
+                preset.getIs_public()
+                );
+        } catch (Exception e) {
+            logger.error("Could not update preset.", e);
+            throw new IllegalArgumentException("Could not update preset.", e);
+        }
+    }
+
+    public void insertOverrides(AxisOverridesRequest request, String owner)
             throws IllegalArgumentException {
         String numerator = request.getNumerator_id();
         String denominator = request.getDenominator_id();
+        validateIndicators(List.of(numerator, denominator), owner);
+
         String sql = """
                 insert into bivariate_axis_overrides
                 (numerator_id, denominator_id, label, min, max, p25, p75, min_label, p25_label, p75_label, max_label)
@@ -52,11 +107,6 @@ public class AxisRepository {
                 request.getP75Label(),
                 request.getMaxLabel()
                 );
-        } catch (DataIntegrityViolationException e) {
-            logger.error("Could not update bivariate_axis_overrides due to FK constraint", e);
-            // not-null constraint violation is also DataIntegrityViolationException, but we catch it earlier
-            throw new IllegalArgumentException(
-                    String.format("Could not apply overrides: some provided indicator IDs are missing in DB."));
         } catch (Exception e) {
             logger.error("Could not update bivariate_axis_overrides.", e);
             throw new IllegalArgumentException("Could not update bivariate_axis_overrides.", e);

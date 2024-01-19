@@ -3,6 +3,7 @@ package io.kontur.insightsapi.controller;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.service.AxisService;
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
+import io.kontur.insightsapi.dto.PresetDto;
 import io.kontur.insightsapi.service.IndicatorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.BindingResult;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
@@ -153,6 +155,33 @@ public class IndicatorController {
         }
         try {
             axisService.insertOverrides(request);
+        } catch (DataIntegrityViolationException e) {
+            // catch 'invalid syntax for type...' to hide plain SQL in error response
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid input data format");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok().body("");
+    }
+
+    @Operation(
+            summary = "Create or update bivariate presets.",
+            tags = {"Indicators"},
+            description = "TODO",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+                    @ApiResponse(responseCode = "500", description = "Internal error")})
+    @PostMapping(value = "/axis/presets")
+    public ResponseEntity<String> uploadLabels(@Valid @RequestBody PresetDto request, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body("Validation error: " + bindingResult.getFieldError().getDefaultMessage());
+        }
+        try {
+            axisService.insertPreset(request);
+        } catch (DataIntegrityViolationException e) {
+            // catch 'invalid syntax for type...' to hide plain SQL in error response
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid input data format");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

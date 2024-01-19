@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
@@ -163,6 +164,16 @@ public class IndicatorRepository {
         return jdbcTemplate.query(
                 "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ? AND param_id = ?",
                 bivariateIndicatorRowMapper, owner, paramId);
+    }
+
+    public BivariateIndicatorDto getIndicatorByOwnerAndExternalId(String owner, String externalId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ? AND external_id = ?::uuid",
+                    bivariateIndicatorRowMapper, owner, externalId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     // TODO: possibly will be added something about owner field here
