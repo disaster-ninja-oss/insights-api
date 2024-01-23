@@ -27,4 +27,5 @@
     <include file="add-task-queue-table.sql" relativeToChangelogFile="true"/>
     <include file="rebuild_bivariate_axis_correlation_v2.sql" relativeToChangelogFile="true"/>
     <include file="add_constraints_bivariate_axis_v2.sql" relativeToChangelogFile="true"/>
+    <include file="create_bivariate_overlays_v2.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

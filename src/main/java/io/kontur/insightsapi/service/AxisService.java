@@ -1,7 +1,9 @@
 package io.kontur.insightsapi.service;
 
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
+import io.kontur.insightsapi.dto.PresetDto;
 import io.kontur.insightsapi.repository.AxisRepository;
+import io.kontur.insightsapi.service.auth.AuthService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +12,16 @@ import org.springframework.stereotype.Service;
 public class AxisService {
 
     private final AxisRepository axisRepository;
+    private final AuthService authService;
 
     public void insertOverrides(AxisOverridesRequest request) {
-        axisRepository.insertOverrides(request);
+        String owner = authService.getCurrentUsername().orElseThrow();
+        axisRepository.insertOverrides(request, owner);
+    }
+
+    public void insertPreset(PresetDto request) {
+        String owner = authService.getCurrentUsername().orElseThrow();
+        axisRepository.insertPreset(request, owner);
     }
 
 }
