@@ -33,7 +33,7 @@ public class WebSecurityConfiguration {
                 .csrf()
                 .disable()
                 .authorizeRequests(auth -> auth
-                        .antMatchers("/graphql/**", "/graphiql/**", "/vendor/graphiql/**", "/tiles/**",
+                        .antMatchers("/graphql/**", "/graphiql/**", "/vendor/graphiql/**", "/tiles/**", "/population/**",
                                 "/cache/cleanUp", "/health/liveness", "/health/readiness", "/metrics",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/doc/**").permitAll()
                         .anyRequest().authenticated()//TODO: secure other endpoints in future
