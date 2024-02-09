@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class BivariateIndicatorDto {
 
     @JsonProperty(value = "id", required = true)
     @NotEmpty(message = "Id cannot be null or empty")
+    @Deprecated
     private String id;
 
     @JsonProperty(value = "label", required = true)
@@ -35,7 +37,10 @@ public class BivariateIndicatorDto {
     private Boolean isBase = false;
 
     @JsonProperty(value = "uuid")
-    private String uuid;
+    private String externalId;
+
+    @JsonIgnore
+    private String internalId;
 
     @JsonProperty(value = "owner")
     private String owner;

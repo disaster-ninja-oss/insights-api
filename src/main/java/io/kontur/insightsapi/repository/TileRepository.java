@@ -108,9 +108,9 @@ public class TileRepository {
             List<String> columns = Lists.newArrayList();
 
             for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
-                outerFilter.add(String.format("'%s'", indicator.getUuid()));
+                outerFilter.add(String.format("'%s'", indicator.getExternalId()));
                 columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as %s",
-                        indicator.getUuid(), indicator.getId()));
+                        indicator.getExternalId(), indicator.getId()));
             }
 
             return String.format(queryFactory.getSql(getTileMvtGenerateOnTheFly),
