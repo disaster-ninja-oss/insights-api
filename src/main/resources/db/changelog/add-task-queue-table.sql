@@ -12,7 +12,6 @@ create table if not exists task_queue
     created_at       timestamptz default now()::timestamptz
 );
 
--- alter table task_queue
---     add constraint task_queue_unique unique nulls not distinct (
---         task_type, x_numerator_id, x_denominator_id, y_numerator_id, y_denominator_id);
-
+alter table task_queue
+    add constraint task_queue_unique unique nulls not distinct (
+        task_type, x_numerator_id, x_denominator_id, y_numerator_id, y_denominator_id);
