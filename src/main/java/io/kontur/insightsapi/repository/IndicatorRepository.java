@@ -77,6 +77,7 @@ public class IndicatorRepository {
             Future<?> uploadTask = submitUploadTask(file, internalId, pipedOutputStream);
 
             copyFile(connection, pipedInputStream);
+            jdbcTemplate.execute(String.format("analyze %s", transposedTableName));
 
             try {
                 uploadTask.get();
