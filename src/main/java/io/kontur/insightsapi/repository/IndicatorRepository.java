@@ -77,13 +77,14 @@ public class IndicatorRepository {
             Future<?> uploadTask = submitUploadTask(file, internalId, pipedOutputStream);
 
             copyFile(connection, pipedInputStream);
-            jdbcTemplate.execute(String.format("analyze %s", transposedTableName));
 
             try {
                 uploadTask.get();
             } catch (Exception e) {
                 throw new IndicatorDataProcessingException(e.getCause().getMessage(), e);
             }
+
+            jdbcTemplate.execute(String.format("analyze %s", transposedTableName));
             connection.commit();
         } catch (Exception e) {
             if (connection != null) {
