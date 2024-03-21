@@ -83,6 +83,8 @@ public class IndicatorRepository {
             } catch (Exception e) {
                 throw new IndicatorDataProcessingException(e.getCause().getMessage(), e);
             }
+
+            jdbcTemplate.execute(String.format("analyze %s", transposedTableName));
             connection.commit();
         } catch (Exception e) {
             if (connection != null) {
