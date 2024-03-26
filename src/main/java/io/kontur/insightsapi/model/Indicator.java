@@ -25,6 +25,8 @@ public class Indicator {
 
     private Unit unit;
 
+    private String emoji;
+
     @SuppressWarnings("unused")
     public String getUpdate_frequency() {
         return updateFrequency;
