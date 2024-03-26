@@ -73,6 +73,9 @@ public class BivariateIndicatorDto {
     @JsonProperty(value = "unitId")
     private String unitId;
 
+    @JsonProperty(value = "emoji")
+    private String emoji;
+
     @JsonProperty(value = "lastUpdated")
     private OffsetDateTime lastUpdated;
 }
