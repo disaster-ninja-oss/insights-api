@@ -89,14 +89,19 @@ public class TileRepository {
     }
 
     public List<String> getGeneralBivariateIndicators() {
-        Set<String> result = new HashSet<>();
-        var query = "select x_numerator, x_denominator, y_numerator, y_denominator from bivariate_overlays";
-        jdbcTemplate.query(query, (rs, rowNum) ->
-                result.addAll(List.of(rs.getString("x_numerator"),
-                        rs.getString("x_denominator"),
-                        rs.getString("y_numerator"),
-                        rs.getString("y_denominator"))));
-        return result.stream().toList();
+        if (useStatSeparateTables) {
+            Set<String> result = new HashSet<>();
+            var query = "select x_numerator, x_denominator, y_numerator, y_denominator from bivariate_overlays";
+            jdbcTemplate.query(query, (rs, rowNum) ->
+                    result.addAll(List.of(rs.getString("x_numerator"),
+                            rs.getString("x_denominator"),
+                            rs.getString("y_numerator"),
+                            rs.getString("y_denominator"))));
+            return result.stream().toList();
+        } else {
+            var query = String.format("select param_id from %s where is_public", bivariateIndicatorsMetadataTableName);
+            return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
+        }
     }
 
     private String generateSqlQuery(List<String> bivariateIndicators) {
@@ -109,7 +114,7 @@ public class TileRepository {
 
             for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
                 outerFilter.add(String.format("'%s'", indicator.getExternalId()));
-                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as %s",
+                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
                         indicator.getExternalId(), indicator.getId()));
             }
 
