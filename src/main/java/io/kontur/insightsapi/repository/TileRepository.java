@@ -81,27 +81,14 @@ public class TileRepository {
                 (rs, rowNum) -> rs.getBytes("tile"));
     }
 
-    public List<String> getAllBivariateIndicators() {
+    public List<String> getAllBivariateIndicators(Boolean publicOnly) {
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName
                 : bivariateIndicatorsTableName;
         var query = String.format("select param_id from %s", bivariateIndicatorsTable);
-        return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
-    }
-
-    public List<String> getGeneralBivariateIndicators() {
-        if (useStatSeparateTables) {
-            Set<String> result = new HashSet<>();
-            var query = "select x_numerator, x_denominator, y_numerator, y_denominator from bivariate_overlays";
-            jdbcTemplate.query(query, (rs, rowNum) ->
-                    result.addAll(List.of(rs.getString("x_numerator"),
-                            rs.getString("x_denominator"),
-                            rs.getString("y_numerator"),
-                            rs.getString("y_denominator"))));
-            return result.stream().toList();
-        } else {
-            var query = String.format("select param_id from %s where is_public", bivariateIndicatorsMetadataTableName);
-            return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
+        if (publicOnly) {
+            query += " where is_public";
         }
+        return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
     }
 
     private String generateSqlQuery(List<String> bivariateIndicators) {

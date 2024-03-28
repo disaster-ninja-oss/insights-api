@@ -50,8 +50,8 @@ public class TileService {
     public byte[] getBivariateTileMvt(Integer z, Integer x, Integer y, String indicatorsClass) {
         List<String> bivariateIndicators;
         switch (indicatorsClass) {
-            case ("all") -> bivariateIndicators = tileRepository.getAllBivariateIndicators();
-            case ("general") -> bivariateIndicators = tileRepository.getGeneralBivariateIndicators();
+            case ("all") -> bivariateIndicators = tileRepository.getAllBivariateIndicators(false);
+            case ("general") -> bivariateIndicators = tileRepository.getAllBivariateIndicators(true);
             default -> {
                 String error = String.format("Tile indicator class is not defined. Class: %s", indicatorsClass);
                 logger.error(error);
@@ -64,7 +64,7 @@ public class TileService {
     public byte[] getBivariateTileMvtIndicatorsList(Integer z, Integer x, Integer y, List<String> indicatorsList) {
         var indicators = indicatorsList;
         if (CollectionUtils.isEmpty(indicators)) {
-            indicators = tileRepository.getAllBivariateIndicators();
+            indicators = tileRepository.getAllBivariateIndicators(false);
         } else {
             if (!checkIndicatorsList(indicators)) {
                 String error = "Wrong indicator name. " +
@@ -81,7 +81,7 @@ public class TileService {
     }
 
     private boolean checkIndicatorsList(List<String> indicatorsList) {
-        var bivariateIndicators = tileRepository.getAllBivariateIndicators();
+        var bivariateIndicators = tileRepository.getAllBivariateIndicators(false);
         return bivariateIndicators.containsAll(indicatorsList);
     }
 
