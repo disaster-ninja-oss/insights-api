@@ -57,6 +57,7 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
                 new TypeReference<>() {
                 }));
         bivariateIndicatorDto.setUnitId(resultSet.getString(BivariateIndicatorsColumns.unit_id.name()));
+        bivariateIndicatorDto.setEmoji(resultSet.getString(BivariateIndicatorsColumns.emoji.name()));
         bivariateIndicatorDto.setLastUpdated(resultSet.getObject(BivariateIndicatorsColumns.last_updated.name(),
                 OffsetDateTime.class));
         return bivariateIndicatorDto;
@@ -64,6 +65,6 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
 
     private enum BivariateIndicatorsColumns {
         param_id, param_label, copyrights, direction, is_base, external_id, internal_id, owner, state, is_public,
-        allowed_users, date, description, coverage, update_frequency, application, unit_id, last_updated
+        allowed_users, date, description, coverage, update_frequency, application, unit_id, emoji, last_updated
     }
 }
