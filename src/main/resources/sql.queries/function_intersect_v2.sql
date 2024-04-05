@@ -11,7 +11,7 @@ with validated_input as (
              where sh.resolution = 8
                and indicator_uuid IN (select internal_id
                                       from %s
-                                      where param_id IN ('%s'))),
+                                      where param_id IN ('%s') and state = 'READY' and is_public)),
      stat_area as (select distinct on (h.h3) h.*
 from (select res_0.h3,
     %s
