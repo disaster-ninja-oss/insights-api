@@ -58,6 +58,22 @@ public class FunctionsRepository implements FunctionsService {
     private final IndicatorRepository indicatorRepository;
 
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
+        var paramSource = new MapSqlParameterSource("polygon", geojson);
+        List<FunctionResult> result = new ArrayList<>();
+        String query = getFunctionsQuery(args);
+        try {
+            namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
+                result.addAll(createFunctionResultList(args, rs));
+            }));
+        } catch (Exception e) {
+            String error = String.format("Sql exception for geometry %s", geojson);
+            logger.error(error, e);
+            throw new IllegalArgumentException(error, e);
+        }
+        return result;
+    }
+
+    public String getFunctionsQuery(List<FunctionArgs> args) {
         List<String> params = args.stream()
                 .map(this::createFunctionsForSelect)
                 .toList();
@@ -70,7 +86,6 @@ public class FunctionsRepository implements FunctionsService {
                 paramIds.add(arg.getY());
             }
         }
-        var paramSource = new MapSqlParameterSource("polygon", geojson);
         var query = StringUtils.EMPTY;
         if (useStatSeparateTables) {
             List<String> columns = new ArrayList<>();
@@ -99,17 +114,7 @@ public class FunctionsRepository implements FunctionsService {
                     StringUtils.join(paramIds, ", "),
                     StringUtils.join(params, ", "));
         }
-        List<FunctionResult> result = new ArrayList<>();
-        try {
-            namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
-                result.addAll(createFunctionResultList(args, rs));
-            }));
-        } catch (Exception e) {
-            String error = String.format("Sql exception for geometry %s", geojson);
-            logger.error(error, e);
-            throw new IllegalArgumentException(error, e);
-        }
-        return result;
+        return query;
     }
 
     private String createFunctionsForSelect(FunctionArgs functionArgs) {

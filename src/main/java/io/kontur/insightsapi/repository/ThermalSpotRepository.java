@@ -1,14 +1,13 @@
 package io.kontur.insightsapi.repository;
 
+import io.kontur.insightsapi.dto.FunctionArgs;
 import io.kontur.insightsapi.model.ThermalSpotStatistic;
-import io.kontur.insightsapi.service.Helper;
 import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
+import io.kontur.insightsapi.repository.FunctionsRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -18,41 +17,40 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
 public class ThermalSpotRepository implements ThermalSpotStatisticService {
 
-    @Value("classpath:/sql.queries/thermal_statistic.sql")
-    private Resource thermalStatistic;
-
-    private static final Map<String, String> queryMap = Map.of(
-            "industrialAreaKm2", "sum(industrial_area) as industrialAreaKm2 ",
-            "hotspotDaysPerYearMax", "max(wildfires) as hotspotDaysPerYearMax ",
-            "volcanoesCount", "sum(volcanos_count)  as volcanoesCount ",
-            "forestAreaKm2", "sum(forest) as forestAreaKm2"
+    private static final Map<String, String> funcMap = Map.of(
+            "industrialAreaKm2", "sumX",
+            "hotspotDaysPerYearMax", "maxX",
+            "volcanoesCount", "sumX",
+            "forestAreaKm2", "sumX"
     );
 
     private final Logger logger = LoggerFactory.getLogger(ThermalSpotRepository.class);
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    private final Helper helper;
-
-    private final QueryFactory queryFactory;
+    private final FunctionsRepository functionsRepository;
 
     @Transactional(readOnly = true)
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
-        var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(thermalStatistic), StringUtils.join(queryList, ", "));
+        System.out.println(geojson);
+        List<FunctionArgs> args = fieldList.stream()
+            .map(f -> new FunctionArgs(f, funcMap.get(f), f, null))
+            .collect(Collectors.toList());
+        String query = functionsRepository.getFunctionsQuery(args);
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     ThermalSpotStatistic.builder()
-                            .industrialAreaKm2(rs.getBigDecimal("industrialAreaKm2"))
-                            .hotspotDaysPerYearMax(rs.getLong("hotspotDaysPerYearMax"))
-                            .volcanoesCount(rs.getLong("volcanoesCount"))
-                            .forestAreaKm2(rs.getBigDecimal("forestAreaKm2"))
+                            .industrialAreaKm2(rs.getBigDecimal("resultindustrialAreaKm2"))
+                            .hotspotDaysPerYearMax(rs.getLong("resulthotspotDaysPerYearMax"))
+                            .volcanoesCount(rs.getLong("resultvolcanoesCount"))
+                            .forestAreaKm2(rs.getBigDecimal("resultforestAreaKm2"))
                             .build());
         } catch (DataAccessResourceFailureException e) {
             String error = String.format(DatabaseUtil.ERROR_TIMEOUT, geojson);
