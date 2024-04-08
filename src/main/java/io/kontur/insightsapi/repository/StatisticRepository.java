@@ -49,6 +49,9 @@ public class StatisticRepository implements CorrelationRateService {
     @Value("classpath:/sql.queries/statistic_correlation.sql")
     private Resource statisticCorrelation;
 
+    @Value("classpath:/sql.queries/statistic_correlation_v2.sql")
+    private Resource statisticCorrelationV2;
+
     @Value("classpath:/sql.queries/statistic_correlation_numdenom.sql")
     private Resource statisticCorrelationNumdenom;
 
@@ -146,6 +149,9 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public List<PolygonMetrics> getAllCorrelationRateStatistics() {
+        if (useStatSeparateTables) {
+            return jdbcTemplate.query(queryFactory.getSql(statisticCorrelationV2), polygonMetricsRowMapper);
+        }
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
         String bivariateAxisCorrelationTable = useStatSeparateTables
                 ? bivariateAxisCorrelationV2TableName : bivariateAxisCorrelationTableName;
