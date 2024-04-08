@@ -43,3 +43,44 @@ begin
     return resolution;
 end;
 $$;
+
+
+drop function if exists calculate_area_resolution_v2(geometry);
+
+create or replace function calculate_area_resolution_v2(geometry geometry)
+    returns integer
+    language plpgsql
+    stable
+    parallel safe
+    cost 10000
+as
+$$
+declare
+    area_limit bigint := 10000;
+    resolution int    := 8;
+    geom_area  bigint;
+begin
+    geometry = map_to_geometry_obj(geometry);
+    geom_area = ST_Area(ST_Transform(geometry, 4326)::geography) / 1000000;
+    select (case when geom_area = 0 then
+                     sum(indicator_value)
+            else least(sum(indicator_value), geom_area)::numeric
+            end) "geom_area"
+    from (
+             select h3, indicator_value
+             from stat_h3_transposed
+             join stat_h3_geom sg using(h3)
+             cross join ST_Subdivide(geometry) g_geom
+             where ST_Intersects(sg.geom, g_geom)
+               and sg.resolution = 4
+               and indicator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'populated_area_km2' limit 1)
+         ) "pop_area_h3"
+    into geom_area;
+    while area_limit < geom_area and resolution > 1
+        loop
+            resolution = resolution - 1;
+            area_limit = area_limit * 7;
+        end loop;
+    return resolution;
+end;
+$$;

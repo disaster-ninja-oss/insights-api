@@ -1,4 +1,4 @@
-with resolution as (select calculate_area_resolution(ST_SetSRID(:polygon::geometry, 4326)) as resolution),
+with resolution as (select calculate_area_resolution_v2(ST_SetSRID(:polygon::geometry, 4326)) as resolution),
      validated_input
          as (select (:transformed_polygon)::geometry as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
@@ -9,7 +9,7 @@ with resolution as (select calculate_area_resolution(ST_SetSRID(:polygon::geomet
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
                       join stat_h3_transposed st on (sh.h3 = st.h3)
              where sh.resolution = (select resolution from resolution)
-               and indicator_uuid = (select internal_id from %s where param_id = 'population')
+               and indicator_uuid = (select internal_id from %s where param_id = 'population' and state = 'READY' limit 1)
                and indicator_value > 0),
      stat_pop as (select s.*, sum(population) over (order by population desc) as sum_pop
                   from res s),
