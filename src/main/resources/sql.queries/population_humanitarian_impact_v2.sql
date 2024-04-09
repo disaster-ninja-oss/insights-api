@@ -1,4 +1,4 @@
-with resolution as (select calculate_area_resolution(ST_SetSRID(:geometry::geometry, 4326)) as resolution),
+with resolution as (select calculate_area_resolution_v2(ST_SetSRID(:geometry::geometry, 4326)) as resolution),
      validated_input
          as (select (:transformed_geometry)::geometry as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
