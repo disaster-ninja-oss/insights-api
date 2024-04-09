@@ -184,9 +184,9 @@ from
     bivariate_indicators_metadata biy2 left join bivariate_unit_localization buly2 on biy2.unit_id = buly2.unit_id
 where
       x.numerator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'count' limit 1)
-  and x.denominator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'area_km2' and owner='insights-db' limit 1)
+  and x.denominator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'area_km2' and owner='disaster.ninja' limit 1)
   and y.numerator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'view_count' limit 1)
-  and y.denominator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'area_km2' and owner='insights-db' limit 1)
+  and y.denominator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'area_km2' and owner='disaster.ninja' limit 1)
   and x.numerator_uuid = bix1.internal_id
   and x.denominator_uuid = bix2.internal_id
   and y.numerator_uuid = biy1.internal_id
