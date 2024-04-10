@@ -9,16 +9,10 @@ with validated_input as (
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
                       join stat_h3_transposed st on (sh.h3 = st.h3)
              where sh.resolution = 8
-               and indicator_uuid IN (select internal_id
-                                      from %s
-                                      where param_id IN ('%s') and state = 'READY' and is_public)),
-     stat_area as (select distinct on (h.h3) h.*
-from (select res_0.h3,
-    %s
-    from res %s,
-    %s
-    where %s%s
-    and %s
-    order by h3) h)
+               and indicator_uuid IN ('%s')),
+     stat_area as (
+        select res_0.h3, %s
+        from %s
+        where %s)
 select %s
 from stat_area st;
