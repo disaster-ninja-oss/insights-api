@@ -93,27 +93,25 @@ public class FunctionsRepository implements FunctionsService {
         if (useStatSeparateTables) {
             Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(paramIds)
                 .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
-            List<String> uuids = new ArrayList<>(indicators.values());
             List<String> columns = new ArrayList<>();
             List<String> fromRes = new ArrayList<>();
-            List<String> whereUuid = new ArrayList<>();
             for (int i = 0; i < paramIds.size(); i++) {
                 var uuid = indicators.get(paramIds.get(i));
                 if (uuid != null) {
                     columns.add(String.format("res_%s.indicator_value as %s", i, paramIds.get(i)));
-                    fromRes.add(String.format("res res_%s", i));
-                    whereUuid.add(String.format("res_%s.indicator_uuid = '%s'", i, uuid));
+                    fromRes.add(String.format("left join stat_h3_transposed res_%s on (res_%s.indicator_uuid = '%s' and sh.h3 = res_%s.h3)", i, i, uuid, i));
                 } else {
                     columns.add(String.format("null::float as %s", paramIds.get(i)));
                 }
             }
-            String joinSQL = fromRes.get(0);
-            for (int i = 1; i < fromRes.size(); i++) {
-                joinSQL += " full join " + fromRes.get(i) + " using (h3)";
+            String joinSQL = StringUtils.EMPTY;
+            for (int i = 0; i < fromRes.size(); i++) {
+                joinSQL += " left join stat_h3_transposed " + fromRes.get(i) + " using (h3)";
             }
-            query = String.format(queryFactory.getSql(functionIntersectV2), StringUtils.join(uuids, "', '"),
-                    StringUtils.join(columns, ", "), joinSQL,
-                    StringUtils.join(whereUuid, " and "), StringUtils.join(params, ", "));
+            query = String.format(queryFactory.getSql(functionIntersectV2),
+                    StringUtils.join(columns, ", "),
+                    StringUtils.join(fromRes, " "),
+                    StringUtils.join(params, ", "));
         } else {
             query = String.format(queryFactory.getSql(functionIntersect),
                     StringUtils.join(paramIds, ", "),
