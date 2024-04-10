@@ -187,7 +187,7 @@ public class IndicatorRepository {
 
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getSelectedBivariateIndicators(List<String> indicatorIds) {
-        return jdbcTemplate.query(String.format("SELECT distinct on (param_id) * FROM %s WHERE param_id in ('%s') and state = 'READY' and is_public order by param_id, date desc",
+        return jdbcTemplate.query(String.format("SELECT distinct on (param_id) * FROM %s WHERE param_id in ('%s') and is_public order by param_id, date desc",
                         bivariateIndicatorsMetadataTableName, String.join("','", indicatorIds)),
                 bivariateIndicatorRowMapper);
     }
@@ -198,7 +198,7 @@ public class IndicatorRepository {
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName
                 : bivariateIndicatorsTableName;
         try {
-            return jdbcTemplate.queryForObject(String.format("SELECT param_label FROM %s where param_id = '%s' and state = 'READY' and is_public order by date desc limit 1",
+            return jdbcTemplate.queryForObject(String.format("SELECT param_label FROM %s where param_id = '%s' and is_public order by date desc limit 1",
                     bivariateIndicatorsTable, paramId), String.class);
         } catch (EmptyResultDataAccessException e) {
             return null;

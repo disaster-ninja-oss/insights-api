@@ -87,12 +87,6 @@ public class TileRepository {
         var query = String.format("select param_id from %s", bivariateIndicatorsTable);
         if (publicOnly) {
             query += " where is_public";
-            if (bivariateIndicatorsTable == bivariateIndicatorsMetadataTableName) {
-                query += " and state = 'READY'";
-            }
-        }
-        else if (bivariateIndicatorsTable == bivariateIndicatorsMetadataTableName) {
-            query += " where state = 'READY'";
         }
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
     }
