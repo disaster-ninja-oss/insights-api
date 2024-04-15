@@ -126,10 +126,10 @@ public class FunctionsRepository implements FunctionsService {
         String validY = checkString(functionArgs.getY());
         return switch (functionArgs.getName()) {
             case "sumX" -> "sum(" + validX + ") as result" + validId;
-            case "sumXWhereNoY" -> "sum(" + validX + " * (1 - sign(" + validY + "))) " +
+            case "sumXWhereNoY" -> "sum(" + validX + " * (1 - sign(coalesce(" + validY + ", 0)))) " +
                     "as result" + validId;
-            case "percentageXWhereNoY" -> "(sum(" + validX + " * (1 - sign(" + validY + ")))/sum(" +
-                    validX + ") filter (where " + validX + " != 0)) * 100 as result" + validId;
+            case "percentageXWhereNoY" -> "(sum(" + validX + " * (1 - sign(coalesce(" + validY + ", 0))))/sum(" +
+                    validX + ") filter (where " + validX + " != 0 and " + validX + " is not null)) * 100 as result" + validId;
             case "maxX" -> "max(" + validX + ") as result" + validId;
             case "minX" -> "min(" + validX + ") as result" + validId;
             case "avgX" -> "avg(" + validX + ") as result" + validId;
