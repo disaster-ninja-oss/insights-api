@@ -15,7 +15,7 @@ with resolution as (select calculate_area_resolution_v2(ST_SetSRID(:geometry::ge
                       from (select distinct h3,
                                             indicator_value          as population,
                                             h3_cell_area(h3, 'km^2') as area_km2,
-                                            h3_cell_to_geometry(h3)  as geom
+                                            h3_cell_to_boundary_geometry(h3)  as geom
                             from res) s),
      total as (select sum(population) as population, round(sum(area_km2)::numeric, 2) as area from stat_in_area)
 select sum(s.population)                                as population,
