@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.repository;
 
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.FunctionArgs;
 import io.kontur.insightsapi.model.FunctionResult;
 import io.kontur.insightsapi.model.Unit;
@@ -20,8 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 @Repository
@@ -58,48 +61,9 @@ public class FunctionsRepository implements FunctionsService {
     private final IndicatorRepository indicatorRepository;
 
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
-        List<String> params = args.stream()
-                .map(this::createFunctionsForSelect)
-                .toList();
-        List<String> paramIds = new ArrayList<>();
-        for (FunctionArgs arg : args) {
-            if (!paramIds.contains(arg.getX())) {
-                paramIds.add(arg.getX());
-            }
-            if (arg.getY() != null && !paramIds.contains(arg.getY())) {
-                paramIds.add(arg.getY());
-            }
-        }
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = StringUtils.EMPTY;
-        if (useStatSeparateTables) {
-            List<String> columns = new ArrayList<>();
-            List<String> fromRes = new ArrayList<>();
-            List<String> fromBivariateIndicators = new ArrayList<>();
-            List<String> whereH3 = new ArrayList<>();
-            List<String> whereUuid = new ArrayList<>();
-            List<String> whereParamId = new ArrayList<>();
-            for (int i = 0; i < paramIds.size(); i++) {
-                columns.add(String.format("res_%s.indicator_value as %s", i, paramIds.get(i)));
-                fromRes.add(String.format("res_%s", i));
-                fromBivariateIndicators.add(String.format("%s bi_%s", bivariateIndicatorsMetadataTableName, i));
-                whereUuid.add(String.format("res_%s.indicator_uuid = bi_%s.param_uuid", i, i));
-                whereParamId.add(String.format("bi_%s.param_id = '%s'", i, paramIds.get(i)));
-            }
-            if (paramIds.size() > 1) {
-                for (int i = 1; i < paramIds.size(); i++) {
-                    whereH3.add(String.format("res_%s.h3 = res_%s.h3 and ", 0, i));
-                }
-            }
-            query = String.format(queryFactory.getSql(functionIntersectV2), bivariateIndicatorsMetadataTableName, StringUtils.join(paramIds, "', '"),
-                    StringUtils.join(columns, ", "), StringUtils.join(fromRes, ", res "), StringUtils.join(fromBivariateIndicators, ", "), StringUtils.join(whereH3, ""),
-                    StringUtils.join(whereUuid, " and "), StringUtils.join(whereParamId, " and "), StringUtils.join(params, ", "));
-        } else {
-            query = String.format(queryFactory.getSql(functionIntersect),
-                    StringUtils.join(paramIds, ", "),
-                    StringUtils.join(params, ", "));
-        }
         List<FunctionResult> result = new ArrayList<>();
+        String query = getFunctionsQuery(args);
         try {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.addAll(createFunctionResultList(args, rs));
@@ -112,16 +76,60 @@ public class FunctionsRepository implements FunctionsService {
         return result;
     }
 
+    public String getFunctionsQuery(List<FunctionArgs> args) {
+        List<String> params = args.stream()
+                .map(this::createFunctionsForSelect)
+                .toList();
+        List<String> paramIds = new ArrayList<>();
+        for (FunctionArgs arg : args) {
+            if (!paramIds.contains(arg.getX())) {
+                paramIds.add(arg.getX());
+            }
+            if (arg.getY() != null && !paramIds.contains(arg.getY())) {
+                paramIds.add(arg.getY());
+            }
+        }
+        var query = StringUtils.EMPTY;
+        if (useStatSeparateTables) {
+            Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(paramIds)
+                .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
+            List<String> columns = new ArrayList<>();
+            List<String> fromRes = new ArrayList<>();
+            for (int i = 0; i < paramIds.size(); i++) {
+                var uuid = indicators.get(paramIds.get(i));
+                if (uuid != null) {
+                    columns.add(String.format("res_%s.indicator_value as %s", i, paramIds.get(i)));
+                    fromRes.add(String.format("left join stat_h3_transposed res_%s on (res_%s.indicator_uuid = '%s' and sh.h3 = res_%s.h3)", i, i, uuid, i));
+                } else {
+                    columns.add(String.format("null::float as %s", paramIds.get(i)));
+                }
+            }
+            String joinSQL = StringUtils.EMPTY;
+            for (int i = 0; i < fromRes.size(); i++) {
+                joinSQL += " left join stat_h3_transposed " + fromRes.get(i) + " using (h3)";
+            }
+            query = String.format(queryFactory.getSql(functionIntersectV2),
+                    StringUtils.join(columns, ", "),
+                    StringUtils.join(fromRes, " "),
+                    StringUtils.join(params, ", "));
+        } else {
+            query = String.format(queryFactory.getSql(functionIntersect),
+                    StringUtils.join(paramIds, ", "),
+                    StringUtils.join(params, ", "));
+        }
+        return query;
+    }
+
     private String createFunctionsForSelect(FunctionArgs functionArgs) {
         String validId = checkString(functionArgs.getId());
         String validX = checkString(functionArgs.getX());
         String validY = checkString(functionArgs.getY());
         return switch (functionArgs.getName()) {
             case "sumX" -> "sum(" + validX + ") as result" + validId;
-            case "sumXWhereNoY" -> "sum(" + validX + " * (1 - sign(" + validY + "))) " +
+            case "sumXWhereNoY" -> "sum(" + validX + " * (1 - sign(coalesce(" + validY + ", 0)))) " +
                     "as result" + validId;
-            case "percentageXWhereNoY" -> "(sum(" + validX + " * (1 - sign(" + validY + ")))/sum(" +
-                    validX + ") filter (where " + validX + " != 0)) * 100 as result" + validId;
+            case "percentageXWhereNoY" -> "(sum(" + validX + " * (1 - sign(coalesce(" + validY + ", 0))))/sum(" +
+                    validX + ") filter (where " + validX + " != 0 and " + validX + " is not null)) * 100 as result" + validId;
             case "maxX" -> "max(" + validX + ") as result" + validId;
             case "minX" -> "min(" + validX + ") as result" + validId;
             case "avgX" -> "avg(" + validX + ") as result" + validId;

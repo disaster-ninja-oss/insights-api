@@ -11,7 +11,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     url: 'jdbc:postgresql://localhost:5432/postgres'
     username: postgres
-    password: password
+    password: postgres
     hikari:
       register-mbeans: true
       pool-name: HikariPool-1
@@ -42,11 +42,13 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://keycloak01.kontur.io/auth/realms/kontur
-          jwk-set-uri: https://keycloak01.kontur.io/auth/realms/kontur/protocol/openid-connect/certs
+          issuer-uri: https://keycloak01.kontur.io/realms/kontur
+          jwk-set-uri: https://keycloak01.kontur.io/realms/kontur/protocol/openid-connect/certs
 
 springdoc:
   packages-to-scan: io.kontur.insightsapi.controller
+  swagger-ui:
+    path: 'doc'
 
 graphql:
   servlet:

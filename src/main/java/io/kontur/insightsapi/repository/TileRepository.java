@@ -81,22 +81,14 @@ public class TileRepository {
                 (rs, rowNum) -> rs.getBytes("tile"));
     }
 
-    public List<String> getAllBivariateIndicators() {
+    public List<String> getAllBivariateIndicators(Boolean publicOnly) {
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName
                 : bivariateIndicatorsTableName;
         var query = String.format("select param_id from %s", bivariateIndicatorsTable);
+        if (publicOnly) {
+            query += " where is_public";
+        }
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
-    }
-
-    public List<String> getGeneralBivariateIndicators() {
-        Set<String> result = new HashSet<>();
-        var query = "select x_numerator, x_denominator, y_numerator, y_denominator from bivariate_overlays";
-        jdbcTemplate.query(query, (rs, rowNum) ->
-                result.addAll(List.of(rs.getString("x_numerator"),
-                        rs.getString("x_denominator"),
-                        rs.getString("y_numerator"),
-                        rs.getString("y_denominator"))));
-        return result.stream().toList();
     }
 
     private String generateSqlQuery(List<String> bivariateIndicators) {
@@ -108,9 +100,9 @@ public class TileRepository {
             List<String> columns = Lists.newArrayList();
 
             for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
-                outerFilter.add(String.format("'%s'", indicator.getUuid()));
-                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as %s",
-                        indicator.getUuid(), indicator.getId()));
+                outerFilter.add(String.format("'%s'", indicator.getInternalId()));
+                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
+                        indicator.getInternalId(), indicator.getId()));
             }
 
             return String.format(queryFactory.getSql(getTileMvtGenerateOnTheFly),

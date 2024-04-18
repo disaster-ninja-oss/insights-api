@@ -40,11 +40,17 @@ public class StatisticRepository implements CorrelationRateService {
     @Value("classpath:/sql.queries/bivariate_statistic.sql")
     private Resource bivariateStatistic;
 
+    @Value("classpath:/sql.queries/bivariate_statistic_v2.sql")
+    private Resource bivariateStatisticV2;
+
     @Value("classpath:/sql.queries/axis_statistic.sql")
     private Resource axisStatistic;
 
     @Value("classpath:/sql.queries/statistic_correlation.sql")
     private Resource statisticCorrelation;
+
+    @Value("classpath:/sql.queries/statistic_correlation_v2.sql")
+    private Resource statisticCorrelationV2;
 
     @Value("classpath:/sql.queries/statistic_correlation_numdenom.sql")
     private Resource statisticCorrelationNumdenom;
@@ -117,8 +123,11 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public BivariateStatistic getBivariateStatistic() {
-        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
-        String bivariateAxisTable = useStatSeparateTables ? bivariateAxisV2TableName : bivariateAxisTableName;
+        if (useStatSeparateTables) {
+            return jdbcTemplate.queryForObject(queryFactory.getSql(bivariateStatisticV2), bivariateStatisticRowMapper);
+        }
+        String bivariateIndicatorsTable = bivariateIndicatorsTableName;
+        String bivariateAxisTable = bivariateAxisTableName;
 
         return jdbcTemplate.queryForObject(String.format(queryFactory.getSql(bivariateStatistic),
                         bivariateIndicatorsTable, bivariateAxisTable, bivariateAxisTable, bivariateAxisTable,
@@ -140,6 +149,9 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public List<PolygonMetrics> getAllCorrelationRateStatistics() {
+        if (useStatSeparateTables) {
+            return jdbcTemplate.query(queryFactory.getSql(statisticCorrelationV2), polygonMetricsRowMapper);
+        }
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
         String bivariateAxisCorrelationTable = useStatSeparateTables
                 ? bivariateAxisCorrelationV2TableName : bivariateAxisCorrelationTableName;
@@ -168,13 +180,13 @@ public class StatisticRepository implements CorrelationRateService {
                         .xNumerator(rs.getString("x_num"))
                         .xDenominator(rs.getString("x_den"))
                         .xLabel(rs.getString("x_param_label"))
-                        .xNumUuid(rs.getObject("x_num_param_uuid", UUID.class))
-                        .xDenUuid(rs.getObject("x_den_param_uuid", UUID.class))
+                        .xNumUuid(rs.getObject("x_num_internal_id", UUID.class))
+                        .xDenUuid(rs.getObject("x_den_internal_id", UUID.class))
                         .yNumerator(rs.getString("y_num"))
                         .yDenominator(rs.getString("y_den"))
                         .yLabel(rs.getString("y_param_label"))
-                        .yNumUuid(rs.getObject("y_num_param_uuid", UUID.class))
-                        .yDenUuid(rs.getObject("y_den_param_uuid", UUID.class))
+                        .yNumUuid(rs.getObject("y_num_internal_id", UUID.class))
+                        .yDenUuid(rs.getObject("y_den_internal_id", UUID.class))
                         .quality(rs.getDouble("quality")).build());
     }
 
