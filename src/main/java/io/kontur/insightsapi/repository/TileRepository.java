@@ -85,7 +85,7 @@ public class TileRepository {
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName
                 : bivariateIndicatorsTableName;
         var query = String.format("select param_id from %s", bivariateIndicatorsTable);
-        if (publicOnly) {
+        if (publicOnly && useStatSeparateTables) {
             query += " where is_public";
         }
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
