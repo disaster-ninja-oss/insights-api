@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.stream.Collectors;
@@ -142,7 +143,8 @@ public class FunctionsRepository implements FunctionsService {
         return args.stream().map(arg -> {
             try {
                 //TODO: in future getLabel should consume UUID
-                return new FunctionResult(arg.getId(), rs.getBigDecimal("result" + arg.getId()), getUnit(arg), getLabel(arg.getX()), getLabel(arg.getY()));
+                var result = rs.getBigDecimal("result" + arg.getId());  // bug #18327
+                return new FunctionResult(arg.getId(), result == null ? BigDecimal.ZERO : result, getUnit(arg), getLabel(arg.getX()), getLabel(arg.getY()));
             } catch (SQLException e) {
                 logger.error("Can't get BigDecimal value from result set", e);
                 return null;
