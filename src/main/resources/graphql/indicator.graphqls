@@ -1,6 +1,7 @@
 type Indicator {
     name: String,
     label: String,
+    emoji: String,
     copyrights: [String],
     direction: [[String]],
     description: String,
