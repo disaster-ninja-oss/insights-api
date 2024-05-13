@@ -39,3 +39,4 @@ log/
 .graphqlconfig
 schema.graphql
 docker-compose.yml
+tags

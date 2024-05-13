@@ -5,6 +5,7 @@ select
                        'indicators', (
                            select jsonb_agg(jsonb_build_object('name', bi.param_id,
                                                                'label', bi.param_label,
+                                                               'emoji', bi.emoji,
                                                                'direction', bi.direction,
                                                                'copyrights', bi.copyrights,
                                                                'description', bi.description,
