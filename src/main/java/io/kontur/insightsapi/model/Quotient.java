@@ -21,6 +21,7 @@ public class Quotient implements Serializable {
     private String coverage;
     private String updateFrequency;
     private Unit unit;
+    private String emoji;
 
     @SuppressWarnings("unused")
     public String getUpdate_frequency() {

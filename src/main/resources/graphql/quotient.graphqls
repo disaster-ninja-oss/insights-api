@@ -1,6 +1,7 @@
 type Quotient {
     name: String,
     label: String,
+    emoji: String,
     direction: [[String]],
     description: String,
     coverage: String,
