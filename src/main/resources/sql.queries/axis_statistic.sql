@@ -3,6 +3,7 @@ select
                        'quotients', jsonb_build_array(
                                jsonb_build_object('name', bi1.param_id,
                                                   'label', bi1.param_label,
+                                                  'emoji', bi1.emoji,
                                                   'direction', bi1.direction,
                                                   'description', bi1.description,
                                                   'coverage', bi1.coverage,
@@ -12,6 +13,7 @@ select
                                                                              'longName', bul1.long_name)),
                                jsonb_build_object('name', bi2.param_id,
                                                   'label', bi2.param_label,
+                                                  'emoji', bi2.emoji,
                                                   'direction', bi2.direction,
                                                   'description', bi2.description,
                                                   'coverage', bi2.coverage,

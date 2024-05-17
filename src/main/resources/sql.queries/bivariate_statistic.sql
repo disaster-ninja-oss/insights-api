@@ -31,6 +31,7 @@ select
                                                                   jsonb_build_array(
                                                                           jsonb_build_object('name', bix1.param_id,
                                                                                              'label', bix1.param_label,
+                                                                                             'emoji', bix1.emoji,
                                                                                              'direction', bix1.direction,
                                                                                              'description', bix1.description,
                                                                                              'coverage', bix1.coverage,
@@ -40,6 +41,7 @@ select
                                                                                                                         'longName', bulx1.long_name)),
                                                                           jsonb_build_object('name', bix2.param_id,
                                                                                              'label', bix2.param_label,
+                                                                                             'emoji', bix2.emoji,
                                                                                              'direction', bix2.direction,
                                                                                              'description', bix2.description,
                                                                                              'coverage', bix2.coverage,
@@ -60,6 +62,7 @@ select
                                                                   jsonb_build_array(
                                                                           jsonb_build_object('name', biy1.param_id,
                                                                                              'label', biy1.param_label,
+                                                                                             'emoji', biy1.emoji,
                                                                                              'direction', biy1.direction,
                                                                                              'description', biy1.description,
                                                                                              'coverage', biy1.coverage,
@@ -69,6 +72,7 @@ select
                                                                                                                         'longName', buly1.long_name)),
                                                                           jsonb_build_object('name', biy2.param_id,
                                                                                              'label', biy2.param_label,
+                                                                                             'emoji', biy2.emoji,
                                                                                              'direction', biy2.direction,
                                                                                              'description', biy2.description,
                                                                                              'coverage', biy2.coverage,
@@ -107,6 +111,7 @@ from
                                                               jsonb_build_array(
                                                                       jsonb_build_object('name', bix1.param_id,
                                                                                          'label', bix1.param_label,
+                                                                                         'emoji', bix1.emoji,
                                                                                          'direction', bix1.direction,
                                                                                          'description', bix1.description,
                                                                                          'coverage', bix1.coverage,
@@ -116,6 +121,7 @@ from
                                                                                                                     'longName', bulx1.long_name)),
                                                                       jsonb_build_object('name', bix2.param_id,
                                                                                          'label', bix2.param_label,
+                                                                                         'emoji', bix2.emoji,
                                                                                          'direction', bix2.direction,
                                                                                          'description', bix2.description,
                                                                                          'coverage', bix2.coverage,
@@ -136,6 +142,7 @@ from
                                                               jsonb_build_array(
                                                                       jsonb_build_object('name', biy1.param_id,
                                                                                          'label', biy1.param_label,
+                                                                                         'emoji', biy1.emoji,
                                                                                          'direction', biy1.direction,
                                                                                          'description', biy1.description,
                                                                                          'coverage', biy1.coverage,
@@ -145,6 +152,7 @@ from
                                                                                                                     'longName', buly1.long_name)),
                                                                       jsonb_build_object('name', biy2.param_id,
                                                                                          'label', biy2.param_label,
+                                                                                         'emoji', biy2.emoji,
                                                                                          'direction', biy2.direction,
                                                                                          'description', biy2.description,
                                                                                          'coverage', biy2.coverage,
