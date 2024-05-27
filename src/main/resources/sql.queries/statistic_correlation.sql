@@ -15,5 +15,5 @@ select
     avg(abs(correlation)) over (partition by x_num, x_den) * avg(abs(correlation)) over (partition by y_num, y_den) mult
 from
     %s, %s xcopy, %s ycopy
-    where xcopy.param_id = x_num and ycopy.param_id = y_num
+    where xcopy.param_id = x_num and ycopy.param_id = y_num and correlation is not null
     order by mult desc
