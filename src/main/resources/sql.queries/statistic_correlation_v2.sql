@@ -16,3 +16,7 @@ select
 from
     bivariate_axis_correlation_v2, bivariate_indicators_metadata xcopy, bivariate_indicators_metadata ycopy
     where xcopy.internal_id = x_numerator_id and ycopy.internal_id = y_numerator_id and correlation is not null
+-- hotfix!
+--currently there's ~71122 records in bivariate_axis_correlation_v2
+    order by quality desc
+    limit 500
