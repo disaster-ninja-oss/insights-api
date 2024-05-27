@@ -18,6 +18,7 @@ public class Quotient implements Serializable {
     private String label;
     private List<List<String>> direction;
     private String description;
+    private List<String> copyrights;
     private String coverage;
     private String updateFrequency;
     private Unit unit;
