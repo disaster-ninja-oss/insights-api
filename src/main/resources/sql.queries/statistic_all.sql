@@ -40,7 +40,7 @@ select
                                          order by mult desc)
                            from
                                %s, %s xcopy, %s ycopy
-                           where xcopy.param_id = x_num and ycopy.param_id = y_num
+                           where xcopy.param_id = x_num and ycopy.param_id = y_num and correlation is not null
                        ),
                        'initAxis',
                        jsonb_build_object('x', jsonb_build_object('label', x.label, 'quotient',
