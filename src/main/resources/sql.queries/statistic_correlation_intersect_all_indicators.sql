@@ -39,5 +39,6 @@ y_numerator_id ynumuuid,
 y_denominator_id ydenuuid,
 correlation metrics
 from bivariate_axis_correlation_v2
-limit 100;
+order by quality desc
+limit 500
 --currently there's ~71122 records in bivariate_axis_correlation_v2
