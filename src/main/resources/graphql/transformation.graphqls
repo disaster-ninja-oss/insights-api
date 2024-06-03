@@ -1,0 +1,10 @@
+type Transformation {
+    transformation: String,
+    min: Float,
+    max: Float,
+    skew: Float,
+    stddev: Float,
+    lowerBound: Float,
+    upperBound: Float,
+    points: [Float]
+}

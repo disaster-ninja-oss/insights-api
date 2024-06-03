@@ -52,6 +52,7 @@ select
                                                                                                                         'shortName', bulx2.short_name,
                                                                                                                         'longName', bulx2.long_name))
                                                                                    ),
+                                                                  'transformation', x.default_transform,
                                                                   'steps',
                                                                   jsonb_build_array(
                                                                       jsonb_build_object('value', x.min, 'label', x.min_label),
@@ -85,6 +86,7 @@ select
                                                                                                                         'shortName', buly2.short_name,
                                                                                                                         'longName', buly2.long_name))
                                                                                    ),
+                                                                  'transformation', y.default_transform,
                                                                   'steps',
                                                                   jsonb_build_array(
                                                                       jsonb_build_object('value', y.min, 'label', y.min_label),
@@ -99,6 +101,7 @@ from
           json_agg(
               jsonb_build_object('label', label, 'quotient', jsonb_build_array(numerator, denominator), 'quality',
                                  quality,
+                                 'transformation', default_transform,
                                  'steps', jsonb_build_array(
                                      jsonb_build_object('value', min, 'label', min_label),
                                      jsonb_build_object('value', p25, 'label', p25_label),
@@ -136,6 +139,7 @@ from
                                                                                                                     'shortName', bulx2.short_name,
                                                                                                                     'longName', bulx2.long_name))
                                                                                ),
+                                                              'transformation', ax.default_transform,
                                                               'steps',
                                                               jsonb_build_array(
                                                                       jsonb_build_object('value', ax.min, 'label', ax.min_label),
@@ -169,6 +173,7 @@ from
                                                                                                                     'shortName', buly2.short_name,
                                                                                                                     'longName', buly2.long_name))
                                                                                ),
+                                                              'transformation', ay.default_transform,
                                                               'steps',
                                                               jsonb_build_array(
                                                                       jsonb_build_object('value', ay.min, 'label', ay.min_label),
