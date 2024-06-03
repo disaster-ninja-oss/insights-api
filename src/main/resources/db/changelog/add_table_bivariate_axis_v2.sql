@@ -1,7 +1,6 @@
 --liquibase formatted sql
 --changeset insights-api:add_table_bivariate_axis_v2 splitStatements:false stripComments:false endDelimiter:; runOnChange:true
-drop table if exists bivariate_axis_v2;
-create table bivariate_axis_v2 as (
+create table if not exists bivariate_axis_v2 as (
     select a.param_id             as numerator,
            b.param_id             as denominator,
            null::double precision as min,
@@ -30,3 +29,7 @@ create table bivariate_axis_v2 as (
         bivariate_indicators as b
     where b.is_base and a.param_id != b.param_id
 );
+
+alter table bivariate_axis_v2
+    add column if not exists default_transform jsonb,
+    add column if not exists transformations jsonb;
