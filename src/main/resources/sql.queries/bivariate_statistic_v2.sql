@@ -15,6 +15,7 @@ select
                                                                                           'shortName', bul.short_name,
                                                                                           'longName', bul.long_name)))
                            from bivariate_indicators_metadata bi left join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
+                           where bi.state = 'READY'
                        ),
                        'colors', jsonb_build_object(
                            'fallback', '#ccc',
@@ -194,6 +195,10 @@ from
         and bix2.external_id = o.x_denominator_id
         and biy1.external_id = o.y_numerator_id
         and biy2.external_id = o.y_denominator_id
+        and bix1.state = 'READY'
+        and bix2.state = 'READY'
+        and biy1.state = 'READY'
+        and biy2.state = 'READY'
         and ax.numerator_uuid = bix1.internal_id
         and ax.denominator_uuid = bix2.internal_id
         and ay.numerator_uuid = biy1.internal_id

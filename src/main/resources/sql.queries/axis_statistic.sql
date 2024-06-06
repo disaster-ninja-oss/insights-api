@@ -38,3 +38,4 @@ from
 where
     numerator = bi1.param_id
   and denominator = bi2.param_id
+  %s
