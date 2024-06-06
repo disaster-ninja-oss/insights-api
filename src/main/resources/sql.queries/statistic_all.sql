@@ -115,6 +115,7 @@ from
         and bix2.param_id = o.x_denominator
         and biy1.param_id = o.y_numerator
         and biy2.param_id = o.y_denominator
+        %s
         and ax.denominator = o.x_denominator
         and ax.numerator = o.x_numerator
         and ay.denominator = o.y_denominator
