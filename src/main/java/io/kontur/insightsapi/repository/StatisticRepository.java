@@ -148,10 +148,16 @@ public class StatisticRepository implements CorrelationRateService {
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
         String bivariateAxisTable = useStatSeparateTables ? bivariateAxisV2TableName : bivariateAxisTableName;
         String defaultTransform = useStatSeparateTables ? "default_transform" : "null";
-        String filterReady = useStatSeparateTables ? "and bi1.state='READY' and bi2.state='READY'" : "";
+        String where = useStatSeparateTables ? """
+                numerator_uuid = bi1.internal_id
+            and denominator_uuid = bi2.internal_id
+            and bi1.state='READY' and bi2.state='READY'
+        """ : """
+            numerator = bi1.param_id and denominator = bi2.param_id
+        """;
 
         return jdbcTemplate.query(String.format(queryFactory.getSql(axisStatistic),
-                        defaultTransform, bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable, filterReady),
+                        defaultTransform, bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable, where),
                 axisRowMapper);
     }
 

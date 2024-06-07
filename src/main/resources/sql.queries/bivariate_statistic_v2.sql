@@ -109,7 +109,15 @@ from
                                      jsonb_build_object('value', p75, 'label', p75_label),
                                      jsonb_build_object('value', max, 'label', max_label)))) as axis
       from
-          bivariate_axis_v2 )                                                                      ba,
+          bivariate_axis_v2 b,
+          bivariate_indicators_metadata m1,
+          bivariate_indicators_metadata m2
+      where
+            m1.state = 'READY'
+        and m2.state = 'READY'
+        and b.numerator_uuid = m1.internal_id
+        and b.denominator_uuid = m2.internal_id
+    ) ba,
     ( select
           json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
                                       'colors', o.colors, 'order', o.ord,
