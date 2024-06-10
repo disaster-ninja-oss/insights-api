@@ -2,13 +2,18 @@ package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
 import io.kontur.insightsapi.dto.PresetDto;
+import io.kontur.insightsapi.mapper.AxisRowMapper;
+import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -16,8 +21,24 @@ public class AxisRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(AxisRepository.class);
 
+    private final QueryFactory queryFactory;
+
     private final JdbcTemplate jdbcTemplate;
     private final IndicatorRepository indicatorRepository;
+    private final AxisRowMapper axisRowMapper;
+
+    @Value("classpath:/sql.queries/axis_info.sql")
+    private Resource axisInfo;
+
+    @Transactional(readOnly = true)
+    public List<Axis> getAxes(String numerator, String denominator) {
+        if (numerator != null && denominator != null) {
+            String where = " and bi1.internal_id = ?::uuid and bi2.internal_id = ?::uuid";
+            return jdbcTemplate.query(queryFactory.getSql(axisInfo) + where, axisRowMapper, numerator, denominator);
+        }
+        // if numerator and denominator are not present, return all axes
+        return jdbcTemplate.query(queryFactory.getSql(axisInfo), axisRowMapper);
+    }
 
     public void validateIndicators(List<String> uuids, String owner) {
         for (String uuid : uuids)
