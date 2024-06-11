@@ -4,4 +4,6 @@ type Query {
     allStatistic(defaultParam: Int): Statistic
 
     polygonStatistic(polygonStatisticRequest: PolygonStatisticRequest): PolygonStatistic
+
+    getAxes(numerator: String, denominator: String): [Axis]
 }

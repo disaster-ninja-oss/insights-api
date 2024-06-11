@@ -112,12 +112,18 @@ public class StatisticRepository implements CorrelationRateService {
         String bivariateAxisTable = useStatSeparateTables ? bivariateAxisV2TableName : bivariateAxisTableName;
         String bivariateAxisCorrelationTable = useStatSeparateTables
                 ? bivariateAxisCorrelationV2TableName : bivariateAxisCorrelationTableName;
+        String filterReady = useStatSeparateTables ? """
+            and bix1.state = 'READY'
+            and bix2.state = 'READY'
+            and biy1.state = 'READY'
+            and biy2.state = 'READY'
+        """ : "";
 
         return jdbcTemplate.queryForObject(String.format(queryFactory.getSql(statisticAll), bivariateIndicatorsTable,
                         bivariateAxisCorrelationTable, bivariateIndicatorsTable, bivariateIndicatorsTable,
                         bivariateAxisTable, bivariateAxisTable, bivariateAxisTable, bivariateIndicatorsTable,
                         bivariateIndicatorsTable, bivariateIndicatorsTable, bivariateIndicatorsTable,
-                        bivariateAxisTable, bivariateAxisTable),
+                        filterReady, bivariateAxisTable, bivariateAxisTable),
                 statisticRowMapper);
     }
 
@@ -141,9 +147,17 @@ public class StatisticRepository implements CorrelationRateService {
     public List<Axis> getAxisStatistic() {
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
         String bivariateAxisTable = useStatSeparateTables ? bivariateAxisV2TableName : bivariateAxisTableName;
+        String defaultTransform = useStatSeparateTables ? "default_transform" : "null";
+        String where = useStatSeparateTables ? """
+                numerator_uuid = bi1.internal_id
+            and denominator_uuid = bi2.internal_id
+            and bi1.state='READY' and bi2.state='READY'
+        """ : """
+            numerator = bi1.param_id and denominator = bi2.param_id
+        """;
 
         return jdbcTemplate.query(String.format(queryFactory.getSql(axisStatistic),
-                        bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable),
+                        defaultTransform, bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable, where),
                 axisRowMapper);
     }
 

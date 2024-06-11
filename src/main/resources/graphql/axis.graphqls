@@ -4,5 +4,7 @@ type Axis {
     quality: Float,
     quotient: [String],
     quotients: [Quotient],
+    transformation: Transformation,
+    transformations: [Transformation],
     parent: [String]
 }

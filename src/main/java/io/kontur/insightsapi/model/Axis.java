@@ -28,6 +28,10 @@ public class Axis implements Cloneable, Serializable {
 
     private List<String> parent;
 
+    private Transformation transformation;
+
+    private List<Transformation> transformations;
+
     @Override
     public Axis clone() {
         Axis result = new Axis();
@@ -40,6 +44,8 @@ public class Axis implements Cloneable, Serializable {
             result.setQuotients(this.quotients);
             result.setLabel(this.label);
             result.setParent(this.parent);
+            result.setTransformation(this.transformation);
+            result.setTransformations(this.transformations);
         }
         return result;
     }

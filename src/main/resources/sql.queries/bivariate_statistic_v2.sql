@@ -15,6 +15,7 @@ select
                                                                                           'shortName', bul.short_name,
                                                                                           'longName', bul.long_name)))
                            from bivariate_indicators_metadata bi left join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
+                           where bi.state = 'READY'
                        ),
                        'colors', jsonb_build_object(
                            'fallback', '#ccc',
@@ -52,6 +53,7 @@ select
                                                                                                                         'shortName', bulx2.short_name,
                                                                                                                         'longName', bulx2.long_name))
                                                                                    ),
+                                                                  'transformation', x.default_transform,
                                                                   'steps',
                                                                   jsonb_build_array(
                                                                       jsonb_build_object('value', x.min, 'label', x.min_label),
@@ -85,6 +87,7 @@ select
                                                                                                                         'shortName', buly2.short_name,
                                                                                                                         'longName', buly2.long_name))
                                                                                    ),
+                                                                  'transformation', y.default_transform,
                                                                   'steps',
                                                                   jsonb_build_array(
                                                                       jsonb_build_object('value', y.min, 'label', y.min_label),
@@ -99,13 +102,22 @@ from
           json_agg(
               jsonb_build_object('label', label, 'quotient', jsonb_build_array(numerator, denominator), 'quality',
                                  quality,
+                                 'transformation', default_transform,
                                  'steps', jsonb_build_array(
                                      jsonb_build_object('value', min, 'label', min_label),
                                      jsonb_build_object('value', p25, 'label', p25_label),
                                      jsonb_build_object('value', p75, 'label', p75_label),
                                      jsonb_build_object('value', max, 'label', max_label)))) as axis
       from
-          bivariate_axis_v2 )                                                                      ba,
+          bivariate_axis_v2 b,
+          bivariate_indicators_metadata m1,
+          bivariate_indicators_metadata m2
+      where
+            m1.state = 'READY'
+        and m2.state = 'READY'
+        and b.numerator_uuid = m1.internal_id
+        and b.denominator_uuid = m2.internal_id
+    ) ba,
     ( select
           json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
                                       'colors', o.colors, 'order', o.ord,
@@ -136,6 +148,7 @@ from
                                                                                                                     'shortName', bulx2.short_name,
                                                                                                                     'longName', bulx2.long_name))
                                                                                ),
+                                                              'transformation', ax.default_transform,
                                                               'steps',
                                                               jsonb_build_array(
                                                                       jsonb_build_object('value', ax.min, 'label', ax.min_label),
@@ -169,6 +182,7 @@ from
                                                                                                                     'shortName', buly2.short_name,
                                                                                                                     'longName', buly2.long_name))
                                                                                ),
+                                                              'transformation', ay.default_transform,
                                                               'steps',
                                                               jsonb_build_array(
                                                                       jsonb_build_object('value', ay.min, 'label', ay.min_label),
@@ -189,6 +203,10 @@ from
         and bix2.external_id = o.x_denominator_id
         and biy1.external_id = o.y_numerator_id
         and biy2.external_id = o.y_denominator_id
+        and bix1.state = 'READY'
+        and bix2.state = 'READY'
+        and biy1.state = 'READY'
+        and biy2.state = 'READY'
         and ax.numerator_uuid = bix1.internal_id
         and ax.denominator_uuid = bix2.internal_id
         and ay.numerator_uuid = biy1.internal_id
@@ -200,9 +218,9 @@ from
     bivariate_indicators_metadata biy1 left join bivariate_unit_localization buly1 on biy1.unit_id = buly1.unit_id,
     bivariate_indicators_metadata biy2 left join bivariate_unit_localization buly2 on biy2.unit_id = buly2.unit_id
 where
-      x.numerator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'count' limit 1)
+      x.numerator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'count' and state = 'READY' limit 1)
   and x.denominator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'area_km2' and owner='disaster.ninja' limit 1)
-  and y.numerator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'view_count' limit 1)
+  and y.numerator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'view_count' and state = 'READY' limit 1)
   and y.denominator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'area_km2' and owner='disaster.ninja' limit 1)
   and x.numerator_uuid = bix1.internal_id
   and x.denominator_uuid = bix2.internal_id
