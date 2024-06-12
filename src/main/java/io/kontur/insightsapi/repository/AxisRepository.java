@@ -7,6 +7,7 @@ import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,11 +28,17 @@ public class AxisRepository {
     private final IndicatorRepository indicatorRepository;
     private final AxisRowMapper axisRowMapper;
 
+    @Value("${calculations.useStatSeparateTables:false}")
+    private Boolean useStatSeparateTables;
+
     @Value("classpath:/sql.queries/axis_info.sql")
     private Resource axisInfo;
 
     @Transactional(readOnly = true)
     public List<Axis> getAxes(String numerator, String denominator) {
+        if (!useStatSeparateTables) {
+            return new ArrayList<>();
+        }
         if (numerator != null && denominator != null) {
             String where = " and bi1.internal_id = ?::uuid and bi2.internal_id = ?::uuid";
             return jdbcTemplate.query(queryFactory.getSql(axisInfo) + where, axisRowMapper, numerator, denominator);
