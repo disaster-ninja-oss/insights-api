@@ -171,7 +171,7 @@ public class IndicatorRepository {
     public BivariateIndicatorDto getIndicatorByOwnerAndExternalId(String owner, String externalId) {
         try {
             return jdbcTemplate.queryForObject(
-                    "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ? AND external_id = ?::uuid",
+                    "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ? AND external_id = ?::uuid limit 1",
                     bivariateIndicatorRowMapper, owner, externalId);
         } catch (EmptyResultDataAccessException e) {
             return null;
