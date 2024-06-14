@@ -2,7 +2,7 @@ package io.kontur.insightsapi.service.resolver;
 
 import graphql.kickstart.tools.GraphQLQueryResolver;
 import io.kontur.insightsapi.dto.PolygonStatisticRequest;
-import io.kontur.insightsapi.model.Axis;
+import io.kontur.insightsapi.model.AxisInfo;
 import io.kontur.insightsapi.model.PolygonStatistic;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.repository.AxisRepository;
@@ -27,7 +27,7 @@ public class StatisticResolver implements GraphQLQueryResolver {
         return statisticService.getPolygonStatistic();
     }
 
-    public List<Axis> getAxes(String numerator, String denominator) {
-        return axisRepository.getAxes(numerator, denominator);
+    public AxisInfo getAxes(String numerator, String denominator) {
+        return new AxisInfo(axisRepository.getAxes(numerator, denominator));
     }
 }
