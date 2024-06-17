@@ -5,5 +5,7 @@ type Query {
 
     polygonStatistic(polygonStatisticRequest: PolygonStatisticRequest): PolygonStatistic
 
-    getAxes(numerator: String, denominator: String): AxisInfo
+    getTransformations(numerator: String, denominator: String): TransformationInfo
+
+    getAxes: AxisInfo
 }

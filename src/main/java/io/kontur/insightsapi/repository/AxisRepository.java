@@ -3,7 +3,9 @@ package io.kontur.insightsapi.repository;
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
 import io.kontur.insightsapi.dto.PresetDto;
 import io.kontur.insightsapi.mapper.AxisRowMapper;
+import io.kontur.insightsapi.mapper.TransformationRowMapper;
 import io.kontur.insightsapi.model.Axis;
+import io.kontur.insightsapi.model.Transformation;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -27,23 +29,30 @@ public class AxisRepository {
     private final JdbcTemplate jdbcTemplate;
     private final IndicatorRepository indicatorRepository;
     private final AxisRowMapper axisRowMapper;
+    private final TransformationRowMapper transformationRowMapper;
 
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
+
+    @Value("classpath:/sql.queries/transformation_info.sql")
+    private Resource transformationInfo;
 
     @Value("classpath:/sql.queries/axis_info.sql")
     private Resource axisInfo;
 
     @Transactional(readOnly = true)
-    public List<Axis> getAxes(String numerator, String denominator) {
+    public List<Transformation> getTransformations(String numerator, String denominator) {
         if (!useStatSeparateTables) {
             return new ArrayList<>();
         }
-        if (numerator != null && denominator != null) {
-            String where = " and bi1.internal_id = ?::uuid and bi2.internal_id = ?::uuid";
-            return jdbcTemplate.query(queryFactory.getSql(axisInfo) + where, axisRowMapper, numerator, denominator);
+        return jdbcTemplate.query(queryFactory.getSql(transformationInfo), transformationRowMapper, numerator, denominator);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Axis> getAxes() {
+        if (!useStatSeparateTables) {
+            return new ArrayList<>();
         }
-        // if numerator and denominator are not present, return all axes
         return jdbcTemplate.query(queryFactory.getSql(axisInfo), axisRowMapper);
     }
 
