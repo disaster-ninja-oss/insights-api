@@ -24,9 +24,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -84,7 +82,6 @@ public class IndicatorRepository {
                 throw new IndicatorDataProcessingException(e.getCause().getMessage(), e);
             }
 
-            jdbcTemplate.execute(String.format("analyze %s", transposedTableName));
             connection.commit();
         } catch (Exception e) {
             if (connection != null) {
