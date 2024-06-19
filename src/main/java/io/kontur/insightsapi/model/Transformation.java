@@ -22,7 +22,7 @@ public class Transformation implements Serializable {
 
     private Double min;
 
-    private Double max;
+    private Double mean;
 
     private Double skew;
 

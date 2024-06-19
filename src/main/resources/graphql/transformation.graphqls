@@ -1,7 +1,7 @@
 type Transformation {
     transformation: String,
     min: Float,
-    max: Float,
+    mean: Float,
     skew: Float,
     stddev: Float,
     lowerBound: Float,
