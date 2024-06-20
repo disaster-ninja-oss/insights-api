@@ -92,3 +92,9 @@ values ('n_per_10k_sq_km', 'en', 'n/10000km²', 'number per ten thousands square
 
 insert into bivariate_unit_localization (unit_id, language, short_name, long_name)
 values ('n_per_ha', 'en', 'n/ha', 'number per hectare');
+
+insert into bivariate_unit_localization (unit_id, language, short_name, long_name)
+values ('years', 'en', 'years', 'years');
+
+insert into bivariate_unit_localization (unit_id, language, short_name, long_name)
+values ('billions_USD', 'en', 'B USD', 'billions of the United States dollar');

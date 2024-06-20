@@ -92,3 +92,9 @@ values ('n_per_10k_sq_km', 'generic', 'density', FALSE);
 
 insert into bivariate_unit (id, type, measurement, is_base)
 values ('n_per_ha', 'generic', 'density', FALSE);
+
+insert into bivariate_unit (id, type, measurement, is_base)
+values ('years', 'generic', 'time', FALSE);
+
+insert into bivariate_unit (id, type, measurement, is_base)
+values ('billions_USD', 'generic', 'money', NULL);
