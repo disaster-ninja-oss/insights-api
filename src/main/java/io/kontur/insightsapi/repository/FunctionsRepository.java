@@ -183,8 +183,8 @@ public class FunctionsRepository implements FunctionsService {
                             .longName(rs.getString("long_name"))
                             .build());
         } catch (EmptyResultDataAccessException e) {
-            logger.error("No such unit", e);
-            throw new EmptyResultDataAccessException("No such unit", 1);
+            logger.error("No such indicator: " + arg.getX(), e);
+            throw new EmptyResultDataAccessException("No such indicator: " + arg.getX(), 1);
         }
     }
 
