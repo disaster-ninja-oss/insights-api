@@ -5,7 +5,7 @@ with validated_input as (select (:polygon)::geometry as geom),
              from boxinput bi
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
-                      join stat_h3_transposed st on (sh.h3 = st.h3)
+                      join stat_h3_transposed st on (indicator_uuid in (select internal_id from bivariate_indicators_metadata) and sh.h3 = st.h3)
              order by st.h3, indicator_uuid),
      normalized_indicators as (select a.indicator_uuid                        as numerator_uuid,
                                       b.indicator_uuid                        as denominator_uuid,
