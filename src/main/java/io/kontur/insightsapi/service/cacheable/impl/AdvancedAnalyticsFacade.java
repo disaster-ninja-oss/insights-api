@@ -8,6 +8,7 @@ import io.kontur.insightsapi.model.AdvancedAnalyticsValues;
 import io.kontur.insightsapi.repository.AdvancedAnalyticsRepository;
 import io.kontur.insightsapi.service.cacheable.AdvancedAnalyticsService;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
+import io.kontur.insightsapi.service.cacheable.RedisLock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -28,6 +29,7 @@ public class AdvancedAnalyticsFacade implements AdvancedAnalyticsService, CacheE
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "advanced-analytics-all", key = "'all'")
     public List<AdvancedAnalytics> getWorldData() {
         return repository.getWorldData();
@@ -35,6 +37,7 @@ public class AdvancedAnalyticsFacade implements AdvancedAnalyticsService, CacheE
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "advanced-analytics-all", keyGenerator = "listKeyGenerator")
     public List<AdvancedAnalytics> getFilteredWorldData(List<AdvancedAnalyticsRequest> argRequests) {
         return repository.getFilteredWorldData(argRequests);
@@ -42,6 +45,7 @@ public class AdvancedAnalyticsFacade implements AdvancedAnalyticsService, CacheE
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "advanced-analytics", keyGenerator = "stringStringKeyGenerator")
     public List<List<AdvancedAnalyticsValues>> getAdvancedAnalytics(String argQuery, String argGeometry) {
         return repository.getAdvancedAnalytics(argQuery, argGeometry);
@@ -49,6 +53,7 @@ public class AdvancedAnalyticsFacade implements AdvancedAnalyticsService, CacheE
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "advanced-analytics", keyGenerator = "threeParametersAsStringOrListKeyGenerator")
     public List<List<AdvancedAnalyticsValues>> getFilteredAdvancedAnalytics(String argQuery, String argGeometry, List<BivariativeAxisDto> axisDtos) {
         return repository.getFilteredAdvancedAnalytics(argQuery, argGeometry, axisDtos);
@@ -56,6 +61,7 @@ public class AdvancedAnalyticsFacade implements AdvancedAnalyticsService, CacheE
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "advanced-analytics-v2", keyGenerator = "stringListKeyGenerator")
     public List<AdvancedAnalytics> getAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators) {
         return repository.getAdvancedAnalyticsV2(argGeometry, indicators);
@@ -63,6 +69,7 @@ public class AdvancedAnalyticsFacade implements AdvancedAnalyticsService, CacheE
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "advanced-analytics-v2", keyGenerator = "threeParametersAsStringOrListKeyGenerator")
     public List<AdvancedAnalytics> getFilteredAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos) {
         return repository.getFilteredAdvancedAnalyticsV2(argGeometry, indicators, axisDtos);

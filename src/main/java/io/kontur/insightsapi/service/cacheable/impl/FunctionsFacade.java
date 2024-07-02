@@ -5,6 +5,7 @@ import io.kontur.insightsapi.model.FunctionResult;
 import io.kontur.insightsapi.repository.FunctionsRepository;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.kontur.insightsapi.service.cacheable.FunctionsService;
+import io.kontur.insightsapi.service.cacheable.RedisLock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,6 +26,7 @@ public class FunctionsFacade implements FunctionsService, CacheEvictable {
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "functions", keyGenerator = "stringListKeyGenerator")
     public List<FunctionResult> calculateFunctionsResult(String geojson, List<FunctionArgs> args) {
         return repository.calculateFunctionsResult(geojson, args);

@@ -6,6 +6,7 @@ import io.kontur.insightsapi.model.PolygonMetrics;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.kontur.insightsapi.service.cacheable.CorrelationRateService;
+import io.kontur.insightsapi.service.cacheable.RedisLock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -26,6 +27,7 @@ public class CorrelationRateFacade implements CorrelationRateService, CacheEvict
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "correlation-rate-all", key = "'all'")
     public List<PolygonMetrics> getAllCorrelationRateStatistics() {
         return repository.getAllCorrelationRateStatistics();
@@ -33,6 +35,7 @@ public class CorrelationRateFacade implements CorrelationRateService, CacheEvict
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "correlation-rate-polygon", keyGenerator = "stringListKeyGenerator")
     public List<Double> getPolygonCorrelationRateStatisticsBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList) {
         return repository.getPolygonCorrelationRateStatisticsBatch(polygon, dtoList);
@@ -40,6 +43,7 @@ public class CorrelationRateFacade implements CorrelationRateService, CacheEvict
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "correlation-rate-polygon-all", keyGenerator = "stringKeyGenerator")
     public List<NumeratorsDenominatorsUuidCorrelationDto> getPolygonCorrelationRateStatistics(String polygon) {
         return repository.getPolygonCorrelationRateStatistics(polygon);

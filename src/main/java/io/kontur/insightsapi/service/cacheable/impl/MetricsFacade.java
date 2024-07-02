@@ -4,6 +4,7 @@ import io.kontur.insightsapi.dto.NumeratorsDenominatorsDto;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.kontur.insightsapi.service.cacheable.MetricsService;
+import io.kontur.insightsapi.service.cacheable.RedisLock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,6 +26,7 @@ public class MetricsFacade implements MetricsService, CacheEvictable {
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "metrics-num-den", key = "'all'")
     public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForMetrics() {
         return repository.getNumeratorsDenominatorsForCorrelation();
@@ -32,6 +34,7 @@ public class MetricsFacade implements MetricsService, CacheEvictable {
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "metrics-num-den-with-uuid", key = "'all-uuid'")
     public List<NumeratorsDenominatorsDto> getAllNumeratorsDenominators() {
         return repository.getNumeratorsDenominatorsWithUuidForCorrelation();
@@ -39,6 +42,7 @@ public class MetricsFacade implements MetricsService, CacheEvictable {
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "metrics-num-not-empty-layers", keyGenerator = "stringListKeyGenerator")
     public Map<String, Boolean> getNumeratorsForNotEmptyLayersBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList) {
         return repository.getNumeratorsForNotEmptyLayersBatch(polygon, dtoList);
