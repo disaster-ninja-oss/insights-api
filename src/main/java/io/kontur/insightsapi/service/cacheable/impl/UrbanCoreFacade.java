@@ -4,6 +4,7 @@ import io.kontur.insightsapi.model.UrbanCore;
 import io.kontur.insightsapi.service.PopulationTransformer;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.kontur.insightsapi.service.cacheable.UrbanCoreService;
+import io.kontur.insightsapi.service.cacheable.RedisLock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,6 +25,7 @@ public class UrbanCoreFacade implements UrbanCoreService, CacheEvictable {
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "urban-core", keyGenerator = "stringListKeyGenerator")
     public UrbanCore calculateUrbanCore(String geojson, List<String> requestFields) {
         return populationTransformer.calculateUrbanCore(geojson, requestFields);

@@ -5,6 +5,7 @@ import io.kontur.insightsapi.model.PolygonMetrics;
 import io.kontur.insightsapi.repository.StatisticRepository;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.kontur.insightsapi.service.cacheable.CovarianceRateService;
+import io.kontur.insightsapi.service.cacheable.RedisLock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,6 +26,7 @@ public class CovarianceRateFacade implements CovarianceRateService, CacheEvictab
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "covariance-rate-all", key = "'all'")
     public List<PolygonMetrics> getAllCovarianceRateStatistics() {
         return repository.getAllCovarianceRateStatistics();
@@ -32,6 +34,7 @@ public class CovarianceRateFacade implements CovarianceRateService, CacheEvictab
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "covariance-rate-polygon", keyGenerator = "stringListKeyGenerator")
     public List<Double> getPolygonCovarianceRateStatisticsBatch(String polygon, List<NumeratorsDenominatorsDto> dtoList) {
         return repository.getPolygonCovarianceRateStatisticsBatch(polygon, dtoList);

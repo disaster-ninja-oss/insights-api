@@ -4,6 +4,7 @@ import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.service.PopulationTransformer;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.kontur.insightsapi.service.cacheable.HumanitarianImpactService;
+import io.kontur.insightsapi.service.cacheable.RedisLock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,6 +25,7 @@ public class HumanitarianImpactFacade implements HumanitarianImpactService, Cach
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "humanitarian-impact", keyGenerator = "stringKeyGenerator")
     public List<HumanitarianImpactDto> calculateHumanitarianImpact(String geojson) {
         return populationTransformer.calculateHumanitarianImpact(geojson);

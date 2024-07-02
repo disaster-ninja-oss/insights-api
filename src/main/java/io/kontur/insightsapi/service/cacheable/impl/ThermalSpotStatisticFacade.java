@@ -4,6 +4,7 @@ import io.kontur.insightsapi.model.ThermalSpotStatistic;
 import io.kontur.insightsapi.repository.ThermalSpotRepository;
 import io.kontur.insightsapi.service.cacheable.CacheEvictable;
 import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
+import io.kontur.insightsapi.service.cacheable.RedisLock;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,6 +25,7 @@ public class ThermalSpotStatisticFacade implements ThermalSpotStatisticService, 
 
     @SneakyThrows
     @Override
+    @RedisLock
     @Cacheable(value = "thermal-spot", keyGenerator = "stringListKeyGenerator")
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
         return repository.calculateThermalSpotStatistic(geojson, fieldList);
