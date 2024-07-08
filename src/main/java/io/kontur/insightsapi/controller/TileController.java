@@ -18,6 +18,7 @@ import org.springframework.web.context.request.WebRequest;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -57,21 +58,27 @@ public class TileController {
         }
         Instant lastUpdated = indicatorService.getIndicatorsLastUpdateDate();
         if (lastUpdated == null) {
+            // might happen only if there're no READY indicators in DB
             return ResponseEntity.ok()
                     .cacheControl(CacheControl.empty().cachePublic())
-                    .header("Expires", HTTP_TIME_FORMATTER.format(Instant.now()))
                     .body(tileService.getBivariateTileMvt(z, x, y, indicatorsClass));
         }
 
-        Instant expirationTime = lastUpdated.plus(Duration.ofDays(1));
         String eTag = lastUpdated.toString();
 
         // if If-None-Match header is present and set to the ETag that is still valid, return 304 Not Modified
         String ifNoneMatch = request.getHeader("If-None-Match");
-        if (ifNoneMatch != null && ifNoneMatch.equals(eTag)) {
+        // if If-Modified-Since header is present and >= lastUpdated, return 304 Not Modified
+        String ifModifiedSinceHeader = request.getHeader("If-Modified-Since");
+        ZonedDateTime ifModifiedSince = null;
+        if (ifModifiedSinceHeader != null && !ifModifiedSinceHeader.isEmpty()) {
+            ifModifiedSince = ZonedDateTime.parse(ifModifiedSinceHeader, HTTP_TIME_FORMATTER);
+        }
+        if ((ifNoneMatch != null && ifNoneMatch.equals(eTag)) ||
+                (ifModifiedSince != null && !lastUpdated.isAfter(ifModifiedSince.toInstant()))) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                     .cacheControl(CacheControl.empty().cachePublic())
-                    .header("Expires", HTTP_TIME_FORMATTER.format(expirationTime))
+                    .header("Last-Modified", HTTP_TIME_FORMATTER.format(lastUpdated))
                     .eTag(eTag)
                     .build();
         }
@@ -79,7 +86,7 @@ public class TileController {
         log.info("Data has been updated. Refreshing tiles");
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.empty().cachePublic())
-                .header("Expires", HTTP_TIME_FORMATTER.format(expirationTime))
+                .header("Last-Modified", HTTP_TIME_FORMATTER.format(lastUpdated))
                 .eTag(eTag)
                 .body(tileService.getBivariateTileMvt(z, x, y, indicatorsClass));
     }
