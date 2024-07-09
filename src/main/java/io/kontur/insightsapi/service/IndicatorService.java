@@ -106,10 +106,6 @@ public class IndicatorService {
         }
     }
 
-    public void updateIndicatorsLastUpdateDate(Instant lastUpdated) {
-        indicatorRepository.updateIndicatorsLastUpdateDate(lastUpdated);
-    }
-
     public Instant getIndicatorsLastUpdateDate() {
         return indicatorRepository.getIndicatorsLastUpdateDate();
     }

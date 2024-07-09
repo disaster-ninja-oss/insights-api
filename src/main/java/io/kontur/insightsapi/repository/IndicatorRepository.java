@@ -203,11 +203,6 @@ public class IndicatorRepository {
         }
     }
 
-    public void updateIndicatorsLastUpdateDate(Instant lastUpdated) {
-        jdbcTemplate.update(String.format("UPDATE %s SET last_updated = '%s'", bivariateIndicatorsMetadataTableName,
-                Timestamp.from(lastUpdated)));
-    }
-
     public Instant getIndicatorsLastUpdateDate() {
         Timestamp lastUpdated = jdbcTemplate.queryForObject(String.format("SELECT MAX(last_updated) FROM %s",
                 bivariateIndicatorsMetadataTableName), Timestamp.class);
