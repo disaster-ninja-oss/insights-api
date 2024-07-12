@@ -52,7 +52,10 @@ insert into bivariate_unit (id, type, measurement, is_base)
 values ('n', 'generic', NULL, NULL);
 
 insert into bivariate_unit (id, type, measurement, is_base)
-values ('ppl', 'generic', NULL, NULL);
+values ('ppl', 'generic', 'people', NULL);
+
+insert into bivariate_unit (id, type, measurement, is_base)
+values ('ppl_km2', 'generic', 'man_distance', NULL);
 
 insert into bivariate_unit (id, type, measurement, is_base)
 values ('perc', 'generic', NULL, NULL);
