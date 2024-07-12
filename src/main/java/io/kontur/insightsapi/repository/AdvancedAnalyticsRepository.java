@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -22,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -30,6 +33,8 @@ import java.util.stream.Stream;
 public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     private final QueryFactory queryFactory;
+
+    private final JdbcTemplate jdbcTemplate;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -199,20 +204,73 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<AdvancedAnalytics> getAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators) {
+        int analyticsTimeout = 40; // seconds
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        // spawn 8 threads: each calculating advanced analytics for resolution 1..8
+        List<Callable<Map<Integer, List<AdvancedAnalytics>>>> tasks = IntStream.rangeClosed(1, 8)
+                .mapToObj(resolution -> createQueryTask(argGeometry, indicators, resolution))
+                .collect(Collectors.toList());
+
+        try {
+            List<Future<Map<Integer, List<AdvancedAnalytics>>>> futures = executor.invokeAll(tasks, analyticsTimeout, TimeUnit.SECONDS);
+
+            // return result calculated for max resolution within timeout
+            Optional<Map<Integer, List<AdvancedAnalytics>>> analytics = futures.stream()
+                    .filter(Future::isDone)
+                    .map(f -> {
+                        try {
+                            return f.get();
+                        } catch (InterruptedException | ExecutionException | CancellationException e) {
+                            // the thread continues to live, but has a timeout state
+                            return null;
+                        }
+                    })
+                    .filter(result -> result != null)
+                    .max((r1, r2) -> {
+                        // resolution comparator
+                        int res1 = r1.keySet().iterator().next();
+                        int res2 = r2.keySet().iterator().next();
+                        return Integer.compare(res1, res2);
+                    });
+
+            logger.info("return analytics for res {}", analytics.get().keySet().iterator().next());
+            return analytics == null ? null : analytics.get().values().iterator().next();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();  // Restore the interrupted status
+            return null;
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    private Callable<Map<Integer, List<AdvancedAnalytics>>> createQueryTask(String argGeometry, List<BivariateIndicatorDto> indicators, int resolution) {
+        return () -> {
+            List<AdvancedAnalytics> analytics = getAdvancedAnalyticsForResolution(argGeometry, indicators, resolution);
+            Map<Integer, List<AdvancedAnalytics>> result = new HashMap<Integer, List<AdvancedAnalytics>>();
+            result.put(resolution, analytics);
+            return result;
+        };
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdvancedAnalytics> getAdvancedAnalyticsForResolution(String argGeometry, List<BivariateIndicatorDto> indicators, Integer maxResolution) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", argGeometry);
+        paramSource.addValue("max_resolution", maxResolution);
 
-        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectAllIndicators), bivariateIndicatorsMetadataTableName);
+        String query = queryFactory.getSql(advancedAnalyticsIntersectAllIndicators);
 
         List<AdvancedAnalytics> result = new ArrayList<>();
 
         try {
+            // NOTE: instead of dying by timeout we can save the result to redis - update cached result with higher resolution
+            jdbcTemplate.execute("set statement_timeout='41s'");
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.add(mapAdvancedAnalyticsWithAxis(rs, indicators, null));
             }));
         } catch (DataAccessResourceFailureException e) {
+            logger.warn(String.format("timeout calculating advancedAnalytics for resolution %s", maxResolution));
             String error = String.format(DatabaseUtil.ERROR_TIMEOUT, argGeometry);
             logger.error(error, e);
             throw new DataAccessResourceFailureException(error, e);

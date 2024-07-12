@@ -4,8 +4,8 @@ with validated_input as (select (:polygon)::geometry as geom),
      res as (select st.h3, st.indicator_uuid, st.indicator_value
              from boxinput bi
                       cross join subdivision sb
-                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
-                      join stat_h3_transposed st on (st.indicator_uuid in (select internal_id from bivariate_indicators_metadata) and sh.h3 = st.h3)
+                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution <= :max_resolution)
+                      join stat_h3_transposed st on (st.indicator_uuid in (select internal_id from bivariate_indicators_metadata where state = 'READY') and sh.h3 = st.h3)
              order by st.h3, st.indicator_uuid),
      normalized_indicators as (select a.indicator_uuid                        as numerator_uuid,
                                       b.indicator_uuid                        as denominator_uuid,
@@ -14,7 +14,7 @@ with validated_input as (select (:polygon)::geometry as geom),
                                       h3_get_resolution(a.h3)                 as resolution
                                from res a,
                                     res b,
-                                    %s as bi_b
+                                    bivariate_indicators_metadata as bi_b
                                where b.indicator_value != 0
                                  and bi_b.is_base
                                  and bi_b.internal_id = b.indicator_uuid
@@ -22,59 +22,59 @@ with validated_input as (select (:polygon)::geometry as geom),
                                order by a.h3)
 select h.numerator_uuid,
        h.denominator_uuid,
-       avg(sum) filter (where resolution = 8)    as sum_value,
+       avg(sum) filter (where resolution = :max_resolution)    as sum_value,
        case
            --if value is null, no need to calculate quality
-           when avg(sum) filter (where resolution = 8) is null then null
+           when avg(sum) filter (where resolution = :max_resolution) is null then null
            when (nullif(max(sum), 0) / nullif(min(sum), 0)) > 0
                then log10(nullif(max(sum), 0) / nullif(min(sum), 0))
            else log10((nullif(max(sum), 0) - nullif(min(sum), 0)) /
                       least(abs(nullif(min(sum), 0)), abs(nullif(max(sum), 0))))
            end                                   as sum_quality,
-       avg(min) filter (where resolution = 8)    as min_value,
+       avg(min) filter (where resolution = :max_resolution)    as min_value,
        case
            --if value is null, no need to calculate quality
-           when avg(min) filter (where resolution = 8) is null then null
+           when avg(min) filter (where resolution = :max_resolution) is null then null
            when (nullif(max(min), 0) / nullif(min(min), 0)) > 0
                then log10(nullif(max(min), 0) / nullif(min(min), 0))
            else log10((nullif(max(min), 0) - nullif(min(min), 0)) /
                       least(abs(nullif(min(min), 0)), abs(nullif(max(min), 0))))
            end
                                                  as min_quality,
-       avg(max) filter (where resolution = 8)    as max_value,
+       avg(max) filter (where resolution = :max_resolution)    as max_value,
        case
            --if value is null, no need to calculate quality
-           when avg(max) filter (where resolution = 8) is null then null
+           when avg(max) filter (where resolution = :max_resolution) is null then null
            when (nullif(max(max), 0) / nullif(min(max), 0)) > 0
                then log10(nullif(max(max), 0) / nullif(min(max), 0))
            else log10((nullif(max(max), 0) - nullif(min(max), 0)) /
                       least(abs(nullif(min(max), 0)), abs(nullif(max(max), 0))))
            end
                                                  as max_quality,
-       avg(mean) filter (where resolution = 8)   as mean_value,
+       avg(mean) filter (where resolution = :max_resolution)   as mean_value,
        case
            --if value is null, no need to calculate quality
-           when avg(mean) filter (where resolution = 8) is null then null
+           when avg(mean) filter (where resolution = :max_resolution) is null then null
            when (nullif(max(mean), 0) / nullif(min(mean), 0)) > 0
                then log10(nullif(max(mean), 0) / nullif(min(mean), 0))
            else log10((nullif(max(mean), 0) - nullif(min(mean), 0)) /
                       least(abs(nullif(min(mean), 0)), abs(nullif(max(mean), 0))))
            end
                                                  as mean_quality,
-       avg(stddev) filter (where resolution = 8) as stddev_value,
+       avg(stddev) filter (where resolution = :max_resolution) as stddev_value,
        case
            --if value is null, no need to calculate quality
-           when avg(stddev) filter (where resolution = 8) is null then null
+           when avg(stddev) filter (where resolution = :max_resolution) is null then null
            when (nullif(max(stddev), 0) / nullif(min(stddev), 0)) > 0
                then log10(nullif(max(stddev), 0) / nullif(min(stddev), 0))
            else log10((nullif(max(stddev), 0) - nullif(min(stddev), 0)) /
                       least(abs(nullif(min(stddev), 0)), abs(nullif(max(stddev), 0))))
            end
                                                  as stddev_quality,
-       avg(median) filter (where resolution = 8) as median_value,
+       avg(median) filter (where resolution = :max_resolution) as median_value,
        case
            --if value is null, no need to calculate quality
-           when avg(median) filter (where resolution = 8) is null then null
+           when avg(median) filter (where resolution = :max_resolution) is null then null
            when (nullif(max(median), 0) / nullif(min(median), 0)) > 0
                then log10(nullif(max(median), 0) / nullif(min(median), 0))
            else log10((nullif(max(median), 0) - nullif(min(median), 0)) /
