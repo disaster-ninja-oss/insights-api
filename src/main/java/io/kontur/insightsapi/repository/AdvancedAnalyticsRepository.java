@@ -241,7 +241,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
                     });
 
             logger.info("return analytics for res {}", analytics.get().keySet().iterator().next());
-            return analytics == null ? null : analytics.get().values().iterator().next();
+            return analytics == null ? new ArrayList<>() : analytics.get().values().iterator().next();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();  // Restore the interrupted status
             return new ArrayList<>();
