@@ -40,6 +40,8 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     private final Logger logger = LoggerFactory.getLogger(AdvancedAnalyticsRepository.class);
 
+    private final int ADVANCED_ANALYTICS_TIMEOUT = 40;  // seconds
+
     @Value("classpath:/sql.queries/bivariate_axis.sql")
     private Resource bivariateAxis;
 
@@ -72,6 +74,9 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
+
+    @Value("${calculations.tiles.max-h3-resolution}")
+    private Integer maxH3Resolution;
 
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
@@ -205,15 +210,16 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Override
     public List<AdvancedAnalytics> getAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators) {
-        int analyticsTimeout = 40; // seconds
-        ExecutorService executor = Executors.newFixedThreadPool(8);
-        // spawn 8 threads: each calculating advanced analytics for resolution 1..8
-        List<Callable<Map<Integer, List<AdvancedAnalytics>>>> tasks = IntStream.rangeClosed(1, 8)
+        int startResolution = 4;  // guaranteed to return result within ADVANCED_ANALYTICS_TIMEOUT
+        ExecutorService executor = Executors.newFixedThreadPool(maxH3Resolution - startResolution + 1);
+        // spawn 5 threads: each calculating advanced analytics for resolution 4..8
+        List<Callable<Map<Integer, List<AdvancedAnalytics>>>> tasks = IntStream.rangeClosed(startResolution, maxH3Resolution)
                 .mapToObj(resolution -> createQueryTask(argGeometry, indicators, resolution))
                 .collect(Collectors.toList());
 
         try {
-            List<Future<Map<Integer, List<AdvancedAnalytics>>>> futures = executor.invokeAll(tasks, analyticsTimeout, TimeUnit.SECONDS);
+            List<Future<Map<Integer, List<AdvancedAnalytics>>>> futures = executor
+                    .invokeAll(tasks, ADVANCED_ANALYTICS_TIMEOUT, TimeUnit.SECONDS);
 
             // return result calculated for max resolution within timeout
             Optional<Map<Integer, List<AdvancedAnalytics>>> analytics = futures.stream()
@@ -238,7 +244,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
             return analytics == null ? null : analytics.get().values().iterator().next();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();  // Restore the interrupted status
-            return null;
+            return new ArrayList<>();
         } finally {
             executor.shutdown();
         }
@@ -265,7 +271,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
         try {
             // NOTE: instead of dying by timeout we can save the result to redis - update cached result with higher resolution
-            jdbcTemplate.execute("set statement_timeout='41s'");
+            jdbcTemplate.execute(String.format("set statement_timeout='%ss'", ADVANCED_ANALYTICS_TIMEOUT + 1));
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.add(mapAdvancedAnalyticsWithAxis(rs, indicators, null));
             }));
@@ -310,6 +316,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
                 .numeratorLabel(numerator.getLabel())
                 .denominator(denominator.getId())
                 .denominatorLabel(denominator.getLabel())
+                .resolution(DatabaseUtil.getIntValueByColumnName(rs, "resolution"))
                 .analytics(createFilteredValuesList(rs, argCalculations))
                 .build();
     }
@@ -439,6 +446,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     public List<AdvancedAnalytics> sortResultList(List<AdvancedAnalytics> unsortedResultList) {
         List<BivariativeAxisDto> argAxis = new ArrayList<>();
         List<List<AdvancedAnalyticsValues>> argValues = new ArrayList<>();
+        List<Integer> resolutions = new ArrayList<>();
 
         for (AdvancedAnalytics analytics : unsortedResultList) {
             argAxis.add(BivariativeAxisDto
@@ -449,14 +457,20 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
                     .denominatorLabel(analytics.getDenominatorLabel())
                     .build());
             argValues.add(analytics.getAnalytics());
+            resolutions.add(analytics.getResolution());
         }
 
         List<AdvancedAnalyticsQualitySortDto> argQualitySortedList = createSortedList(argAxis, argValues);
 
-        return getAdvancedAnalyticsResult(argQualitySortedList, argAxis, argValues);
+        return getAdvancedAnalyticsResult(argQualitySortedList, argAxis, argValues, resolutions);
     }
 
     public List<AdvancedAnalytics> getAdvancedAnalyticsResult(List<AdvancedAnalyticsQualitySortDto> argQualitySortedList, List<BivariativeAxisDto> argAxis, List<List<AdvancedAnalyticsValues>> argValues) {
+        // method overload: if resolution list is unknown, pass array of max res
+        return getAdvancedAnalyticsResult(argQualitySortedList, argAxis, argValues, Collections.nCopies(argAxis.size(), maxH3Resolution));
+    }
+
+    public List<AdvancedAnalytics> getAdvancedAnalyticsResult(List<AdvancedAnalyticsQualitySortDto> argQualitySortedList, List<BivariativeAxisDto> argAxis, List<List<AdvancedAnalyticsValues>> argValues, List<Integer> resolutions) {
         List<AdvancedAnalytics> returnList = new ArrayList<>();
         for (int i = 0; i < argAxis.size(); i++) {
             List<AdvancedAnalyticsValues> advancedAnalyticsValues = argValues.get(i);
@@ -466,6 +480,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
                 analytics.setDenominator(argAxis.get(i).getDenominator());
                 analytics.setNumeratorLabel(argAxis.get(i).getNumeratorLabel());
                 analytics.setDenominatorLabel(argAxis.get(i).getDenominatorLabel());
+                analytics.setResolution(resolutions.get(i));
                 analytics.setAnalytics(advancedAnalyticsValues);
                 //get order according to quality value
                 analytics.setOrder(getIndexOfListByQuality(argQualitySortedList, argAxis.get(i).getNumerator(), argAxis.get(i).getDenominator()));

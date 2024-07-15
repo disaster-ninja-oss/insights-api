@@ -3,5 +3,6 @@ type AdvancedAnalytics {
     denominator: String,
     numeratorLabel: String,
     denominatorLabel: String,
+    resolution: Int,
     analytics: [AdvancedAnalyticsValues]
 }

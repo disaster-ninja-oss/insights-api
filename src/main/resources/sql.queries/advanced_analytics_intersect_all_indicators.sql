@@ -22,6 +22,7 @@ with validated_input as (select (:polygon)::geometry as geom),
                                order by a.h3)
 select h.numerator_uuid,
        h.denominator_uuid,
+       :max_resolution resolution,
        avg(sum) filter (where resolution = :max_resolution)    as sum_value,
        case
            --if value is null, no need to calculate quality

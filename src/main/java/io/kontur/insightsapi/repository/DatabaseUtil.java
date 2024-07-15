@@ -25,6 +25,15 @@ public class DatabaseUtil {
         }
     }
 
+    public static Integer getIntValueByColumnName(ResultSet rs, String columnName) {
+        try {
+            return rs.getInt(columnName);
+        } catch (SQLException e) {
+            logger.error("Can't get int value from result set", e);
+            return null;
+        }
+    }
+
     public static String getStringValueByColumnName(ResultSet rs, String columnName) {
         try {
             return rs.getString(columnName);

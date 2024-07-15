@@ -24,6 +24,8 @@ public class AdvancedAnalytics implements Serializable {
 
     private String denominatorLabel;
 
+    private Integer resolution;
+
     private List<AdvancedAnalyticsValues> analytics;
 
     private Integer order;
