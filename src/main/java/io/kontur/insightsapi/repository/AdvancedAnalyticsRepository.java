@@ -210,9 +210,9 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Override
     public List<AdvancedAnalytics> getAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators) {
-        int startResolution = 4;  // guaranteed to return result within ADVANCED_ANALYTICS_TIMEOUT
+        int startResolution = 3;
         ExecutorService executor = Executors.newFixedThreadPool(maxH3Resolution - startResolution + 1);
-        // spawn 5 threads: each calculating advanced analytics for resolution 4..8
+        // spawn 6 threads: each calculating advanced analytics for resolution 3..8
         List<Callable<Map<Integer, List<AdvancedAnalytics>>>> tasks = IntStream.rangeClosed(startResolution, maxH3Resolution)
                 .mapToObj(resolution -> createQueryTask(argGeometry, indicators, resolution))
                 .collect(Collectors.toList());
@@ -240,8 +240,12 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
                         return Integer.compare(res1, res2);
                     });
 
+            if (analytics == null) {
+                logger.warn("no analytics result within timeout");
+                return new ArrayList<>();
+            }
             logger.info("return analytics for res {}", analytics.get().keySet().iterator().next());
-            return analytics == null ? new ArrayList<>() : analytics.get().values().iterator().next();
+            return analytics.get().values().iterator().next();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();  // Restore the interrupted status
             return new ArrayList<>();
