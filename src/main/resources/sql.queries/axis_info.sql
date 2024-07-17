@@ -1,5 +1,5 @@
 select
-    jsonb_build_object('label', label, 'quotient', jsonb_build_array(numerator_uuid, denominator_uuid),
+    jsonb_build_object('label', label, 'quotient', jsonb_build_array(bi1.param_id, bi2.param_id),
                        'transformation', default_transform,
                        'quotients', jsonb_build_array(
                                jsonb_build_object('name', bi1.param_id,
