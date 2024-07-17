@@ -1,4 +1,4 @@
-with validated_input as (select (:polygon)::geometry as geom),
+with validated_input as (select st_simplify((:polygon)::geometry, h3_get_hexagon_edge_length_avg(:max_resolution, 'm')) as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
      subdivision as (select st_subdivide(v.geom) geom from validated_input v),
      hexes as materialized (

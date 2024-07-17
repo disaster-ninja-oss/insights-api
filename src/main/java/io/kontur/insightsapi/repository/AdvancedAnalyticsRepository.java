@@ -240,7 +240,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
                         return Integer.compare(res1, res2);
                     });
 
-            if (analytics == null) {
+            if (analytics == null || analytics.get() == null) {
                 logger.warn("no analytics result within timeout");
                 return new ArrayList<>();
             }
