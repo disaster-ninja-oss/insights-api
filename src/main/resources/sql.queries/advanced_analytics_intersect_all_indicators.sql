@@ -1,4 +1,4 @@
-with validated_input as (select (:polygon)::geometry as geom),
+with validated_input as (select ST_MakeValid(ST_SimplifyVW((:polygon)::geometry, .5*h3_get_hexagon_area_avg(:max_resolution, 'm'))) as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
      subdivision as (select st_subdivide(v.geom) geom from validated_input v),
      hexes as materialized (
@@ -8,7 +8,7 @@ with validated_input as (select (:polygon)::geometry as geom),
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution <= :max_resolution)),
      res as (select st.h3, st.indicator_uuid, st.indicator_value
              from stat_h3_transposed st
-                      join hexes h on (st.indicator_uuid in (select internal_id from bivariate_indicators_metadata where state = 'READY') and h.h3 = st.h3)
+                      join hexes h on (st.indicator_uuid in (select internal_id from bivariate_indicators_metadata where state = 'READY' and is_public) and h.h3 = st.h3)
              order by st.h3, st.indicator_uuid),
      normalized_indicators as (select a.indicator_uuid                        as numerator_uuid,
                                       b.indicator_uuid                        as denominator_uuid,

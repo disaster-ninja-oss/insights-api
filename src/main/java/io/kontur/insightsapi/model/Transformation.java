@@ -34,4 +34,14 @@ public class Transformation implements Serializable {
 
     private List<Double> points;
 
+    @SuppressWarnings("unused")
+    public void setUpper_bound(Double upperBound) {
+        this.upperBound = upperBound;
+    }
+
+    @SuppressWarnings("unused")
+    public void setLower_bound(Double lowerBound) {
+        this.lowerBound = lowerBound;
+    }
+
 }
