@@ -29,7 +29,7 @@ public class DatabaseUtil {
         try {
             return rs.getInt(columnName);
         } catch (SQLException e) {
-            logger.error("Can't get int value from result set", e);
+            logger.warn("Can't get int value from result set: {}", e.toString());
             return null;
         }
     }

@@ -173,7 +173,7 @@ public class FunctionsRepository implements FunctionsService {
                         select bivariate_unit_localization.unit_id, short_name, long_name
                         from %s bi
                         left join bivariate_unit_localization on bi.unit_id = bivariate_unit_localization.unit_id
-                        where bi.param_id = '%s';
+                        where bi.param_id = '%s' limit 1;
                         """, bivariateIndicatorsTable, arg.getX());
             }
             return jdbcTemplate.queryForObject(query, (rs, rowNum) ->
