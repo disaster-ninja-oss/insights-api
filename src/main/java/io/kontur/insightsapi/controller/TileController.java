@@ -74,8 +74,8 @@ public class TileController {
         if (ifModifiedSinceHeader != null && !ifModifiedSinceHeader.isEmpty()) {
             ifModifiedSince = ZonedDateTime.parse(ifModifiedSinceHeader, HTTP_TIME_FORMATTER);
         }
-        if ((ifNoneMatch != null && ifNoneMatch.equals(eTag)) ||
-                (ifModifiedSince != null && !lastUpdated.isAfter(ifModifiedSince.toInstant()))) {
+
+        if (request.checkNotModified(eTag) && request.checkNotModified(eTag, lastUpdated.toEpochMilli())) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                     .cacheControl(CacheControl.empty().cachePublic())
                     .header("Last-Modified", HTTP_TIME_FORMATTER.format(lastUpdated))
