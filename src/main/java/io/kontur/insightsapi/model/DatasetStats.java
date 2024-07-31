@@ -22,8 +22,8 @@ public class DatasetStats implements Serializable {
 
     private Double maxValue;
 
-    private Double meanValue;
+    private Double mean;
 
-    private Double stddevValue;
+    private Double stddev;
 
 }
