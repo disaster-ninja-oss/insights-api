@@ -20,6 +20,8 @@ public class Axis implements Cloneable, Serializable {
 
     private List<Step> steps;
 
+    private DatasetStats datasetStats;
+
     private Double quality;
 
     private List<String> quotient;
