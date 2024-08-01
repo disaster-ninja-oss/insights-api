@@ -26,6 +26,11 @@ select
                                                                              'longName', bul2.long_name))
                            ),
                        'quality', quality,
+                       'datasetStats', jsonb_build_object('minValue', min,
+                                                          'maxValue', max,
+                                                          -- TODO: replace mean_value and stddev_value with metrics calculated by all resolutions, not only 8
+                                                          'mean', mean_value,
+                                                          'stddev', stddev_value),
                        'steps', jsonb_build_array(
                                jsonb_build_object('value', min, 'label', min_label),
                                jsonb_build_object('value', p25, 'label', p25_label),

@@ -1,0 +1,6 @@
+type DatasetStats {
+    minValue: Float,
+    maxValue: Float,
+    mean: Float,
+    stddev: Float
+}
