@@ -30,4 +30,5 @@
     <include file="create_bivariate_overlays_v2.sql" relativeToChangelogFile="true"/>
     <include file="18054_add_field_to_store_emoji_in_bivariate_indicators_metadata_table.sql" relativeToChangelogFile="true"/>
     <include file="create_llm_cache_table.sql" relativeToChangelogFile="true"/>
+    <include file="create_nominatim_cache_table.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>
