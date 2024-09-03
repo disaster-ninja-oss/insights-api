@@ -32,4 +32,5 @@
     <include file="create_llm_cache_table.sql" relativeToChangelogFile="true"/>
     <include file="create_nominatim_cache_table.sql" relativeToChangelogFile="true"/>
     <include file="create_search_history_table.sql" relativeToChangelogFile="true"/>
+    <include file="add_mean_stddev_all_res_to_bivariate_axis_v2.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>
