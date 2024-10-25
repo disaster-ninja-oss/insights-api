@@ -50,10 +50,6 @@ public class IndicatorService {
 
     public static final int UUID_STRING_LENGTH = 36;
 
-    private Path getTempFilePath(String uploadId) {
-        return Paths.get("/tmp", "upload_" + uploadId + ".csv");
-    }
-
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request, boolean isUpdate) {
         try {
             BivariateIndicatorDto indicatorMetadata = null;
@@ -80,7 +76,7 @@ public class IndicatorService {
                     itemIndex++;
                 } else if (!item.isFormField() && "file".equals(item.getFieldName()) && itemIndex == 1) {
                     String uploadId = randomUUID().toString();
-                    Path tempFile = getTempFilePath(uploadId);
+                    Path tempFile = Paths.get("/tmp", "upload_" + uploadId + ".csv");
                     try (InputStream inputStream = item.openStream()) {
                         Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
                     }
@@ -128,9 +124,10 @@ public class IndicatorService {
             return ResponseEntity.ok().body(externalId);
         }
 
-        Path tempFile = getTempFilePath(uploadId);
-        if (Files.exists(tempFile)) {
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body("in progress");
+        String pid = indicatorRepository.getIndicatorUploadProcess(uploadId);
+        // can add info from pg_stat_progress_copy
+        if (pid != null) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(pid + " in progress");
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("upload failed or uploadId invalid");

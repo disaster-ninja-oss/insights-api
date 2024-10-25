@@ -64,6 +64,10 @@ public class IndicatorRepository {
 
     private final ThreadPoolExecutor uploadExecutor;
 
+    private String getUploadAppName(String uploadId) {
+        return "upload " + uploadId;
+    }
+
     @Async
     public void uploadCsvFile(Path file, BivariateIndicatorDto bivariateIndicatorDto)
             throws IndicatorDataProcessingException {
@@ -74,6 +78,10 @@ public class IndicatorRepository {
 
             connection = DataSourceUtils.getConnection(dataSource);
             connection.setAutoCommit(false);
+            try (Statement stmt = connection.createStatement()) {
+                String applicationName = getUploadAppName(bivariateIndicatorDto.getUploadId());
+                stmt.execute("SET application_name = '" + applicationName + "'");
+            }
 
             String internalId = createIndicator(connection, bivariateIndicatorDto);
 
@@ -100,6 +108,11 @@ public class IndicatorRepository {
             throw new IndicatorDataProcessingException(String.format("Failed to copy indicator. %s", e.getMessage()), e);
         } finally {
             if (connection != null) {
+                try (Statement stmt = connection.createStatement()) {
+                    stmt.execute("SET application_name = 'PostgreSQL JDBC Driver'");
+                } catch (SQLException e1) {
+                    logger.error("failed to reset application_name", e1);
+                }
                 try {
                     connection.setAutoCommit(true);
                 } catch (Exception e1) {
@@ -178,6 +191,16 @@ public class IndicatorRepository {
                 "SELECT external_id FROM " + bivariateIndicatorsMetadataTableName +
                 " WHERE owner = ? AND upload_id = ?::uuid",
                 String.class, owner, uploadId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    public String getIndicatorUploadProcess(String uploadId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                "SELECT pid FROM pg_stat_activity where application_name = ?",
+                String.class, getUploadAppName(uploadId));
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
