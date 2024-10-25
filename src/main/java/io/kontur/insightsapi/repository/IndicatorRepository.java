@@ -97,6 +97,7 @@ public class IndicatorRepository {
             }
 
             connection.commit();
+            logger.info("Upload of csv file for indicator with uuid {} has been done successfully", bivariateIndicatorDto.getExternalId());
         } catch (Exception e) {
             if (connection != null) {
                 try {
@@ -119,7 +120,6 @@ public class IndicatorRepository {
                     logger.error("Failed to reset auto-commit behavior after indicator upload", e1);
                 }
                 DataSourceUtils.releaseConnection(connection, dataSource);
-                logger.info("Upload of csv file for indicator with uuid {} has been done successfully", bivariateIndicatorDto.getExternalId());
                 try {
                     Files.deleteIfExists(file);
                     logger.info("removed " + file.toString()); 
