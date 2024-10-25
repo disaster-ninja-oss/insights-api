@@ -21,6 +21,10 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -45,6 +49,10 @@ public class IndicatorService {
     private final AuthService authService;
 
     public static final int UUID_STRING_LENGTH = 36;
+
+    private Path getTempFilePath(String uploadId) {
+        return Paths.get("/tmp", "upload_" + uploadId + ".csv");
+    }
 
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request, boolean isUpdate) {
         try {
@@ -71,9 +79,16 @@ public class IndicatorService {
                     }
                     itemIndex++;
                 } else if (!item.isFormField() && "file".equals(item.getFieldName()) && itemIndex == 1) {
-                    indicatorRepository.uploadCsvFile(item, indicatorMetadata);
-                    logger.info("Upload of csv file for indicator with uuid {} has been done successfully", indicatorMetadata.getExternalId());
-                    return ResponseEntity.ok().body(indicatorMetadata.getExternalId());
+                    String uploadId = randomUUID().toString();
+                    Path tempFile = getTempFilePath(uploadId);
+                    try (InputStream inputStream = item.openStream()) {
+                        Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    // uploaded CSV is saved to /tmp and upload id is returned to client. loading to DB is performed by new thread
+                    indicatorMetadata.setUploadId(uploadId);
+                    indicatorRepository.uploadCsvFile(tempFile, indicatorMetadata);
+                    logger.info("Started upload id {}", uploadId);
+                    return ResponseEntity.ok().body(uploadId); // return  indicatorMetadata.getExternalId() also?
                 } else {
                     return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, "Wrong field parameter or " +
                             "wrong parameters order in multipart request: please send a request with multipart data " +
@@ -104,6 +119,21 @@ public class IndicatorService {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(emptyList());
         }
+    }
+
+    public ResponseEntity<String> getIndicatorUploadStatus(String uploadId) {
+        String owner = authService.getCurrentUsername().orElseThrow();
+        String externalId = indicatorRepository.getIndicatorIdByUploadId(owner, uploadId);
+        if (externalId != null) {
+            return ResponseEntity.ok().body(externalId);
+        }
+
+        Path tempFile = getTempFilePath(uploadId);
+        if (Files.exists(tempFile)) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body("in progress");
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("upload failed or uploadId invalid");
     }
 
     public Instant getIndicatorsLastUpdateDate() {
