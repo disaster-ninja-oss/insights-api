@@ -279,6 +279,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
             namedParameterJdbcTemplate.query(query, paramSource, (rs -> {
                 result.add(mapAdvancedAnalyticsWithAxis(rs, indicators, null));
             }));
+            return result;
         } catch (DataAccessResourceFailureException e) {
             logger.warn(String.format("timeout calculating advancedAnalytics for resolution %s", maxResolution));
             String error = String.format(DatabaseUtil.ERROR_TIMEOUT, argGeometry);
@@ -292,8 +293,9 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
             String error = String.format(DatabaseUtil.ERROR_SQL, argGeometry);
             logger.error(error, e);
             throw new IllegalArgumentException(error, e);
+        } finally {
+            jdbcTemplate.execute("reset statement_timeout");
         }
-        return result;
     }
 
     private AdvancedAnalytics mapAdvancedAnalyticsWithAxis(ResultSet rs, List<BivariateIndicatorDto> indicators, List<BivariativeAxisDto> axisDtos) {
