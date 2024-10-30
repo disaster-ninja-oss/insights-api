@@ -47,11 +47,11 @@ public class TileService {
 
     private final Map<Integer, Integer> zoomToH3Resolutions = new HashMap<>();;
 
-    public byte[] getBivariateTileMvt(Integer z, Integer x, Integer y, String indicatorsClass) {
+    public byte[] getBivariateTileMvt(Integer z, Integer x, Integer y, String indicatorsClass, List<String> indicators) {
         List<String> bivariateIndicators;
         switch (indicatorsClass) {
-            case ("all") -> bivariateIndicators = tileRepository.getAllBivariateIndicators(false);
-            case ("general") -> bivariateIndicators = tileRepository.getAllBivariateIndicators(true);
+            case ("all") -> bivariateIndicators = tileRepository.getAllBivariateIndicators(false, indicators);
+            case ("general") -> bivariateIndicators = tileRepository.getAllBivariateIndicators(true, indicators);
             default -> {
                 String error = String.format("Tile indicator class is not defined. Class: %s", indicatorsClass);
                 logger.error(error);
@@ -64,7 +64,7 @@ public class TileService {
     public byte[] getBivariateTileMvtIndicatorsList(Integer z, Integer x, Integer y, List<String> indicatorsList) {
         var indicators = indicatorsList;
         if (CollectionUtils.isEmpty(indicators)) {
-            indicators = tileRepository.getAllBivariateIndicators(false);
+            indicators = tileRepository.getAllBivariateIndicators(false, null);
         } else {
             if (!checkIndicatorsList(indicators)) {
                 String error = "Wrong indicator name. " +
@@ -81,7 +81,7 @@ public class TileService {
     }
 
     private boolean checkIndicatorsList(List<String> indicatorsList) {
-        var bivariateIndicators = tileRepository.getAllBivariateIndicators(false);
+        var bivariateIndicators = tileRepository.getAllBivariateIndicators(false, null);
         return bivariateIndicators.containsAll(indicatorsList);
     }
 

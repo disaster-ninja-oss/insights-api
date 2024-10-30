@@ -50,6 +50,7 @@ public class TileController {
     public ResponseEntity<byte[]> getBivariateTileMvt(@PathVariable Integer z,
                                                       @PathVariable Integer x,
                                                       @PathVariable Integer y,
+                                                      @RequestParam(required = false) List<String> indicators,
                                                       @RequestParam(defaultValue = "all") String indicatorsClass,
                                                       WebRequest request) {
         if (isRequestInvalid(z, x, y)) {
@@ -61,7 +62,7 @@ public class TileController {
             // might happen only if there're no READY indicators in DB
             return ResponseEntity.ok()
                     .cacheControl(CacheControl.empty().cachePublic())
-                    .body(tileService.getBivariateTileMvt(z, x, y, indicatorsClass));
+                    .body(tileService.getBivariateTileMvt(z, x, y, indicatorsClass, indicators));
         }
 
         String eTag = lastUpdated.toString();
@@ -88,7 +89,7 @@ public class TileController {
                 .cacheControl(CacheControl.empty().cachePublic())
                 .header("Last-Modified", HTTP_TIME_FORMATTER.format(lastUpdated))
                 .eTag(eTag)
-                .body(tileService.getBivariateTileMvt(z, x, y, indicatorsClass));
+                .body(tileService.getBivariateTileMvt(z, x, y, indicatorsClass, indicators));
     }
 
     @Operation(summary = "Get bivariate mvt tile using z, x, y and list of indicators.",

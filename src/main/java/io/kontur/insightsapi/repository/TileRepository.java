@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,7 +82,10 @@ public class TileRepository {
                 (rs, rowNum) -> rs.getBytes("tile"));
     }
 
-    public List<String> getAllBivariateIndicators(Boolean publicOnly) {
+    public List<String> getAllBivariateIndicators(Boolean publicOnly, List<String> indicators) {
+        if (indicators != null) {
+            return indicators;
+        }
         String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName
                 : bivariateIndicatorsTableName;
         var query = String.format("select param_id from %s", bivariateIndicatorsTable);
