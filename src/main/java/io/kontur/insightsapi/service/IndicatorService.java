@@ -83,8 +83,8 @@ public class IndicatorService {
                     // uploaded CSV is saved to /tmp and upload id is returned to client. loading to DB is performed by new thread
                     indicatorMetadata.setUploadId(uploadId);
                     indicatorRepository.uploadCsvFile(tempFile, indicatorMetadata);
-                    logger.info("Started upload id {}", uploadId);
-                    return ResponseEntity.ok().body(uploadId); // return  indicatorMetadata.getExternalId() also?
+                    logger.info("Scheduled upload id {} for indicator ext.id {}", uploadId, indicatorMetadata.getExternalId());
+                    return ResponseEntity.ok().body(uploadId);
                 } else {
                     return logAndReturnErrorWithMessage(HttpStatus.BAD_REQUEST, "Wrong field parameter or " +
                             "wrong parameters order in multipart request: please send a request with multipart data " +
@@ -130,7 +130,8 @@ public class IndicatorService {
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(pid + " in progress");
         }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("upload failed or uploadId invalid");
+        // TODO: currently can't tell wether upload is not started of failed
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("upload scheduled or failed or uploadId invalid");
     }
 
     public Instant getIndicatorsLastUpdateDate() {

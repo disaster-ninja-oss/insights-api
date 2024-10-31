@@ -68,9 +68,10 @@ public class IndicatorRepository {
         return "upload " + uploadId;
     }
 
-    @Async
+    @Async("uploadExecutor") // maxPoolSize = 150
     public void uploadCsvFile(Path file, BivariateIndicatorDto bivariateIndicatorDto)
             throws IndicatorDataProcessingException {
+        logger.info("Started upload thread {} for indicator ext.id {}", bivariateIndicatorDto.getUploadId(), bivariateIndicatorDto.getExternalId());
         Connection connection = null;
 
         try (PipedInputStream pipedInputStream = new PipedInputStream();
