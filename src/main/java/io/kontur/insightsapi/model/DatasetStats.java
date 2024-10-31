@@ -17,12 +17,12 @@ public class DatasetStats implements Serializable {
     @Serial
     private static final long serialVersionUID = 1722430120010101010L;
 
-    private Double minValue;
+    private Double minValue;  // min value of all resolution hexes
 
-    private Double maxValue;
+    private Double maxValue;  // max value of all resolution hexes
 
-    private Double mean;
+    private Double mean;  // mean value of all resolution hexes
 
-    private Double stddev;
+    private Double stddev;  // stddev value of all resolution hexes
 
 }
