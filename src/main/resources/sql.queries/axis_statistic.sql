@@ -27,10 +27,10 @@ select
                            ),
                        'quality', quality,
                        'steps', jsonb_build_array(
-                               jsonb_build_object('value', min, 'label', min_label),
+                               jsonb_build_object('value', floor(min), 'label', min_label),
                                jsonb_build_object('value', p25, 'label', p25_label),
                                jsonb_build_object('value', p75, 'label', p75_label),
-                               jsonb_build_object('value', max, 'label', max_label))) as axis
+                               jsonb_build_object('value', ceil(max), 'label', max_label))) as axis
 from
     %s,
     %s bi1 left join bivariate_unit_localization bul1 on bi1.unit_id = bul1.unit_id,
