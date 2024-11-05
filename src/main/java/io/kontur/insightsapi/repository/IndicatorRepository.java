@@ -16,12 +16,15 @@ import org.springframework.core.io.Resource;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.*;
 import java.time.Instant;
 import java.util.List;
@@ -61,7 +64,14 @@ public class IndicatorRepository {
 
     private final ThreadPoolExecutor uploadExecutor;
 
-    public void uploadCsvFile(FileItemStream file, BivariateIndicatorDto bivariateIndicatorDto) throws IndicatorDataProcessingException {
+    private String getUploadAppName(String uploadId) {
+        return "upload " + uploadId;
+    }
+
+    @Async("uploadExecutor") // maxPoolSize = 150
+    public void uploadCsvFile(Path file, BivariateIndicatorDto bivariateIndicatorDto)
+            throws IndicatorDataProcessingException {
+        logger.info("Started upload thread {} for indicator ext.id {}", bivariateIndicatorDto.getUploadId(), bivariateIndicatorDto.getExternalId());
         Connection connection = null;
 
         try (PipedInputStream pipedInputStream = new PipedInputStream();
@@ -69,6 +79,10 @@ public class IndicatorRepository {
 
             connection = DataSourceUtils.getConnection(dataSource);
             connection.setAutoCommit(false);
+            try (Statement stmt = connection.createStatement()) {
+                String applicationName = getUploadAppName(bivariateIndicatorDto.getUploadId());
+                stmt.execute("SET application_name = '" + applicationName + "'");
+            }
 
             String internalId = createIndicator(connection, bivariateIndicatorDto);
 
@@ -79,27 +93,40 @@ public class IndicatorRepository {
             try {
                 uploadTask.get();
             } catch (Exception e) {
-                throw new IndicatorDataProcessingException(e.getCause().getMessage(), e);
+                logger.error("failed to stream file to db", e);
+                throw new IndicatorDataProcessingException(e.getMessage(), e);
             }
 
             connection.commit();
+            logger.info("Upload of csv file for indicator with uuid {} has been done successfully", bivariateIndicatorDto.getExternalId());
         } catch (Exception e) {
             if (connection != null) {
                 try {
                     connection.rollback();
                 } catch (Exception e1) {
-                    throw new IndicatorDataProcessingException("Failed to rollback indicator upload transaction", e);
+                    throw new IndicatorDataProcessingException("Failed to rollback indicator upload transaction", e1);
                 }
             }
             throw new IndicatorDataProcessingException(String.format("Failed to copy indicator. %s", e.getMessage()), e);
         } finally {
             if (connection != null) {
+                try (Statement stmt = connection.createStatement()) {
+                    stmt.execute("SET application_name = 'PostgreSQL JDBC Driver'");
+                } catch (SQLException e1) {
+                    logger.error("failed to reset application_name", e1);
+                }
                 try {
                     connection.setAutoCommit(true);
                 } catch (Exception e1) {
                     logger.error("Failed to reset auto-commit behavior after indicator upload", e1);
                 }
                 DataSourceUtils.releaseConnection(connection, dataSource);
+                try {
+                    Files.deleteIfExists(file);
+                    logger.info("removed " + file.toString()); 
+                } catch (Exception e1) {
+                    logger.error("Failed to remove file" + file.toString(), e1);
+                }
             }
         }
     }
@@ -129,9 +156,9 @@ public class IndicatorRepository {
         }
     }
 
-    private Future<?> submitUploadTask(FileItemStream file, String internalId, PipedOutputStream pipedOutputStream) {
+    private Future<?> submitUploadTask(Path file, String internalId, PipedOutputStream pipedOutputStream) {
         return uploadExecutor.submit(() -> {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.openStream(), StandardCharsets.UTF_8));
+            try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8);
                  BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(pipedOutputStream, StandardCharsets.UTF_8))) {
                 String row;
                 while ((row = reader.readLine()) != null) {
@@ -157,6 +184,27 @@ public class IndicatorRepository {
         return jdbcTemplate.query(
                 "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ?",
                 bivariateIndicatorRowMapper, owner);
+    }
+
+    public String getIndicatorIdByUploadId(String owner, String uploadId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                "SELECT external_id FROM " + bivariateIndicatorsMetadataTableName +
+                " WHERE owner = ? AND upload_id = ?::uuid",
+                String.class, owner, uploadId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    public String getIndicatorUploadProcess(String uploadId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                "SELECT pid FROM pg_stat_activity where application_name = ?",
+                String.class, getUploadAppName(uploadId));
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     public List<BivariateIndicatorDto> getIndicatorsByOwnerAndParamId(String owner, String paramId) {
@@ -227,5 +275,6 @@ public class IndicatorRepository {
         ps.setString(14, bivariateIndicatorDto.getUnitId());
         ps.setString(15, bivariateIndicatorDto.getEmoji());
         ps.setString(16, bivariateIndicatorDto.getLastUpdated() == null ? null : bivariateIndicatorDto.getLastUpdated().toString());
+        ps.setString(17, bivariateIndicatorDto.getUploadId());
     }
 }

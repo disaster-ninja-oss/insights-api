@@ -78,4 +78,7 @@ public class BivariateIndicatorDto {
 
     @JsonProperty(value = "lastUpdated")
     private OffsetDateTime lastUpdated;
+
+    @JsonIgnore
+    private String uploadId;
 }

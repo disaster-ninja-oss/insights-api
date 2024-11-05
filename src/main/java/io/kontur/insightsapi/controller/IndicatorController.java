@@ -114,6 +114,19 @@ public class IndicatorController {
     }
 
     @Operation(
+            summary = "Get indicator upload status",
+            tags = {"Indicators"},
+            description = "Get indicator upload status. Owner is obtained from the token.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Success"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                    @ApiResponse(responseCode = "500", description = "Internal error")})
+    @GetMapping("/upload/status/{uploadId}")
+    public ResponseEntity<String> getIndicatorUploadStatus(@PathVariable String uploadId) {
+        return indicatorService.getIndicatorUploadStatus(uploadId);
+    }
+
+    @Operation(
             summary = "Get indicators metadata by owner.",
             tags = {"Indicators"},
             description = "Get indicators metadata by owner. Owner is obtained from the token.",
