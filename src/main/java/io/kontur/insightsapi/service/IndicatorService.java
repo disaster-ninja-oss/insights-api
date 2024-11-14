@@ -50,6 +50,12 @@ public class IndicatorService {
 
     public static final int UUID_STRING_LENGTH = 36;
 
+    private String getUploadId(BivariateIndicatorDto bivariateIndicatorDto) throws Exception {
+        // half of id is hash of param_id/owner, another half is random
+        return bivariateIndicatorDto.getParamIdAndOwnerHash()
+            + randomUUID().toString().replace("-", "").substring(0, 16);
+    }
+
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request, boolean isUpdate) {
         try {
             BivariateIndicatorDto indicatorMetadata = null;
@@ -75,7 +81,14 @@ public class IndicatorService {
                     }
                     itemIndex++;
                 } else if (!item.isFormField() && "file".equals(item.getFieldName()) && itemIndex == 1) {
-                    String uploadId = randomUUID().toString();
+                    String activeUploadId = indicatorRepository.getActiveUploadId(indicatorMetadata);
+                    if (activeUploadId != null) {
+                        return logAndReturnErrorWithMessage(
+                                HttpStatus.BAD_REQUEST,
+                                String.format("indicator %s upload in progress, check uploadId %s",
+                                    indicatorMetadata.getId(), activeUploadId));
+                    }
+                    String uploadId = getUploadId(indicatorMetadata);
                     Path tempFile = Paths.get("/tmp", "upload_" + uploadId + ".csv");
                     try (InputStream inputStream = item.openStream()) {
                         Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);

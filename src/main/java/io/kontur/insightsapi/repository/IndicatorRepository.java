@@ -197,6 +197,18 @@ public class IndicatorRepository {
         }
     }
 
+    public String getActiveUploadId(BivariateIndicatorDto indicator) {
+        // if the indicator with the same param_id and owner is currently uploading, return its upload id
+        try {
+            // lookup by partial match: first part of upload_id is always a hash of param_id & owner
+            return jdbcTemplate.queryForObject(
+                "SELECT application_name FROM pg_stat_activity where application_name ~ ?",
+                String.class, getUploadAppName(indicator.getParamIdAndOwnerHash()));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public String getIndicatorUploadProcess(String uploadId) {
         try {
             return jdbcTemplate.queryForObject(

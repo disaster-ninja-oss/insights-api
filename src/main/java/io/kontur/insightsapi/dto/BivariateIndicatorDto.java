@@ -10,6 +10,8 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 @Data
 @NoArgsConstructor
@@ -81,4 +83,28 @@ public class BivariateIndicatorDto {
 
     @JsonIgnore
     private String uploadId;
+
+    private String md5Hash(String input) throws Exception {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new Exception("Can't generate upload id");
+        }
+        byte[] hash = md.digest(input.getBytes());
+
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    public String getParamIdAndOwnerHash() throws Exception {
+        // half of md5 string, so it fits with another 16 bytes of randomness in postgres application_name
+        return md5Hash(id + "/" + owner).substring(0, 16);
+    }
+
 }
