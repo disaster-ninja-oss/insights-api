@@ -50,10 +50,8 @@ public class IndicatorService {
 
     public static final int UUID_STRING_LENGTH = 36;
 
-    private String getUploadId(BivariateIndicatorDto bivariateIndicatorDto) throws Exception {
-        // half of id is hash of param_id/owner, another half is random
-        return bivariateIndicatorDto.getParamIdAndOwnerHash()
-            + randomUUID().toString().replace("-", "").substring(0, 16);
+    private String getUploadId(BivariateIndicatorDto bivariateIndicatorDto) {
+        return randomUUID().toString();
     }
 
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request, boolean isUpdate) {
@@ -81,13 +79,7 @@ public class IndicatorService {
                     }
                     itemIndex++;
                 } else if (!item.isFormField() && "file".equals(item.getFieldName()) && itemIndex == 1) {
-                    String activeUploadId = indicatorRepository.getActiveUploadId(indicatorMetadata);
-                    if (activeUploadId != null) {
-                        return logAndReturnErrorWithMessage(
-                                HttpStatus.BAD_REQUEST,
-                                String.format("indicator %s upload in progress, check uploadId %s",
-                                    indicatorMetadata.getId(), activeUploadId));
-                    }
+                    indicatorRepository.checkActiveUpload(indicatorMetadata);
                     String uploadId = getUploadId(indicatorMetadata);
                     Path tempFile = Paths.get("/tmp", "upload_" + uploadId + ".csv");
                     try (InputStream inputStream = item.openStream()) {
@@ -132,19 +124,20 @@ public class IndicatorService {
 
     public ResponseEntity<String> getIndicatorUploadStatus(String uploadId) {
         String owner = authService.getCurrentUsername().orElseThrow();
-        String externalId = indicatorRepository.getIndicatorIdByUploadId(owner, uploadId);
-        if (externalId != null) {
+        String result = indicatorRepository.getIndicatorIdByUploadId(owner, uploadId);
+        String[] parts = result.split("/");
+        String externalId = parts[0];
+        String indicatorState = parts[1];
+        System.out.println(indicatorState); 
+        if (indicatorState.equals("COPY IN PROGRESS")) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(indicatorState);
+        } else if (indicatorState == null) {
+            // indicator not found by upload_id
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("upload scheduled or failed or uploadId invalid");
+        } else {
+            // uploaded successfully
             return ResponseEntity.ok().body(externalId);
         }
-
-        String pid = indicatorRepository.getIndicatorUploadProcess(uploadId);
-        // can add info from pg_stat_progress_copy
-        if (pid != null) {
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(pid + " in progress");
-        }
-
-        // TODO: currently can't tell wether upload is not started of failed
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("upload scheduled or failed or uploadId invalid");
     }
 
     public Instant getIndicatorsLastUpdateDate() {
