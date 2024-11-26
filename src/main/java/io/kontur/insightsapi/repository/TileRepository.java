@@ -12,12 +12,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -104,9 +101,15 @@ public class TileRepository {
             List<String> columns = Lists.newArrayList();
 
             for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
-                outerFilter.add(String.format("('%s'::uuid)", indicator.getInternalId()));
-                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
-                        indicator.getInternalId(), indicator.getId()));
+                if (indicator.getId().equals("one")) {
+                    columns.add("1. as \"one\"");
+                } else if (indicator.getId().equals("area_km2")) {
+                    columns.add("ST_Area(h3_cell_to_boundary_geography(h3)) / 1000000.0 as \"area_km2\"");
+                } else {
+                    outerFilter.add(String.format("('%s'::uuid)", indicator.getInternalId()));
+                    columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
+                            indicator.getInternalId(), indicator.getId()));
+                }
             }
 
             return String.format(queryFactory.getSql(getTileMvtGenerateOnTheFly),
