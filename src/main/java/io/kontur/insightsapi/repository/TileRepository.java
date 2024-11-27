@@ -36,6 +36,9 @@ public class TileRepository {
     @Value("classpath:/sql.queries/get_tile_mvt_generate_on_the_fly.sql")
     private Resource getTileMvtGenerateOnTheFly;
 
+    @Value("classpath:/sql.queries/get_tile_mvt_generate_high_res.sql")
+    private Resource getTileMvtGenerateHighRes;
+
     @Value("${calculations.bivariate.indicators.test.table}")
     private String bivariateIndicatorsMetadataTableName;
 
@@ -50,7 +53,7 @@ public class TileRepository {
     public byte[] getBivariateTileMvt(Integer resolution, Integer z, Integer x, Integer y,
                                       List<String> bivariateIndicators) {
 
-        String query = generateSqlQuery(bivariateIndicators);
+        String query = generateSqlQuery(bivariateIndicators, resolution);
 
         var paramSource = new MapSqlParameterSource("z", z);
         paramSource.addValue("x", x);
@@ -92,7 +95,7 @@ public class TileRepository {
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
     }
 
-    private String generateSqlQuery(List<String> bivariateIndicators) {
+    private String generateSqlQuery(List<String> bivariateIndicators, Integer resolution) {
         if (useStatSeparateTables) {
             List<BivariateIndicatorDto> bivariateIndicatorDtos =
                     indicatorRepository.getSelectedBivariateIndicators(bivariateIndicators);
@@ -112,7 +115,8 @@ public class TileRepository {
                 }
             }
 
-            return String.format(queryFactory.getSql(getTileMvtGenerateOnTheFly),
+            return String.format(queryFactory.getSql(
+                        resolution > 8 ? getTileMvtGenerateHighRes : getTileMvtGenerateOnTheFly),
                     StringUtils.join(outerFilter, ", "),
                     StringUtils.join(columns, ", "));
 
