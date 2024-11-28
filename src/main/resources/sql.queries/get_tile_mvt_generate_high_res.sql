@@ -1,14 +1,11 @@
-with hexes as materialized (
-    select
-        h3,
-        m.internal_id
+with hexes as (
+    select h3
      from h3_polygon_to_cells(
-            st_transform(ST_TileEnvelope(:z, :x, :y, margin := 0.08), 4326), :resolution) h3,
-          (values %s) m(internal_id)
+            st_transform(ST_TileEnvelope(:z, :x, :y, margin := 0.08), 4326), :resolution) h3
 ),
     res as (select sg.h3, st.indicator_uuid, st.indicator_value
             from stat_h3_transposed st
-            join hexes sg on (sg.h3 = st.h3 and sg.internal_id = st.indicator_uuid)
+            join hexes sg on (sg.h3 = st.h3)
                 )
 select ST_AsMVT(q, 'stats', 8192, 'geom', 'h3ind') as tile
 from (select
