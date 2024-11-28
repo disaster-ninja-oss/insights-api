@@ -104,7 +104,7 @@ public class TileRepository {
 
             for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
                 if (indicator.getId().equals("one")) {
-                    columns.add("1. as \"one\"");
+                    columns.add("1.0::float as \"one\"");
                 } else if (indicator.getId().equals("area_km2")) {
                     columns.add("ST_Area(h3_cell_to_boundary_geography(h3)) / 1000000.0 as \"area_km2\"");
                 } else {
