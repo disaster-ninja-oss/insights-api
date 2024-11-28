@@ -12,12 +12,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,6 +36,9 @@ public class TileRepository {
     @Value("classpath:/sql.queries/get_tile_mvt_generate_on_the_fly.sql")
     private Resource getTileMvtGenerateOnTheFly;
 
+    @Value("classpath:/sql.queries/get_tile_mvt_generate_high_res.sql")
+    private Resource getTileMvtGenerateHighRes;
+
     @Value("${calculations.bivariate.indicators.test.table}")
     private String bivariateIndicatorsMetadataTableName;
 
@@ -53,7 +53,7 @@ public class TileRepository {
     public byte[] getBivariateTileMvt(Integer resolution, Integer z, Integer x, Integer y,
                                       List<String> bivariateIndicators) {
 
-        String query = generateSqlQuery(bivariateIndicators);
+        String query = generateSqlQuery(bivariateIndicators, resolution);
 
         var paramSource = new MapSqlParameterSource("z", z);
         paramSource.addValue("x", x);
@@ -95,7 +95,7 @@ public class TileRepository {
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
     }
 
-    private String generateSqlQuery(List<String> bivariateIndicators) {
+    private String generateSqlQuery(List<String> bivariateIndicators, Integer resolution) {
         if (useStatSeparateTables) {
             List<BivariateIndicatorDto> bivariateIndicatorDtos =
                     indicatorRepository.getSelectedBivariateIndicators(bivariateIndicators);
@@ -104,12 +104,19 @@ public class TileRepository {
             List<String> columns = Lists.newArrayList();
 
             for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
-                outerFilter.add(String.format("('%s'::uuid)", indicator.getInternalId()));
-                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
-                        indicator.getInternalId(), indicator.getId()));
+                if (indicator.getId().equals("one")) {
+                    columns.add("1. as \"one\"");
+                } else if (indicator.getId().equals("area_km2")) {
+                    columns.add("ST_Area(h3_cell_to_boundary_geography(h3)) / 1000000.0 as \"area_km2\"");
+                } else {
+                    outerFilter.add(String.format("('%s'::uuid)", indicator.getInternalId()));
+                    columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
+                            indicator.getInternalId(), indicator.getId()));
+                }
             }
 
-            return String.format(queryFactory.getSql(getTileMvtGenerateOnTheFly),
+            return String.format(queryFactory.getSql(
+                        resolution > 8 ? getTileMvtGenerateHighRes : getTileMvtGenerateOnTheFly),
                     StringUtils.join(outerFilter, ", "),
                     StringUtils.join(columns, ", "));
 
