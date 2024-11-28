@@ -19,4 +19,4 @@ from (select
         ) as geom,
         h3index_to_bigint(h3) as h3ind
       from res
-      group by geom, h3) q;
+      group by h3) q;
