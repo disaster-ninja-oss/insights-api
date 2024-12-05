@@ -9,14 +9,10 @@ with hexes as (
 ),
     scale_factor(uuid, k) as (
         select
-            a.numerator_uuid,
-            case when a.quality>b.quality then pow(7, :resolution-8) else 1 end
-        from bivariate_axis_v2 a
-        join bivariate_axis_v2 b on (
-            a.numerator_uuid = b.numerator_uuid
-            and a.denominator_uuid = '00000000-0000-0000-0000-000000000000'
-            and b.denominator_uuid = '11111111-1111-1111-1111-111111111111'
-        )
+            internal_id,
+            case downscale when 'equal' then 1 else pow(7, :resolution-8) end
+        from bivariate_indicators_metadata
+        where max_res <= 8
 ),
     sampled_values as (
         select h3_cell_to_children(h3, :resolution) h3, indicator_uuid, indicator_value / k indicator_value
@@ -30,9 +26,9 @@ with hexes as (
         join hexes using(h3)
 ),
     res as (
-        select h3, indicator_uuid, coalesce(true_values.indicator_value, sampled_values.indicator_value) indicator_value
-        from sampled_values
-        left join true_values using(h3, indicator_uuid)
+        select * from sampled_values 
+        union all
+        select * from true_values
 )
 select ST_AsMVT(q, 'stats', 8192, 'geom', 'h3ind') as tile
 from (select
