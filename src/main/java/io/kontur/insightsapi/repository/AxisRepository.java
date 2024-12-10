@@ -5,10 +5,13 @@ import io.kontur.insightsapi.dto.PresetDto;
 import io.kontur.insightsapi.mapper.AxisRowMapper;
 import io.kontur.insightsapi.mapper.TransformationRowMapper;
 import io.kontur.insightsapi.model.Axis;
+import io.kontur.insightsapi.model.Indicator;
 import io.kontur.insightsapi.model.Transformation;
 import io.kontur.insightsapi.repository.IndicatorRepository;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +31,8 @@ public class AxisRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final IndicatorRepository indicatorRepository;
+    private final TileRepository tileRepository;
+
     private final AxisRowMapper axisRowMapper;
     private final TransformationRowMapper transformationRowMapper;
 
@@ -53,7 +58,28 @@ public class AxisRepository {
         if (!useStatSeparateTables) {
             return new ArrayList<>();
         }
-        return jdbcTemplate.query(queryFactory.getSql(axisInfo), axisRowMapper);
+        List<Axis> axes = jdbcTemplate.query(queryFactory.getSql(axisInfo), axisRowMapper);
+        Map<Integer, Integer> resolutionToZoom = getZoomMapping();
+        for (Axis axis : axes) {
+            for (Indicator quotient : axis.getQuotients()) {
+                quotient.setMaxZoom(resolutionToZoom.get(quotient.getMaxRes()));
+            }
+        }
+        return axes;
+    }
+
+    private Map<Integer, Integer> getZoomMapping() {
+        Map<Integer, Integer> resolutionToZoom = new HashMap<>();
+
+        // Initialize the mapping from zoom to resolution
+        Map<Integer, Integer> zoomToResolution = tileRepository.initZoomToH3Resolutions();
+
+        // Reverse the mapping
+        for (Map.Entry<Integer, Integer> entry : zoomToResolution.entrySet()) {
+            resolutionToZoom.merge(entry.getValue(), entry.getKey(), Math::min);
+        }
+
+        return resolutionToZoom;
     }
 
     public void validateIndicators(List<String> uuids, String owner) {

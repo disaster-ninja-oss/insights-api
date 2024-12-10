@@ -27,6 +27,20 @@ public class Indicator {
 
     private String emoji;
 
+    private Integer maxZoom;
+
+    private Integer maxRes;
+
+    @SuppressWarnings("unused")
+    public Integer getMax_res() {
+        return maxRes;
+    }
+
+    @SuppressWarnings("unused")
+    public void setMax_res(Integer maxRes) {
+        this.maxRes = maxRes;
+    }
+
     @SuppressWarnings("unused")
     public String getUpdate_frequency() {
         return updateFrequency;

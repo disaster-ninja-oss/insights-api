@@ -23,18 +23,6 @@ public class TileService {
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
 
-    @Value("${calculations.tiles.tile-size}")
-    private Integer tileSize;
-
-    @Value("${calculations.tiles.hex-edge-pixels}")
-    private Integer hexEdgePixels;
-
-    @Value("${calculations.tiles.max-h3-resolution}")
-    private Integer maxH3Resolutions;
-
-    @Value("${calculations.tiles.min-h3-resolution}")
-    private Integer minH3Resolutions;
-
     @Value("${calculations.tiles.max-zoom}")
     private Integer maxZoom;
 
@@ -87,8 +75,7 @@ public class TileService {
 
     @PostConstruct
     private void postConstruct() {
-        Map<Integer, Integer> res = tileRepository.initZoomToH3Resolutions(tileSize, hexEdgePixels, maxH3Resolutions,
-                minH3Resolutions, maxZoom, minZoom);
+        Map<Integer, Integer> res = tileRepository.initZoomToH3Resolutions();
         if (MapUtils.isNotEmpty(res)) {
             zoomToH3Resolutions.putAll(res);
         }
