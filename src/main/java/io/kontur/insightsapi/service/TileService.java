@@ -46,7 +46,12 @@ public class TileService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error);
             }
         }
-        return tileRepository.getBivariateTileMvt(getResolution(z), z, x, y, bivariateIndicators);
+        Integer h3res = getResolution(z);
+        if (indicators != null && h3res > 8) {
+            // for paid population tiles api limit resolution to 8
+            h3res = 8;
+        }
+        return tileRepository.getBivariateTileMvt(h3res, z, x, y, bivariateIndicators);
     }
 
     public byte[] getBivariateTileMvtIndicatorsList(Integer z, Integer x, Integer y, List<String> indicatorsList) {
