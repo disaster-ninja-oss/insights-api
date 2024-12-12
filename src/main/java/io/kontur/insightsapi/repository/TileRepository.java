@@ -39,6 +39,24 @@ public class TileRepository {
     @Value("classpath:/sql.queries/get_tile_mvt_generate_high_res.sql")
     private Resource getTileMvtGenerateHighRes;
 
+    @Value("${calculations.tiles.tile-size}")
+    private Integer tileSize;
+
+    @Value("${calculations.tiles.hex-edge-pixels}")
+    private Integer hexEdgePixels;
+
+    @Value("${calculations.tiles.max-h3-resolution}")
+    private Integer maxH3Resolutions;
+
+    @Value("${calculations.tiles.min-h3-resolution}")
+    private Integer minH3Resolutions;
+
+    @Value("${calculations.tiles.max-zoom}")
+    private Integer maxZoom;
+
+    @Value("${calculations.tiles.min-zoom}")
+    private Integer minZoom;
+
     @Value("${calculations.bivariate.indicators.test.table}")
     private String bivariateIndicatorsMetadataTableName;
 
@@ -124,9 +142,7 @@ public class TileRepository {
         }
     }
 
-    public Map<Integer, Integer> initZoomToH3Resolutions(Integer tileSize, Integer hexEdgePixels,
-                                                         Integer maxH3Resolutions, Integer minH3Resolutions,
-                                                         Integer maxZoom, Integer minZoom) {
+    public Map<Integer, Integer> initZoomToH3Resolutions() {
         Map<Integer, Integer> result = new HashMap<>();
         var paramSource = new MapSqlParameterSource("tile_size", tileSize);
         paramSource.addValue("hex_edge_pixels", hexEdgePixels);

@@ -244,7 +244,8 @@ public class IndicatorRepository {
 
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getSelectedBivariateIndicators(List<String> indicatorIds) {
-        return jdbcTemplate.query(String.format("SELECT distinct on (param_id) * FROM %s WHERE param_id in ('%s') and is_public order by param_id, date desc",
+        return jdbcTemplate.query(String.format(
+                        "SELECT distinct on (param_id) * FROM %s WHERE param_id in ('%s') and is_public and state = 'READY' order by param_id, date desc",
                         bivariateIndicatorsMetadataTableName, String.join("','", indicatorIds)),
                 bivariateIndicatorRowMapper);
     }

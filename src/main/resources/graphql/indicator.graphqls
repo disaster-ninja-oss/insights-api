@@ -2,6 +2,7 @@ type Indicator {
     name: String,
     label: String,
     emoji: String,
+    maxZoom: Int,
     copyrights: [String],
     direction: [[String]],
     description: String,
