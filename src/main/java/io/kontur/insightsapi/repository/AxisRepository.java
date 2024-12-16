@@ -68,7 +68,7 @@ public class AxisRepository {
         return axes;
     }
 
-    private Map<Integer, Integer> getZoomMapping() {
+    public Map<Integer, Integer> getZoomMapping() {
         Map<Integer, Integer> resolutionToZoom = new HashMap<>();
 
         // Initialize the mapping from zoom to resolution

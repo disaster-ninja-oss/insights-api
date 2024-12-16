@@ -6,6 +6,8 @@ import io.kontur.insightsapi.dto.NumeratorsDenominatorsUuidCorrelationDto;
 import io.kontur.insightsapi.mapper.*;
 import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.BivariateStatistic;
+import io.kontur.insightsapi.model.Indicator;
+import io.kontur.insightsapi.model.Overlay;
 import io.kontur.insightsapi.model.PolygonMetrics;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.service.cacheable.CorrelationRateService;
@@ -102,6 +104,8 @@ public class StatisticRepository implements CorrelationRateService {
 
     private final CorrelationRateRowMapper correlationRateRowMapper;
 
+    private final AxisRepository axisRepository;
+
     private final QueryFactory queryFactory;
 
     private final Logger logger = LoggerFactory.getLogger(StatisticRepository.class);
@@ -130,7 +134,19 @@ public class StatisticRepository implements CorrelationRateService {
     @Transactional(readOnly = true)
     public BivariateStatistic getBivariateStatistic() {
         if (useStatSeparateTables) {
-            return jdbcTemplate.queryForObject(queryFactory.getSql(bivariateStatisticV2), bivariateStatisticRowMapper);
+            BivariateStatistic bs = jdbcTemplate.queryForObject(queryFactory.getSql(bivariateStatisticV2), bivariateStatisticRowMapper);
+            Map<Integer, Integer> resolutionToZoom = axisRepository.getZoomMapping();
+            for (Overlay o : bs.getOverlays()) {
+                Axis x = o.getX();
+                for (Indicator quotient : x.getQuotients()) {
+                    quotient.setMaxZoom(resolutionToZoom.get(quotient.getMaxRes()));
+                }
+                Axis y = o.getY();
+                for (Indicator quotient : y.getQuotients()) {
+                    quotient.setMaxZoom(resolutionToZoom.get(quotient.getMaxRes()));
+                }
+            }
+            return bs;
         }
         String bivariateIndicatorsTable = bivariateIndicatorsTableName;
         String bivariateAxisTable = bivariateAxisTableName;
