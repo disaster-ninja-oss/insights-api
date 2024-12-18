@@ -55,7 +55,7 @@ insert into bivariate_unit_localization (unit_id, language, short_name, long_nam
 values ('ppl', 'en', 'ppl', 'people');
 
 insert into bivariate_unit_localization (unit_id, language, short_name, long_name)
-values ('ppl_km2', 'en', 'ppl_km2', 'man-distance');
+values ('ppl*km', 'en', 'ppl*km', 'man-distance');
 
 insert into bivariate_unit_localization (unit_id, language, short_name, long_name)
 values ('perc', 'en', '%', 'percentage');
