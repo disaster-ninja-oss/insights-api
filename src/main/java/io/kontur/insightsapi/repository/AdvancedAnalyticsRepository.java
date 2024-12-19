@@ -42,6 +42,8 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     private final int ADVANCED_ANALYTICS_TIMEOUT = 40;  // seconds
 
+    private final Integer maxAnalyticsResolution = 8;
+
     @Value("classpath:/sql.queries/bivariate_axis.sql")
     private Resource bivariateAxis;
 
@@ -74,9 +76,6 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Value("${calculations.useStatSeparateTables:false}")
     private Boolean useStatSeparateTables;
-
-    @Value("${calculations.tiles.max-h3-resolution}")
-    private Integer maxH3Resolution;
 
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
@@ -211,9 +210,9 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     @Override
     public List<AdvancedAnalytics> getAdvancedAnalyticsV2(String argGeometry, List<BivariateIndicatorDto> indicators) {
         int startResolution = 3;
-        ExecutorService executor = Executors.newFixedThreadPool(maxH3Resolution - startResolution + 1);
+        ExecutorService executor = Executors.newFixedThreadPool(maxAnalyticsResolution - startResolution + 1);
         // spawn 6 threads: each calculating advanced analytics for resolution 3..8
-        List<Callable<Map<Integer, List<AdvancedAnalytics>>>> tasks = IntStream.rangeClosed(startResolution, maxH3Resolution)
+        List<Callable<Map<Integer, List<AdvancedAnalytics>>>> tasks = IntStream.rangeClosed(startResolution, maxAnalyticsResolution)
                 .mapToObj(resolution -> createQueryTask(argGeometry, indicators, resolution))
                 .collect(Collectors.toList());
 
@@ -473,7 +472,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     public List<AdvancedAnalytics> getAdvancedAnalyticsResult(List<AdvancedAnalyticsQualitySortDto> argQualitySortedList, List<BivariativeAxisDto> argAxis, List<List<AdvancedAnalyticsValues>> argValues) {
         // method overload: if resolution list is unknown, pass array of max res
-        return getAdvancedAnalyticsResult(argQualitySortedList, argAxis, argValues, Collections.nCopies(argAxis.size(), maxH3Resolution));
+        return getAdvancedAnalyticsResult(argQualitySortedList, argAxis, argValues, Collections.nCopies(argAxis.size(), maxAnalyticsResolution));
     }
 
     public List<AdvancedAnalytics> getAdvancedAnalyticsResult(List<AdvancedAnalyticsQualitySortDto> argQualitySortedList, List<BivariativeAxisDto> argAxis, List<List<AdvancedAnalyticsValues>> argValues, List<Integer> resolutions) {
