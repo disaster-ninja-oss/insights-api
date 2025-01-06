@@ -4,11 +4,14 @@ with pairs as (select *
          as (select (:polygon)::geometry as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
      subdivision as (select st_subdivide(v.geom) geom from validated_input v),
-     res as (select st.h3, indicator_uuid, indicator_value
+     hexes as materialized (
+             select distinct sh.h3
              from boxinput bi
                       cross join subdivision sb
-                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
-                      join stat_h3_transposed st on (sh.h3 = st.h3)
+                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution = 8)),
+     res as (select st.h3, indicator_uuid, indicator_value
+             from stat_h3_transposed st
+             join hexes sh using(h3)
              order by st.h3, indicator_uuid),
      normalized_indicators as (select a.indicator_uuid                        as numerator_uuid,
                                       b.indicator_uuid                        as denominator_uuid,
