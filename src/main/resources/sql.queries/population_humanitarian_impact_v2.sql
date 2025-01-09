@@ -3,14 +3,15 @@ with resolution as (select calculate_area_resolution_v2(ST_SetSRID(:geometry::ge
          as (select (:transformed_geometry)::geometry as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
      subdivision as (select st_subdivide(v.geom) geom from validated_input v),
-     res as (select st.h3, indicator_uuid, indicator_value
+     hexes as materialized (
+             select distinct sh.h3
              from boxinput bi
                       cross join subdivision sb
-                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
-                      join stat_h3_transposed st on (sh.h3 = st.h3)
-             where sh.resolution = (select resolution from resolution)
-               and indicator_uuid = (select internal_id from %s where param_id = 'population' and state = 'READY')
-               and indicator_value > 0),
+                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution = (select resolution from resolution))),
+     res as (select st.h3, indicator_uuid, indicator_value
+             from stat_h3_transposed st
+             join hexes using(h3)
+             where indicator_uuid = (select internal_id from %s where param_id = 'population' and state = 'READY')),
      stat_in_area as (select s.*, sum(population) over (order by population desc) as sum_pop
                       from (select distinct h3,
                                             indicator_value          as population,
