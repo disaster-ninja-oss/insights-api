@@ -50,9 +50,6 @@ public class IndicatorRepository {
 
     private final BivariateIndicatorRowMapper bivariateIndicatorRowMapper;
 
-    @Value("${calculations.bivariate.transposed.table}")
-    private String transposedTableName;
-
     @Value("${calculations.bivariate.indicators.test.table}")
     private String bivariateIndicatorsMetadataTableName;
 
@@ -84,14 +81,17 @@ public class IndicatorRepository {
             connection.commit();
             // now new indicator is visible for other transactions with the state "COPY IN PROGRESS"
 
+            String tmpTableName = "tmp_stat_h3_" + bivariateIndicatorDto.getUploadId();
             try (Statement stmt = connection.createStatement()) {
                 stmt.execute("select from bivariate_indicators_metadata where internal_id = '" + internalId + "' for no key update nowait");
+                stmt.execute("create table \"" + tmpTableName + "\" (like stat_h3_transposed)");
+                logger.info("created table " + tmpTableName + " for indicator " + bivariateIndicatorDto.getExternalId());
             }
             // row-level lock will be released when COPY fails or succeeds
 
             Future<?> uploadTask = submitUploadTask(file, internalId, pipedOutputStream);
 
-            copyFile(connection, pipedInputStream);
+            copyFile(connection, pipedInputStream, tmpTableName);
 
             try {
                 uploadTask.get();
@@ -101,10 +101,10 @@ public class IndicatorRepository {
             }
 
             try (Statement stmt = connection.createStatement()) {
-                stmt.execute("update bivariate_indicators_metadata set state = 'NEW' where internal_id = '" + internalId + "'");
+                stmt.execute("update bivariate_indicators_metadata set state = 'TMP CREATED' where internal_id = '" + internalId + "'");
             }
             connection.commit();
-            // now new indicator is visible for other transactions with the state "NEW"
+            // now new indicator is visible for other transactions with the state "TMP CREATED"
             logger.info("Upload of csv file for indicator with uuid {} has been done successfully", bivariateIndicatorDto.getExternalId());
         } catch (Exception e) {
             if (connection != null) {
@@ -153,10 +153,10 @@ public class IndicatorRepository {
         }
     }
 
-    private void copyFile(Connection connection, InputStream inputStream) throws SQLException, IOException {
+    private void copyFile(Connection connection, InputStream inputStream, String tmpTableName) throws SQLException, IOException {
         if (connection.isWrapperFor(Connection.class)) {
             CopyManager copyManager = new CopyManager((BaseConnection) connection.unwrap(Connection.class));
-            copyManager.copyIn(String.format("COPY %s FROM STDIN DELIMITER ',' null 'NULL'", transposedTableName), inputStream);
+            copyManager.copyIn(String.format("COPY \"%s\" FROM STDIN DELIMITER ',' null 'NULL'", tmpTableName), inputStream);
         } else {
             logger.error("Could not connect to Copy Manager");
             throw new IndicatorDataProcessingException("Connection was closed unpredictably. Can not obtain connection for CopyManager");
@@ -205,17 +205,31 @@ public class IndicatorRepository {
     }
 
     public void checkActiveUpload(BivariateIndicatorDto indicator) throws Exception {
-        // if the indicator with the same param_id and owner is currently uploading, return its upload id
+        // first check COPY IN PROGRESS state (insights-api side of upload pipeline)
         try {
-            // lookup by partial match: first part of upload_id is always a hash of param_id & owner
+            // specifically check for lock, as no lock = failed upload
             jdbcTemplate.queryForObject(
                 "select 1 from bivariate_indicators_metadata where param_id = ? and owner = ? and state = 'COPY IN PROGRESS' for no key update nowait",
                 String.class, indicator.getId(), indicator.getOwner());
         } catch (EmptyResultDataAccessException e) {
+            // indicator with this param_id and ongoing upload not found
             ;
         } catch (CannotAcquireLockException e) {
             // COPY process is holding a lock on some row with this param_id
             throw new IndicatorDataProcessingException("indicator upload already in progress");
+        }
+
+        // then check TMP CREATED state (insights-db part of uploading)
+        try {
+            String res = jdbcTemplate.queryForObject(
+                "select 1 from bivariate_indicators_metadata where param_id = ? and owner = ? and state = 'TMP CREATED' limit 1",
+                String.class, indicator.getId(), indicator.getOwner());
+            if (res != null) {
+                throw new IndicatorDataProcessingException("indicator upload already in progress");
+            }
+        } catch (EmptyResultDataAccessException e) {
+            // indicator with this param_id and ongoing upload not found
+            ;
         }
     }
 

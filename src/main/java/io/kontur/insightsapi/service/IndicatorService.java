@@ -128,8 +128,7 @@ public class IndicatorService {
         String[] parts = result.split("/");
         String externalId = parts[0];
         String indicatorState = parts[1];
-        System.out.println(indicatorState); 
-        if (indicatorState.equals("COPY IN PROGRESS")) {
+        if (indicatorState.equals("COPY IN PROGRESS") || indicatorState.equals("TMP CREATED")) {
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(indicatorState);
         } else if (indicatorState == null) {
             // indicator not found by upload_id
