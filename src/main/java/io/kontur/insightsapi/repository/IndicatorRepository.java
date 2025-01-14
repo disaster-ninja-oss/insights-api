@@ -303,5 +303,6 @@ public class IndicatorRepository {
         ps.setString(15, bivariateIndicatorDto.getEmoji());
         ps.setString(16, bivariateIndicatorDto.getLastUpdated() == null ? null : bivariateIndicatorDto.getLastUpdated().toString());
         ps.setString(17, bivariateIndicatorDto.getUploadId());
+        ps.setString(18, bivariateIndicatorDto.getDownscale());
     }
 }
