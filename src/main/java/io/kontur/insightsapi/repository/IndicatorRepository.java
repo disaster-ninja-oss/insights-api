@@ -85,6 +85,7 @@ public class IndicatorRepository {
             try (Statement stmt = connection.createStatement()) {
                 stmt.execute("select from bivariate_indicators_metadata where internal_id = '" + internalId + "' for no key update nowait");
                 stmt.execute("create table \"" + tmpTableName + "\" (like stat_h3_transposed)");
+                stmt.execute("alter table \"" + tmpTableName + "\" set (autovacuum_enabled = off)");
                 logger.info("created table " + tmpTableName + " for indicator " + bivariateIndicatorDto.getExternalId());
             }
             // row-level lock will be released when COPY fails or succeeds
