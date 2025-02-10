@@ -128,13 +128,16 @@ public class IndicatorService {
         String[] parts = result.split("/");
         String externalId = parts[0];
         String indicatorState = parts[1];
-        if (indicatorState.equals("COPY IN PROGRESS") || indicatorState.equals("TMP CREATED")) {
+        if (indicatorState.equals("COPY IN PROGRESS")) {
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(indicatorState);
         } else if (indicatorState == null) {
             // indicator not found by upload_id
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("upload scheduled or failed or uploadId invalid");
         } else {
-            // uploaded successfully
+            // uploaded successfully. indicator state is now either:
+            // - NEW (ready for processing)
+            // - TMP CREATED (ready for copying to stat_h3_transposed)
+            // - READY (available on UI)
             return ResponseEntity.ok().body(externalId);
         }
     }
