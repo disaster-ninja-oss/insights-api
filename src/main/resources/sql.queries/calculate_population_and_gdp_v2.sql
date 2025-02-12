@@ -2,32 +2,29 @@ with validated_input
          as (select :geometry::geometry as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
      subdivision as (select st_subdivide(v.geom) geom from validated_input v),
-     res as (select st.h3, indicator_uuid, indicator_value
+     hexes as materialized (
+             select distinct sh.h3
              from boxinput bi
                       cross join subdivision sb
-                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom))
-                      join stat_h3_transposed st on (sh.h3 = st.h3)
-             where sh.resolution = 8 and indicator_uuid IN (select internal_id from %s where param_id IN ('gdp','population', 'residential') and state = 'READY')),
-     distinct_h3 as (select a.h3                                          h3,
-                            st_transform(h3_cell_to_geometry(a.h3), 3857) geom,
-                            a.indicator_value                             population,
-                            b.indicator_value                             gdp,
-                            c.indicator_value                             residential
-                     from res a,
-                          res b,
-                          res c,
-                          %s bi_a,
-                          %s bi_b,
-                          %s bi_c
-                     where a.h3 = b.h3
-                       and a.h3 = c.h3
-                       and a.indicator_uuid = bi_a.internal_id
-                       and b.indicator_uuid = bi_b.internal_id
-                       and c.indicator_uuid = bi_c.internal_id
-                       and bi_a.param_id = 'population'
-                       and bi_b.param_id = 'gdp'
-                       and bi_c.param_id = 'residential'
-                       and a.indicator_value > 0),
+                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution = 8)),
+     res as (select st.h3, indicator_uuid, indicator_value, param_id
+                      from stat_h3_transposed st
+                      join hexes using(h3)
+                      join bivariate_indicators_metadata m on (
+                        st.indicator_uuid = m.internal_id and
+                        param_id in ('gdp', 'population', 'residential') and
+                        state = 'READY' and
+                        owner = 'disaster.ninja'
+                    )
+                ),
+     distinct_h3 as (select h3,
+                            st_transform(h3_cell_to_geometry(h3), 3857) geom,
+                            coalesce(max(indicator_value) filter (where param_id = 'population'), 0)    population,
+                            coalesce(max(indicator_value) filter (where param_id = 'gdp'), 0)           gdp,
+                            coalesce(max(indicator_value) filter (where param_id = 'residential'), 0)   residential
+                     from res
+                     group by h3
+                ),
      distinct_h3_with_area as materialized (select *
     from distinct_h3 sh
     cross join
