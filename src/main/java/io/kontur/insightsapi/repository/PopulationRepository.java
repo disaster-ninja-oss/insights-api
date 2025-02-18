@@ -133,7 +133,7 @@ public class PopulationRepository {
         if (useStatSeparateTables) {
             var transformedGeometry = helper.transformGeometryToWkt(geometry);
             paramSource.addValue("transformed_geometry", transformedGeometry);
-            queryString = queryFactory.getSql(populationHumanitarianImpactV2);
+            queryString = String.format(queryFactory.getSql(populationHumanitarianImpactV2), bivariateIndicatorsMetadataTableName);
         } else {
             queryString = queryFactory.getSql(populationHumanitarianImpact);
         }
