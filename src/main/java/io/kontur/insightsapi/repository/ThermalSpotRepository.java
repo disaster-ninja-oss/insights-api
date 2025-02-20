@@ -5,7 +5,6 @@ import io.kontur.insightsapi.model.ThermalSpotStatistic;
 import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
 import io.kontur.insightsapi.repository.FunctionsRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;

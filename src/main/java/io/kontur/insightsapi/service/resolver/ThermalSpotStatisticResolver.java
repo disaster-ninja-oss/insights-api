@@ -11,7 +11,6 @@ import io.kontur.insightsapi.service.Helper;
 import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.stream.Collectors;
 
