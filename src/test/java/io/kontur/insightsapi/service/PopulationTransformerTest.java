@@ -19,14 +19,17 @@ import static org.mockito.Mockito.when;
 class PopulationTransformerTest {
 
     private static final String POPULATION_QUERY = "POLYGON((0 0,0 5,5 5,5 0,0 0))";
+    private static final String TRANSFORMED_GEOMETRY = "SRID=3857;POLYGON((0 0,0 557305.2572745768,556597.4539663679 557305.2572745768,556597.4539663679 0,0 0))";
 
     @Test
     void calculatePopulation() {
         PopulationRepository populationRepository = mock(PopulationRepository.class);
         Helper helper = mock(Helper.class);
         PopulationTransformer populationTransformer = new PopulationTransformer(populationRepository, helper, false);
-        when(populationRepository.getPopulationAndGdp(POPULATION_QUERY)).thenReturn(getPopulation());
+        when(populationRepository.getPopulationAndGdp(TRANSFORMED_GEOMETRY)).thenReturn(getPopulation());
         when(populationRepository.getArea(POPULATION_QUERY)).thenReturn(BigDecimal.ONE);
+        when(helper.transformGeometryToWkt(POPULATION_QUERY))
+                .thenReturn(TRANSFORMED_GEOMETRY);
 
         StatisticDto statistic = populationTransformer.calculatePopulation(POPULATION_QUERY);
         Assertions.assertNotNull(statistic, "Population statistic is not received");
