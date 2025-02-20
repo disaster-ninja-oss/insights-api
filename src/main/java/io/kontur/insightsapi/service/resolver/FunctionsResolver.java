@@ -19,9 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FunctionsResolver implements GraphQLResolver<Analytics> {
 
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
-
     private final GeometryTransformer geometryTransformer;
 
     private final Helper helper;
@@ -31,9 +28,7 @@ public class FunctionsResolver implements GraphQLResolver<Analytics> {
     public List<FunctionResult> getFunctions(Analytics analytics, List<FunctionArgs> args, DataFetchingEnvironment environment) throws JsonProcessingException {
         var polygon = helper.getPolygonFromRequest(environment);
         var transformedGeometry = geometryTransformer.transform(polygon, false);
-        if (useStatSeparateTables){
-            transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
-        }
+        transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
         return functionsService.calculateFunctionsResult(transformedGeometry, args);
     }
 }

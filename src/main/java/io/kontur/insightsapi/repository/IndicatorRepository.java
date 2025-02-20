@@ -56,14 +56,7 @@ public class IndicatorRepository {
     @Value("${calculations.bivariate.indicators.table}")
     private String bivariateIndicatorsTableName;
 
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
-
     private final ThreadPoolExecutor uploadExecutor;
-
-    private String getUploadAppName(String uploadId) {
-        return "upload " + uploadId;
-    }
 
     @Async("uploadExecutor") // maxPoolSize = 150
     public void uploadCsvFile(Path file, BivariateIndicatorDto bivariateIndicatorDto)
@@ -268,12 +261,9 @@ public class IndicatorRepository {
     //TODO: remove after transition from param_id to uuid as an identifier for indicator. Use 'getIndicatorByUuid' method in future instead
     @Deprecated
     public String getLabelByParamId(String paramId) {
-        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName
-                : bivariateIndicatorsTableName;
-        String condition = useStatSeparateTables ? "and is_public order by date desc" : "";
         try {
-            return jdbcTemplate.queryForObject(String.format("SELECT param_label FROM %s where param_id = '%s' %s limit 1",
-                    bivariateIndicatorsTable, paramId, condition), String.class);
+            return jdbcTemplate.queryForObject(
+                    String.format("SELECT param_label FROM bivariate_indicators_metadata where param_id = '%s' and is_public order by date desc limit 1", paramId), String.class);
         } catch (EmptyResultDataAccessException e) {
             return null;
         }

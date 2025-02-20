@@ -34,9 +34,6 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
     @Value("${bivatiateMatrix.highCorrelationLevel}")
     private Double highCorrelationLevel;
 
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
-
     public List<PolygonMetrics> getCorrelationRates(BivariateStatistic statistic, DataFetchingEnvironment environment) throws JsonProcessingException {
         Map<String, Object> arguments = (Map<String, Object>) environment.getExecutionStepInfo()
                 .getParent().getParent().getArguments().get("polygonStatisticRequest");
@@ -53,23 +50,10 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
         List<PolygonMetrics> correlationRateList;
 
         var transformedGeometry = metricsHelper.getPolygon(arguments);
-        if (useStatSeparateTables) {
-            transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
-            Map<NumeratorsDenominatorsUuidDto, NumeratorsDenominatorsDto> numeratorsDenominatorsMap = metricsHelper
-                    .getAllNumeratorsDenominators();
-            correlationRateList = calculateAllPolygonCorrelations(numeratorsDenominatorsMap, transformedGeometry);
-
-        } else {
-            List<NumeratorsDenominatorsDto> numeratorsDenominatorsList =
-                    metricsHelper.getNumeratorsDenominatorsForNotEmptyLayers(arguments, transformedGeometry);
-
-            //calculate correlation for every bivariate_axis in defined polygon that intersects h3
-            String finalTransformedGeometry = transformedGeometry;
-            correlationRateList = Lists.partition(numeratorsDenominatorsList, 500).parallelStream()
-                    .map(sourceDtoList -> calculatePolygonCorrelations(sourceDtoList, finalTransformedGeometry))
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
-        }
+        transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
+        Map<NumeratorsDenominatorsUuidDto, NumeratorsDenominatorsDto> numeratorsDenominatorsMap = metricsHelper
+                .getAllNumeratorsDenominators();
+        correlationRateList = calculateAllPolygonCorrelations(numeratorsDenominatorsMap, transformedGeometry);
 
         //calculate avg correlation for xy
         var avgCorrelationXY = metricsHelper.calculateAvgMetricsXY(correlationRateList);
@@ -290,33 +274,6 @@ public class CorrelationRateResolver implements GraphQLResolver<BivariateStatist
                 polygonCorrelationRate.setRate(correlation.getMetrics());
                 result.add(polygonCorrelationRate);
             }
-        }
-        return result;
-    }
-
-    private List<PolygonMetrics> calculatePolygonCorrelations(List<NumeratorsDenominatorsDto> sourceDtoList,
-                                                              String transformedGeometry) {
-        List<PolygonMetrics> result = new ArrayList<>();
-
-        //run for every 100 bivariative_axis sourceDtoList size = 100 & get correlationList
-        List<Double> correlations = correlationRateService.getPolygonCorrelationRateStatisticsBatch(transformedGeometry, sourceDtoList);
-        for (int i = 0; i < sourceDtoList.size(); i++) {
-            PolygonMetrics polygonCorrelationRate = new PolygonMetrics();
-
-            ///combine them on Axis with quality, correlation & rate
-            polygonCorrelationRate.setX(Axis.builder()
-                    .label(sourceDtoList.get(i).getXLabel())
-                    .quotient(List.of(sourceDtoList.get(i).getXNumerator(), sourceDtoList.get(i).getXDenominator()))
-                    .build());
-            polygonCorrelationRate.setY(Axis.builder()
-                    .label(sourceDtoList.get(i).getYLabel())
-                    .quotient(List.of(sourceDtoList.get(i).getYNumerator(), sourceDtoList.get(i).getYDenominator()))
-                    .build());
-            polygonCorrelationRate.setQuality(sourceDtoList.get(i).getQuality());
-            polygonCorrelationRate.setCorrelation(correlations.get(i));
-            polygonCorrelationRate.setMetrics(correlations.get(i));
-            polygonCorrelationRate.setRate(correlations.get(i));
-            result.add(polygonCorrelationRate);
         }
         return result;
     }

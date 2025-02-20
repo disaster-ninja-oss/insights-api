@@ -27,9 +27,6 @@ public class TileRepository {
 
     private final QueryFactory queryFactory;
 
-    @Value("classpath:/sql.queries/get_tile_mvt.sql")
-    private Resource getTileMvtResource;
-
     @Value("classpath:/sql.queries/get_tile_mvt_indicators_list_v2.sql")
     private Resource getTileMvtIndicatorsListResourceV2;
 
@@ -64,9 +61,6 @@ public class TileRepository {
     private String bivariateIndicatorsTableName;
 
     private final IndicatorRepository indicatorRepository;
-
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
 
     public byte[] getBivariateTileMvt(Integer resolution, Integer z, Integer x, Integer y,
                                       List<String> bivariateIndicators) {
@@ -104,42 +98,34 @@ public class TileRepository {
         if (indicators != null) {
             return indicators;
         }
-        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName
-                : bivariateIndicatorsTableName;
-        var query = String.format("select param_id from %s where state = 'READY'", bivariateIndicatorsTable);
-        if (publicOnly && useStatSeparateTables) {
+        var query = "select param_id from bivariate_indicators_metadata where state = 'READY'";
+        if (publicOnly) {
             query += " and is_public";
         }
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getString("param_id"));
     }
 
     private String generateSqlQuery(List<String> bivariateIndicators, Integer resolution) {
-        if (useStatSeparateTables) {
-            List<BivariateIndicatorDto> bivariateIndicatorDtos =
-                    indicatorRepository.getSelectedBivariateIndicators(bivariateIndicators);
+        List<BivariateIndicatorDto> bivariateIndicatorDtos =
+                indicatorRepository.getSelectedBivariateIndicators(bivariateIndicators);
 
-            List<String> columns = Lists.newArrayList();
+        List<String> columns = Lists.newArrayList();
 
-            for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
-                if (indicator.getId().equals("one")) {
-                    columns.add("1.0::float as \"one\"");
-                } else if (indicator.getId().equals("area_km2")) {
-                    columns.add("ST_Area(h3_cell_to_boundary_geography(h3)) / 1000000.0 as \"area_km2\"");
-                } else {
-                    columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
-                            indicator.getInternalId(), indicator.getId()));
-                }
+        for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
+            if (indicator.getId().equals("one")) {
+                columns.add("1.0::float as \"one\"");
+            } else if (indicator.getId().equals("area_km2")) {
+                columns.add("ST_Area(h3_cell_to_boundary_geography(h3)) / 1000000.0 as \"area_km2\"");
+            } else {
+                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
+                        indicator.getInternalId(), indicator.getId()));
             }
-
-            return String.format(queryFactory.getSql(
-                        resolution > 8 ? getTileMvtGenerateHighRes : getTileMvtGenerateOnTheFly),
-                    StringUtils.join(columns, ", "));
-
-        } else {
-            return String.format(queryFactory.getSql(getTileMvtResource),
-                    StringUtils.join(bivariateIndicators.stream().map(current -> String.format("coalesce(%s, 0) as %s",
-                            current, current)).toList(), ", "));
         }
+
+        return String.format(queryFactory.getSql(
+                    resolution > 8 ? getTileMvtGenerateHighRes : getTileMvtGenerateOnTheFly),
+                StringUtils.join(columns, ", "));
+
     }
 
     public Map<Integer, Integer> initZoomToH3Resolutions() {

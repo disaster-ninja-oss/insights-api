@@ -19,9 +19,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ThermalSpotStatisticResolver implements GraphQLResolver<Analytics> {
 
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
-
     private final GeometryTransformer geometryTransformer;
 
     private final Helper helper;
@@ -35,9 +32,7 @@ public class ThermalSpotStatisticResolver implements GraphQLResolver<Analytics> 
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());
-        if (useStatSeparateTables){
-            transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
-        }
+        transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
         return thermalSpotStatisticService.calculateThermalSpotStatistic(transformedGeometry, fieldList);
     }
 }
