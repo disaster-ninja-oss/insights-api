@@ -100,6 +100,7 @@ public class TileRepository {
                 indicatorRepository.getSelectedBivariateIndicators(bivariateIndicators);
 
         List<String> columns = Lists.newArrayList();
+        List<String> uuids = Lists.newArrayList();
 
         for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
             if (indicator.getId().equals("one")) {
@@ -107,14 +108,15 @@ public class TileRepository {
             } else if (indicator.getId().equals("area_km2")) {
                 columns.add("ST_Area(h3_cell_to_boundary_geography(h3)) / 1000000.0 as \"area_km2\"");
             } else {
+                uuids.add("'" + indicator.getInternalId() + "'");
                 columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
                         indicator.getInternalId(), indicator.getId()));
             }
         }
 
-        return String.format(queryFactory.getSql(
-                    resolution > 8 ? getTileMvtGenerateHighRes : getTileMvtGenerateOnTheFly),
-                StringUtils.join(columns, ", "));
+        return resolution > 8 ?
+            String.format(queryFactory.getSql(getTileMvtGenerateHighRes), StringUtils.join(uuids, ", "), StringUtils.join(uuids, ", "), StringUtils.join(columns, ", ")) :
+            String.format(queryFactory.getSql(getTileMvtGenerateOnTheFly), StringUtils.join(uuids, ", "), StringUtils.join(columns, ", "));
 
     }
 

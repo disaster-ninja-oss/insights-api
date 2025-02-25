@@ -6,6 +6,7 @@ with hexes as (select sg.geom, sg.h3
     res as (select sg.geom, sg.h3, st.indicator_uuid, st.indicator_value
             from stat_h3_transposed st
             join hexes sg on (sg.h3 = st.h3)
+            where indicator_uuid in (%s)
                 )
 select ST_AsMVT(q, 'stats', 8192, 'geom', 'h3ind') as tile
 from (select
