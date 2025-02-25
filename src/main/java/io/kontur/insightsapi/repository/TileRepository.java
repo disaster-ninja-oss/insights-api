@@ -54,12 +54,6 @@ public class TileRepository {
     @Value("${calculations.tiles.min-zoom}")
     private Integer minZoom;
 
-    @Value("${calculations.bivariate.indicators.test.table}")
-    private String bivariateIndicatorsMetadataTableName;
-
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
-
     private final IndicatorRepository indicatorRepository;
 
     public byte[] getBivariateTileMvt(Integer resolution, Integer z, Integer x, Integer y,
@@ -86,11 +80,7 @@ public class TileRepository {
         paramSource.addValue("ind1", bivariateIndicators.get(1));
         paramSource.addValue("ind2", bivariateIndicators.get(2));
         paramSource.addValue("ind3", bivariateIndicators.get(3));
-        var query = String.format(queryFactory.getSql(getTileMvtIndicatorsListResourceV2),
-                bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName,
-                bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName,
-                bivariateIndicatorsMetadataTableName);
-        return namedParameterJdbcTemplate.queryForObject(query, paramSource,
+        return namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(getTileMvtIndicatorsListResourceV2), paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
     }
 

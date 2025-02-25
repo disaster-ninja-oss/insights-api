@@ -50,12 +50,6 @@ public class IndicatorRepository {
 
     private final BivariateIndicatorRowMapper bivariateIndicatorRowMapper;
 
-    @Value("${calculations.bivariate.indicators.test.table}")
-    private String bivariateIndicatorsMetadataTableName;
-
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
-
     private final ThreadPoolExecutor uploadExecutor;
 
     @Async("uploadExecutor") // maxPoolSize = 150
@@ -133,7 +127,7 @@ public class IndicatorRepository {
     }
 
     public String createIndicator(Connection connection, BivariateIndicatorDto bivariateIndicatorDto) throws JsonProcessingException, SQLException {
-        String insertQuery = String.format(queryFactory.getSql(insertBivariateIndicators), bivariateIndicatorsMetadataTableName);
+        String insertQuery = queryFactory.getSql(insertBivariateIndicators);
 
         try (PreparedStatement ps = connection.prepareStatement(insertQuery)) {
             initParams(ps, bivariateIndicatorDto);
@@ -175,23 +169,21 @@ public class IndicatorRepository {
 
     public List<BivariateIndicatorDto> getIndicatorsByExternalId(String externalId) {
         return jdbcTemplate.query(
-                String.format("SELECT * FROM %s WHERE external_id = '%s'::uuid",
-                        bivariateIndicatorsMetadataTableName,
+                String.format("SELECT * FROM bivariate_indicators_metadata WHERE external_id = '%s'::uuid",
                         externalId),
                 bivariateIndicatorRowMapper);
     }
 
     public List<BivariateIndicatorDto> getIndicatorsByOwner(String owner) {
         return jdbcTemplate.query(
-                "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ?",
+                "SELECT * FROM bivariate_indicators_metadata WHERE owner = ?",
                 bivariateIndicatorRowMapper, owner);
     }
 
     public String getIndicatorIdByUploadId(String owner, String uploadId) {
         try {
             return jdbcTemplate.queryForObject(
-                "SELECT external_id || '/' || state FROM " + bivariateIndicatorsMetadataTableName +
-                " WHERE owner = ? AND upload_id = ?::uuid",
+                "SELECT external_id || '/' || state FROM bivariate_indicators_metadata WHERE owner = ? AND upload_id = ?::uuid",
                 String.class, owner, uploadId);
         } catch (EmptyResultDataAccessException e) {
             return null;
@@ -229,14 +221,14 @@ public class IndicatorRepository {
 
     public List<BivariateIndicatorDto> getIndicatorsByOwnerAndParamId(String owner, String paramId) {
         return jdbcTemplate.query(
-                "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ? AND param_id = ?",
+                "SELECT * FROM bivariate_indicators_metadata WHERE owner = ? AND param_id = ?",
                 bivariateIndicatorRowMapper, owner, paramId);
     }
 
     public BivariateIndicatorDto getIndicatorByOwnerAndExternalId(String owner, String externalId) {
         try {
             return jdbcTemplate.queryForObject(
-                    "SELECT * FROM " + bivariateIndicatorsMetadataTableName + " WHERE owner = ? AND external_id = ?::uuid limit 1",
+                    "SELECT * FROM bivariate_indicators_metadata WHERE owner = ? AND external_id = ?::uuid limit 1",
                     bivariateIndicatorRowMapper, owner, externalId);
         } catch (EmptyResultDataAccessException e) {
             return null;
@@ -246,15 +238,14 @@ public class IndicatorRepository {
     // TODO: possibly will be added something about owner field here
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getAllBivariateIndicators() {
-        return jdbcTemplate.query(String.format("SELECT * FROM %s", bivariateIndicatorsMetadataTableName),
-                bivariateIndicatorRowMapper);
+        return jdbcTemplate.query("SELECT * FROM bivariate_indicators_metadata", bivariateIndicatorRowMapper);
     }
 
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getSelectedBivariateIndicators(List<String> indicatorIds) {
         return jdbcTemplate.query(String.format(
-                        "SELECT distinct on (param_id) * FROM %s WHERE param_id in ('%s') and is_public and state = 'READY' order by param_id, date desc",
-                        bivariateIndicatorsMetadataTableName, String.join("','", indicatorIds)),
+                        "SELECT distinct on (param_id) * FROM bivariate_indicators_metadata WHERE param_id in ('%s') and is_public and state = 'READY' order by param_id, date desc",
+                        String.join("','", indicatorIds)),
                 bivariateIndicatorRowMapper);
     }
 
@@ -270,8 +261,7 @@ public class IndicatorRepository {
     }
 
     public Instant getIndicatorsLastUpdateDate() {
-        Timestamp lastUpdated = jdbcTemplate.queryForObject(String.format("SELECT MAX(last_updated) FROM %s",
-                bivariateIndicatorsMetadataTableName), Timestamp.class);
+        Timestamp lastUpdated = jdbcTemplate.queryForObject("SELECT MAX(last_updated) FROM bivariate_indicators_metadata", Timestamp.class);
         return lastUpdated != null ? lastUpdated.toInstant() : null;
     }
 

@@ -9,15 +9,15 @@ select x.numerator                             as x_num,
        y_den_indicator.internal_id              as y_den_internal_id,
        y_num_indicator.internal_id              as y_num_internal_id,
        1 - ((1 - x.quality) * (1 - y.quality)) as quality
-from (%s x
-         join %s x_den_indicator
+from (bivariate_axis_v2 x
+         join bivariate_indicators_metadata x_den_indicator
               on (x.denominator = x_den_indicator.param_id)
-         join %s x_num_indicator
+         join bivariate_indicators_metadata x_num_indicator
               on (x.numerator = x_num_indicator.param_id)),
-     (%s y
-         join %s y_den_indicator
+     (bivariate_axis_v2 y
+         join bivariate_indicators_metadata y_den_indicator
               on (y.denominator = y_den_indicator.param_id)
-         join %s y_num_indicator
+         join bivariate_indicators_metadata y_num_indicator
               on (y.numerator = y_num_indicator.param_id))
 where (x.numerator != y.numerator)
   and x.quality > 0.5

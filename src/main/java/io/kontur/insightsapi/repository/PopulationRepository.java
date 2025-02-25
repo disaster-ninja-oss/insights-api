@@ -40,9 +40,6 @@ public class PopulationRepository {
     @Value("classpath:/sql.queries/population_urbancore_v2.sql")
     private Resource populationUrbanCoreV2;
 
-    @Value("${calculations.bivariate.indicators.test.table}")
-    private String bivariateIndicatorsMetadataTableName;
-
     private final QueryFactory queryFactory;
 
     private static final Map<String, String> queryMap = Map.of(
@@ -69,8 +66,7 @@ public class PopulationRepository {
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
-        var queryString = String.format(queryFactory.getSql(calculatePopulationAndAGdpV2), bivariateIndicatorsMetadataTableName,
-                bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName);
+        var queryString = queryFactory.getSql(calculatePopulationAndAGdpV2);
         try {
             return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryString, paramSource, (rs, rowNum) ->
                     CalculatePopulationDto.builder()
@@ -111,9 +107,8 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var transformedGeometry = helper.transformGeometryToWkt(geometry);
         paramSource.addValue("transformed_geometry", transformedGeometry);
-        var queryString = String.format(queryFactory.getSql(populationHumanitarianImpactV2), bivariateIndicatorsMetadataTableName);
         try {
-            return namedParameterJdbcTemplate.query(queryString, paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.query(queryFactory.getSql(populationHumanitarianImpactV2), paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))
@@ -141,9 +136,7 @@ public class PopulationRepository {
     public OsmQuality calculateOsmQuality(String geojson, List<String> fieldList) {
         var queryList = helper.transformFieldList(fieldList, queryMap);
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        var query = String.format(queryFactory.getSql(populationOsmV2), bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName,
-                bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName,
-                bivariateIndicatorsMetadataTableName, StringUtils.join(queryList, ", "));
+        var query = String.format(queryFactory.getSql(populationOsmV2), StringUtils.join(queryList, ", "));
         try {
             return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
                     OsmQuality.builder()
@@ -175,9 +168,8 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var transformedGeometry = helper.transformGeometryToWkt(geojson);
         paramSource.addValue("transformed_polygon", transformedGeometry);
-        var query = String.format(queryFactory.getSql(populationUrbanCoreV2), bivariateIndicatorsMetadataTableName);
         try {
-            return namedParameterJdbcTemplate.queryForObject(query, paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(populationUrbanCoreV2), paramSource, (rs, rowNum) ->
                     UrbanCore.builder()
                             .urbanCorePopulation(rs.getBigDecimal("urbanCorePopulation"))
                             .urbanCoreAreaKm2(rs.getBigDecimal("urbanCoreAreaKm2"))

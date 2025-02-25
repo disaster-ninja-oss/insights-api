@@ -36,13 +36,6 @@ public class FunctionsRepository implements FunctionsService {
     @Value("classpath:/sql.queries/function_intersect_v2.sql")
     private Resource functionIntersectV2;
 
-    @Value("${calculations.bivariate.indicators.test.table}")
-    private String bivariateIndicatorsMetadataTableName;
-
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
-
-
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
     private final Logger logger = LoggerFactory.getLogger(FunctionsRepository.class);

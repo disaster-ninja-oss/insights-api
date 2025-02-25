@@ -9,7 +9,7 @@ with validated_input
                       join stat_h3_transposed st on (sh.h3 = st.h3)
              where sh.resolution = 8
                and indicator_uuid IN (select internal_id
-                                      from %s
+                                      from bivariate_indicators_metadata
                                       where param_id IN ('count', 'building_count', 'highway_length', 'population',
                                                          'populated_area_km2', 'area_km2'))),
      stat_area as (select distinct on (h.h3) h.*
@@ -21,12 +21,12 @@ from (select a.h3,
     d.indicator_value as population,
     e.indicator_value as populated_area_km2
     from res a, res b, res c, res d, res e,
-    %s bi_a,
-    %s bi_b,
-    %s bi_c,
-    %s bi_d,
-    %s bi_e,
-    %s bi_f
+    bivariate_indicators_metadata bi_a,
+    bivariate_indicators_metadata bi_b,
+    bivariate_indicators_metadata bi_c,
+    bivariate_indicators_metadata bi_d,
+    bivariate_indicators_metadata bi_e,
+    bivariate_indicators_metadata bi_f  -- TODO: not used?
     where
     a.h3 = b.h3 and a.h3= c.h3 and a.h3=d.h3 and a.h3=e.h3 and a.indicator_uuid = bi_a.internal_id
     and b.indicator_uuid = bi_b.internal_id

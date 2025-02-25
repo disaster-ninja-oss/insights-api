@@ -66,24 +66,6 @@ public class StatisticRepository implements CorrelationRateService {
     @Value("classpath:/sql.queries/statistic_correlation_emptylayer_intersect.sql")
     private Resource statisticCorrelationEmptylayerIntersect;
 
-    @Value("${calculations.bivariate.indicators.test.table}")
-    private String bivariateIndicatorsMetadataTableName;
-
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
-
-    @Value("${calculations.bivariate.axis.test.table}")
-    private String bivariateAxisV2TableName;
-
-    @Value("${calculations.bivariate.axis.table}")
-    private String bivariateAxisTableName;
-
-    @Value("${calculations.bivariate.correlations.test.table}")
-    private String bivariateAxisCorrelationV2TableName;
-
-    @Value("${calculations.bivariate.correlations.table}")
-    private String bivariateAxisCorrelationTableName;
-
     private final JdbcTemplate jdbcTemplate;
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -106,22 +88,7 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public Statistic getAllStatistic() {
-        String bivariateIndicatorsTable = bivariateIndicatorsMetadataTableName;
-        String bivariateAxisTable = bivariateAxisV2TableName;
-        String bivariateAxisCorrelationTable = bivariateAxisCorrelationV2TableName;
-        String filterReady = """
-            and bix1.state = 'READY'
-            and bix2.state = 'READY'
-            and biy1.state = 'READY'
-            and biy2.state = 'READY'
-        """;
-
-        return jdbcTemplate.queryForObject(String.format(queryFactory.getSql(statisticAll), bivariateIndicatorsTable,
-                        bivariateAxisCorrelationTable, bivariateIndicatorsTable, bivariateIndicatorsTable,
-                        bivariateAxisTable, bivariateAxisTable, bivariateAxisTable, bivariateIndicatorsTable,
-                        bivariateIndicatorsTable, bivariateIndicatorsTable, bivariateIndicatorsTable,
-                        filterReady, bivariateAxisTable, bivariateAxisTable),
-                statisticRowMapper);
+        return jdbcTemplate.queryForObject(queryFactory.getSql(statisticAll), statisticRowMapper);
     }
 
     @Transactional(readOnly = true)
@@ -143,18 +110,7 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public List<Axis> getAxisStatistic() {
-        String bivariateIndicatorsTable = bivariateIndicatorsMetadataTableName;
-        String bivariateAxisTable = bivariateAxisV2TableName;
-        String defaultTransform = "default_transform";
-        String where = """
-                numerator_uuid = bi1.internal_id
-            and denominator_uuid = bi2.internal_id
-            and bi1.state='READY' and bi2.state='READY'
-        """;
-
-        return jdbcTemplate.query(String.format(queryFactory.getSql(axisStatistic),
-                        defaultTransform, bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable, where),
-                axisRowMapper);
+        return jdbcTemplate.query(queryFactory.getSql(axisStatistic), axisRowMapper);
     }
 
     @Transactional(readOnly = true)
@@ -164,19 +120,13 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public List<PolygonMetrics> getAllCovarianceRateStatistics() {
-        String bivariateIndicatorsTable = bivariateIndicatorsMetadataTableName;
-        String bivariateAxisCorrelationTable = bivariateAxisCorrelationV2TableName;
         //TODO: the same as correlations, just for example. Will be changed in future
-        return jdbcTemplate.query(String.format(queryFactory.getSql(statisticCorrelation),
-                        bivariateAxisCorrelationTable, bivariateIndicatorsTable, bivariateIndicatorsTable),
-                polygonMetricsRowMapper);
+        return jdbcTemplate.query(queryFactory.getSql(statisticCorrelation), polygonMetricsRowMapper);
     }
 
     @Transactional(readOnly = true)
     public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsWithUuidForCorrelation() {
-        return jdbcTemplate.query(String.format(queryFactory.getSql(statisticCorrelationNumdenomWithUuid),
-                        bivariateAxisV2TableName, bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName,
-                        bivariateAxisV2TableName, bivariateIndicatorsMetadataTableName, bivariateIndicatorsMetadataTableName),
+        return jdbcTemplate.query(queryFactory.getSql(statisticCorrelationNumdenomWithUuid),
                 (rs, rowNum) -> NumeratorsDenominatorsDto.builder()
                         .xNumerator(rs.getString("x_num"))
                         .xDenominator(rs.getString("x_den"))
@@ -193,12 +143,7 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public List<NumeratorsDenominatorsDto> getNumeratorsDenominatorsForCorrelation() {
-        String bivariateIndicatorsTable = bivariateIndicatorsMetadataTableName;
-        String bivariateAxisTable = bivariateAxisV2TableName;
-
-        return jdbcTemplate.query(String.format(queryFactory.getSql(statisticCorrelationNumdenom),
-                        bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable, bivariateAxisTable,
-                        bivariateIndicatorsTable), (rs, rowNum) ->
+        return jdbcTemplate.query(queryFactory.getSql(statisticCorrelationNumdenom), (rs, rowNum) ->
                 NumeratorsDenominatorsDto.builder()
                         .xNumerator(rs.getString("x_num"))
                         .xDenominator(rs.getString("x_den"))
@@ -213,7 +158,7 @@ public class StatisticRepository implements CorrelationRateService {
     public List<NumeratorsDenominatorsUuidCorrelationDto> getPolygonCorrelationRateStatistics(String polygon) {
         var paramSource = new MapSqlParameterSource();
         paramSource.addValue("polygon", polygon);
-        var query = String.format(queryFactory.getSql(statisticCorrelationIntersectAll), bivariateIndicatorsMetadataTableName);
+        var query = queryFactory.getSql(statisticCorrelationIntersectAll);
         try {
             return namedParameterJdbcTemplate.query(query, paramSource, (rs, rowNum) ->
                     NumeratorsDenominatorsUuidCorrelationDto.builder()

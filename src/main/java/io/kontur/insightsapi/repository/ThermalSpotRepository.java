@@ -38,7 +38,6 @@ public class ThermalSpotRepository implements ThermalSpotStatisticService {
     @Transactional(readOnly = true)
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        System.out.println(geojson);
         List<FunctionArgs> args = fieldList.stream()
             .map(f -> new FunctionArgs(f, funcMap.get(f), f, null))
             .collect(Collectors.toList());
