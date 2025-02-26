@@ -25,7 +25,7 @@ class PopulationTransformerTest {
     void calculatePopulation() {
         PopulationRepository populationRepository = mock(PopulationRepository.class);
         Helper helper = mock(Helper.class);
-        PopulationTransformer populationTransformer = new PopulationTransformer(populationRepository, helper, false);
+        PopulationTransformer populationTransformer = new PopulationTransformer(populationRepository, helper);
         when(populationRepository.getPopulationAndGdp(TRANSFORMED_GEOMETRY)).thenReturn(getPopulation());
         when(populationRepository.getArea(POPULATION_QUERY)).thenReturn(BigDecimal.ONE);
         when(helper.transformGeometryToWkt(POPULATION_QUERY))

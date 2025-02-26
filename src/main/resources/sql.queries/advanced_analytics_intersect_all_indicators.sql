@@ -6,10 +6,11 @@ with validated_input as (select ST_MakeValid(ST_SimplifyVW((:polygon)::geometry,
              from boxinput bi
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution <= :max_resolution)),
+     ids as materialized (select internal_id from bivariate_indicators_metadata where state = 'READY' and is_public),
      res as (select st.h3, st.indicator_uuid, st.indicator_value
              from stat_h3_transposed st
-                      join hexes h on (st.indicator_uuid in (select internal_id from bivariate_indicators_metadata where state = 'READY' and is_public) and h.h3 = st.h3)
-             order by st.h3, st.indicator_uuid),
+             join hexes h on (h.h3 = st.h3)
+             where indicator_uuid in (select internal_id from ids)),
      normalized_indicators as (select a.indicator_uuid                        as numerator_uuid,
                                       b.indicator_uuid                        as denominator_uuid,
                                       (a.indicator_value / b.indicator_value) as normalized_value,
@@ -94,7 +95,9 @@ from (select a.resolution,
              max(a.normalized_value) filter (where a.normalized_value != 0),
              nullif(avg(a.normalized_value), 0)                                         as mean,
              nullif(stddev(a.normalized_value), 0)                                      as stddev,
-             nullif(percentile_cont(0.5) within group (order by a.normalized_value), 0) as median
+             null::float as median
+           -- NOTE: median calculation is disabled to speed up query
+           --  nullif(percentile_cont(0.5) within group (order by a.normalized_value), 0) as median
       from normalized_indicators a
       group by a.resolution, a.numerator_uuid, a.denominator_uuid
       order by a.resolution) h

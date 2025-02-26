@@ -37,8 +37,7 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
 
     private final Helper helper;
 
-    public PopulationTransformer(PopulationRepository populationRepository, Helper helper,
-                                 @Value("${calculations.useStatSeparateTables:false}") Boolean useStatSeparateTables) {
+    public PopulationTransformer(PopulationRepository populationRepository, Helper helper) {
         this.populationRepository = populationRepository;
         this.helper = helper;
     }

@@ -113,7 +113,6 @@ graphql-request:
     max-tokens: 0x7fffffff #Integer.MAX_VALUE
 
 calculations:
-  useStatSeparateTables: true
   tiles:
     tile-size: 512
     hex-edge-pixels: 5
