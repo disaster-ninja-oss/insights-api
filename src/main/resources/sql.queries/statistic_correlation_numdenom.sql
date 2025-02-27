@@ -5,13 +5,13 @@ select x.numerator                             as x_num,
        y.denominator                           as y_den,
        y_den_indicator.param_label             as y_param_label,
        1 - ((1 - x.quality) * (1 - y.quality)) as quality
-from (%s x
-         join %s x_den_indicator
+from (bivariate_axis_v2 x
+         join bivariate_indicators_metadata x_den_indicator
               on (x.denominator = x_den_indicator.param_id)
-         join %s x_num_indicator
+         join bivariate_indicators_metadata x_num_indicator
               on (x.numerator = x_num_indicator.param_id)),
-     (%s y
-         join %s y_den_indicator
+     (bivariate_axis_v2 y
+         join bivariate_indicators_metadata y_den_indicator
               on (y.denominator = y_den_indicator.param_id))
 where (x.numerator != y.numerator)
   and x.quality > 0.5

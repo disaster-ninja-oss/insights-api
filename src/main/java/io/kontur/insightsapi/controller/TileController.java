@@ -18,7 +18,6 @@ import org.springframework.web.context.request.WebRequest;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -66,16 +65,6 @@ public class TileController {
         }
 
         String eTag = lastUpdated.toString();
-
-        // if If-None-Match header is present and set to the ETag that is still valid, return 304 Not Modified
-        String ifNoneMatch = request.getHeader("If-None-Match");
-        // if If-Modified-Since header is present and >= lastUpdated, return 304 Not Modified
-        String ifModifiedSinceHeader = request.getHeader("If-Modified-Since");
-        ZonedDateTime ifModifiedSince = null;
-        if (ifModifiedSinceHeader != null && !ifModifiedSinceHeader.isEmpty()) {
-            ifModifiedSince = ZonedDateTime.parse(ifModifiedSinceHeader, HTTP_TIME_FORMATTER);
-        }
-
         if (request.checkNotModified(eTag) && request.checkNotModified(eTag, lastUpdated.toEpochMilli())) {
             return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                     .cacheControl(CacheControl.empty().cachePublic())

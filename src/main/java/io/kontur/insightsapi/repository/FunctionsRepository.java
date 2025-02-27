@@ -33,21 +33,8 @@ import java.util.regex.Pattern;
 @Transactional(readOnly = true)
 public class FunctionsRepository implements FunctionsService {
 
-    @Value("classpath:/sql.queries/function_intersect.sql")
-    private Resource functionIntersect;
-
     @Value("classpath:/sql.queries/function_intersect_v2.sql")
     private Resource functionIntersectV2;
-
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
-
-    @Value("${calculations.bivariate.indicators.test.table}")
-    private String bivariateIndicatorsMetadataTableName;
-
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
-
 
     private static final Pattern VALID_STRING_PATTERN = Pattern.compile("(\\d|\\w){1,255}");
 
@@ -90,34 +77,23 @@ public class FunctionsRepository implements FunctionsService {
                 paramIds.add(arg.getY());
             }
         }
-        var query = StringUtils.EMPTY;
-        if (useStatSeparateTables) {
-            Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(paramIds)
-                .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
-            List<String> columns = new ArrayList<>();
-            List<String> fromRes = new ArrayList<>();
-            for (int i = 0; i < paramIds.size(); i++) {
-                var uuid = indicators.get(paramIds.get(i));
-                if (uuid != null) {
-                    columns.add(String.format("res_%s.indicator_value as %s", i, paramIds.get(i)));
-                    fromRes.add(String.format("left join stat_h3_transposed res_%s on (res_%s.indicator_uuid = '%s' and sh.h3 = res_%s.h3)", i, i, uuid, i));
-                } else {
-                    columns.add(String.format("null::float as %s", paramIds.get(i)));
-                }
+        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(paramIds)
+            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
+        List<String> columns = new ArrayList<>();
+        List<String> fromRes = new ArrayList<>();
+        for (int i = 0; i < paramIds.size(); i++) {
+            var uuid = indicators.get(paramIds.get(i));
+            if (uuid != null) {
+                columns.add(String.format("res_%s.indicator_value as %s", i, paramIds.get(i)));
+                fromRes.add(String.format("left join stat_h3_transposed res_%s on (res_%s.indicator_uuid = '%s' and sh.h3 = res_%s.h3)", i, i, uuid, i));
+            } else {
+                columns.add(String.format("null::float as %s", paramIds.get(i)));
             }
-            String joinSQL = StringUtils.EMPTY;
-            for (int i = 0; i < fromRes.size(); i++) {
-                joinSQL += " left join stat_h3_transposed " + fromRes.get(i) + " using (h3)";
-            }
-            query = String.format(queryFactory.getSql(functionIntersectV2),
-                    StringUtils.join(columns, ", "),
-                    StringUtils.join(fromRes, " "),
-                    StringUtils.join(params, ", "));
-        } else {
-            query = String.format(queryFactory.getSql(functionIntersect),
-                    StringUtils.join(paramIds, ", "),
-                    StringUtils.join(params, ", "));
         }
+        var query = String.format(queryFactory.getSql(functionIntersectV2),
+                StringUtils.join(columns, ", "),
+                StringUtils.join(fromRes, " "),
+                StringUtils.join(params, ", "));
         return query;
     }
 
@@ -158,7 +134,6 @@ public class FunctionsRepository implements FunctionsService {
     }
 
     private Unit getUnit(FunctionArgs arg) {
-        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
         String query;
         //TODO: localization for units can be added to this request in future
         try {
@@ -171,10 +146,10 @@ public class FunctionsRepository implements FunctionsService {
             } else {
                 query = String.format("""
                         select bivariate_unit_localization.unit_id, short_name, long_name
-                        from %s bi
+                        from bivariate_indicators_metadata bi
                         left join bivariate_unit_localization on bi.unit_id = bivariate_unit_localization.unit_id
                         where bi.param_id = '%s' limit 1;
-                        """, bivariateIndicatorsTable, arg.getX());
+                        """, arg.getX());
             }
             return jdbcTemplate.queryForObject(query, (rs, rowNum) ->
                     Unit.builder()

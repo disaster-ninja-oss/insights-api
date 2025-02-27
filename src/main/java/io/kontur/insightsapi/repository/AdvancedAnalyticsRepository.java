@@ -62,25 +62,9 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     @Value("classpath:/sql.queries/advanced_analytics_intersect_filtered_indicators.sql")
     private Resource advancedAnalyticsIntersectFilteredIndicators;
 
-    @Value("${calculations.bivariate.indicators.test.table}")
-    private String bivariateIndicatorsMetadataTableName;
-
-    @Value("${calculations.bivariate.indicators.table}")
-    private String bivariateIndicatorsTableName;
-
-    @Value("${calculations.bivariate.axis.test.table}")
-    private String bivariateAxisV2TableName;
-
-    @Value("${calculations.bivariate.axis.table}")
-    private String bivariateAxisTableName;
-
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
-
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getBivariativeAxis() {
-        return namedParameterJdbcTemplate.query(String.format(queryFactory.getSql(bivariateAxis),
-                        bivariateAxisTableName, bivariateIndicatorsTableName, bivariateIndicatorsTableName),
+        return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis),
                 (rs, rowNum) -> BivariativeAxisDto.builder()
                 .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
                 .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
@@ -90,11 +74,8 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
 
     @Transactional(readOnly = true)
     public List<BivariativeAxisDto> getFilteredBivariativeAxis(List<AdvancedAnalyticsRequest> argRequests) {
-        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
-        String bivariateAxisTable = useStatSeparateTables ? bivariateAxisV2TableName : bivariateAxisTableName;
         String filterQuery = getBivariateAxisFilter(argRequests);
-        return namedParameterJdbcTemplate.query(String.format(queryFactory.getSql(bivariateAxis),
-                        bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable) + filterQuery,
+        return namedParameterJdbcTemplate.query(queryFactory.getSql(bivariateAxis) + filterQuery,
                 (rs, rowNum) -> BivariativeAxisDto.builder()
                 .numerator(rs.getString(BivariateAxisColumns.numerator.name()))
                 .denominator(rs.getString(BivariateAxisColumns.denominator.name()))
@@ -116,13 +97,8 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
     public List<AdvancedAnalytics> getWorldData() {
         List<BivariativeAxisDto> axisDtos = new ArrayList<>();
         List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = new ArrayList<>();
-        // TODO: not only different tables but also different sql script versions should be used here since uuid
-        //  should be used in new schema
-        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
-        String bivariateAxisTable = useStatSeparateTables ? bivariateAxisV2TableName : bivariateAxisTableName;
         try {
-            namedParameterJdbcTemplate.query(String.format(queryFactory.getSql(advancedAnalyticsWorld),
-                    bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable), (rs -> {
+            namedParameterJdbcTemplate.query(queryFactory.getSql(advancedAnalyticsWorld), (rs -> {
                 BivariativeAxisDto bivariativeAxisDto = new BivariativeAxisDto();
                 bivariativeAxisDto.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
                 bivariativeAxisDto.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));
@@ -148,11 +124,8 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         List<BivariativeAxisDto> axisDtos = new ArrayList<>();
         List<List<AdvancedAnalyticsValues>> advancedAnalyticsValues = new ArrayList<>();
         String filterQuery = getBivariateAxisFilter(argRequests);
-        String bivariateIndicatorsTable = useStatSeparateTables ? bivariateIndicatorsMetadataTableName : bivariateIndicatorsTableName;
-        String bivariateAxisTable = useStatSeparateTables ? bivariateAxisV2TableName : bivariateAxisTableName;
         try {
-            namedParameterJdbcTemplate.query(String.format(queryFactory.getSql(advancedAnalyticsWorld),
-                    bivariateAxisTable, bivariateIndicatorsTable, bivariateIndicatorsTable) + filterQuery, (rs -> {
+            namedParameterJdbcTemplate.query(queryFactory.getSql(advancedAnalyticsWorld) + filterQuery, (rs -> {
                 BivariativeAxisDto bivariativeAxisDto = new BivariativeAxisDto();
                 bivariativeAxisDto.setNumerator(rs.getString(BivariateAxisColumns.numerator.name()));
                 bivariativeAxisDto.setDenominator(rs.getString(BivariateAxisColumns.denominator.name()));

@@ -5,7 +5,6 @@ import io.kontur.insightsapi.model.ThermalSpotStatistic;
 import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
 import io.kontur.insightsapi.repository.FunctionsRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -39,7 +38,6 @@ public class ThermalSpotRepository implements ThermalSpotStatisticService {
     @Transactional(readOnly = true)
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
-        System.out.println(geojson);
         List<FunctionArgs> args = fieldList.stream()
             .map(f -> new FunctionArgs(f, funcMap.get(f), f, null))
             .collect(Collectors.toList());

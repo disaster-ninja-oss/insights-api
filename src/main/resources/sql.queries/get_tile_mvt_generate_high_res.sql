@@ -19,11 +19,13 @@ with hexes as (
         from stat_h3_transposed s
         join parents p using(h3)
         join scale_factor on (indicator_uuid=uuid)
+        where indicator_uuid in (%s)
 ),
     true_values as (
         select h3, indicator_uuid, indicator_value
         from stat_h3_transposed s
         join hexes using(h3)
+        where indicator_uuid in (%s)
 ),
     res as (
         select * from sampled_values 

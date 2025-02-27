@@ -11,7 +11,7 @@ select
                                                                'unit', jsonb_build_object('id', bul.unit_id,
                                                                                           'shortName', bul.short_name,
                                                                                           'longName', bul.long_name)))
-                           from %s bi join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
+                           from bivariate_indicators_metadata bi join bivariate_unit_localization bul on bi.unit_id = bul.unit_id
                        ),
                        'colors', jsonb_build_object(
                            'fallback', '#ccc',
@@ -39,7 +39,7 @@ select
                                              avg(abs(correlation)) over (partition by x_num, x_den) * avg(abs(correlation)) over (partition by y_num, y_den) mult
                                          order by mult desc)
                            from
-                               %s, %s xcopy, %s ycopy
+                               bivariate_axis_correlation_v2, bivariate_indicators_metadata xcopy, bivariate_indicators_metadata ycopy
                            where xcopy.param_id = x_num and ycopy.param_id = y_num and correlation is not null
                        ),
                        'initAxis',
@@ -73,7 +73,7 @@ from
                                      jsonb_build_object('value', p75, 'label', p75_label),
                                      jsonb_build_object('value', ceil(max), 'label', max_label)))) as axis
       from
-          %s )                                                                      ba,
+          bivariate_axis_v2 )                                                                      ba,
     ( select
           json_agg(jsonb_build_object('name', o.name, 'active', o.active, 'description', o.description,
                                       'colors', o.colors, 'order', o.ord,
@@ -103,25 +103,28 @@ from
                                                                   jsonb_build_object('value', ceil(ay.max), 'label', ay.max_label))))
                    order by ord) as overlay
       from
-          %s     ax,
-          %s     ay,
+          bivariate_axis_v2     ax,
+          bivariate_axis_v2     ay,
           bivariate_overlays o,
-          %s bix1,
-          %s bix2,
-          %s biy1,
-          %s biy2
+          bivariate_indicators_metadata bix1,
+          bivariate_indicators_metadata bix2,
+          bivariate_indicators_metadata biy1,
+          bivariate_indicators_metadata biy2
       where
             bix1.param_id = o.x_numerator
         and bix2.param_id = o.x_denominator
         and biy1.param_id = o.y_numerator
         and biy2.param_id = o.y_denominator
-        %s
+        and bix1.state = 'READY'
+        and bix2.state = 'READY'
+        and biy1.state = 'READY'
+        and biy2.state = 'READY'
         and ax.denominator = o.x_denominator
         and ax.numerator = o.x_numerator
         and ay.denominator = o.y_denominator
         and ay.numerator = o.y_numerator )                                                      ov,
-    %s                                                                              x,
-    %s                                                                              y
+    bivariate_axis_v2                                                                              x,
+    bivariate_axis_v2                                                                              y
 where
       x.numerator = 'count'
   and x.denominator = 'area_km2'

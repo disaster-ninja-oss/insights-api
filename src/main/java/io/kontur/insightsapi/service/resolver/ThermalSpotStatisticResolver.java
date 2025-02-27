@@ -11,16 +11,12 @@ import io.kontur.insightsapi.service.Helper;
 import io.kontur.insightsapi.service.cacheable.ThermalSpotStatisticService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class ThermalSpotStatisticResolver implements GraphQLResolver<Analytics> {
-
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
 
     private final GeometryTransformer geometryTransformer;
 
@@ -35,9 +31,7 @@ public class ThermalSpotStatisticResolver implements GraphQLResolver<Analytics> 
         var fieldList = environment.getSelectionSet().getFields().stream()
                 .map(SelectedField::getQualifiedName)
                 .collect(Collectors.toList());
-        if (useStatSeparateTables){
-            transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
-        }
+        transformedGeometry = helper.transformGeometryToWkt(transformedGeometry);
         return thermalSpotStatisticService.calculateThermalSpotStatistic(transformedGeometry, fieldList);
     }
 }

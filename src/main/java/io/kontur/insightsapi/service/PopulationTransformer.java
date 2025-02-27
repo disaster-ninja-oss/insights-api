@@ -37,19 +37,13 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
 
     private final Helper helper;
 
-    private final Boolean useStatSeparateTables;
-
-    public PopulationTransformer(PopulationRepository populationRepository, Helper helper,
-                                 @Value("${calculations.useStatSeparateTables:false}") Boolean useStatSeparateTables) {
+    public PopulationTransformer(PopulationRepository populationRepository, Helper helper) {
         this.populationRepository = populationRepository;
         this.helper = helper;
-        this.useStatSeparateTables = useStatSeparateTables;
     }
 
     public Optional<Map<String, CalculatePopulationDto>> calculatePopulationAndGdp(String geometry) {
-        if (useStatSeparateTables) {
-            geometry = helper.transformGeometryToWkt(geometry);
-        }
+        geometry = helper.transformGeometryToWkt(geometry);
         Map<String, CalculatePopulationDto> population = populationRepository.getPopulationAndGdp(geometry);
         return Optional.ofNullable(population);
     }
@@ -116,9 +110,7 @@ public class PopulationTransformer implements HumanitarianImpactService, OsmQual
     }
 
     public OsmQuality calculateOsmQuality(String geojson, List<String> osmRequestFields) {
-        if (useStatSeparateTables) {
-            geojson = helper.transformGeometryToWkt(geojson);
-        }
+        geojson = helper.transformGeometryToWkt(geojson);
         return populationRepository.calculateOsmQuality(geojson, osmRequestFields);
     }
 

@@ -9,10 +9,11 @@ with pairs as (select *
              from boxinput bi
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution = 8)),
-     res as (select st.h3, indicator_uuid, indicator_value
+     ids(internal_id) as materialized (select nominator from pairs union all select denominator from pairs),
+     res as (select st.h3, st.indicator_uuid, st.indicator_value
              from stat_h3_transposed st
-             join hexes sh using(h3)
-             order by st.h3, indicator_uuid),
+             join hexes h on (h.h3 = st.h3)
+             where indicator_uuid in (select distinct internal_id::uuid from ids)),
      normalized_indicators as (select a.indicator_uuid                        as numerator_uuid,
                                       b.indicator_uuid                        as denominator_uuid,
                                       (a.indicator_value / b.indicator_value) as normalized_value,

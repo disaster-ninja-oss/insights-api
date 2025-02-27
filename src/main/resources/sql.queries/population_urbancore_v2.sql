@@ -11,7 +11,7 @@ with resolution as (select calculate_area_resolution_v2(ST_SetSRID(:polygon::geo
      res as (select st.h3, st.indicator_value as population, h3_cell_area(st.h3, 'km^2') as area_km2
              from stat_h3_transposed st
              join hexes using(h3)
-             where indicator_uuid = (select internal_id from %s where param_id = 'population' and state = 'READY')),
+             where indicator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'population' and state = 'READY')),
      stat_pop as (select s.*, sum(population) over (order by population desc) as sum_pop
                   from res s),
      total as (select sum(population)                  as population,

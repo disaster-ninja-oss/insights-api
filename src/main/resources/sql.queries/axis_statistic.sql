@@ -1,6 +1,6 @@
 select
     jsonb_build_object('label', label, 'quotient', jsonb_build_array(numerator, denominator),
-                       'transformation', %s,
+                       'transformation', default_transform,
                        'quotients', jsonb_build_array(
                                jsonb_build_object('name', bi1.param_id,
                                                   'label', bi1.param_label,
@@ -32,8 +32,10 @@ select
                                jsonb_build_object('value', p75, 'label', p75_label),
                                jsonb_build_object('value', ceil(max), 'label', max_label))) as axis
 from
-    %s,
-    %s bi1 left join bivariate_unit_localization bul1 on bi1.unit_id = bul1.unit_id,
-    %s bi2 left join bivariate_unit_localization bul2 on bi2.unit_id = bul2.unit_id
+    bivariate_axis_v2,
+    bivariate_indicators_metadata bi1 left join bivariate_unit_localization bul1 on bi1.unit_id = bul1.unit_id,
+    bivariate_indicators_metadata bi2 left join bivariate_unit_localization bul2 on bi2.unit_id = bul2.unit_id
 where
-  %s
+    numerator_uuid = bi1.internal_id
+and denominator_uuid = bi2.internal_id
+and bi1.state='READY' and bi2.state='READY'

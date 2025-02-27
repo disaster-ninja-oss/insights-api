@@ -20,9 +20,6 @@ import javax.annotation.PostConstruct;
 @RequiredArgsConstructor
 public class TileService {
 
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
-
     @Value("${calculations.tiles.max-zoom}")
     private Integer maxZoom;
 
@@ -67,10 +64,7 @@ public class TileService {
             }
         }
         Integer resolution = getResolution(z);
-        if (useStatSeparateTables) {
-            return tileRepository.getBivariateTileMvtIndicatorsListV2(resolution, z, x, y, indicators);
-        }
-        return tileRepository.getBivariateTileMvt(resolution, z, x, y, indicators);
+        return tileRepository.getBivariateTileMvtIndicatorsListV2(resolution, z, x, y, indicators);
     }
 
     private boolean checkIndicatorsList(List<String> indicatorsList) {

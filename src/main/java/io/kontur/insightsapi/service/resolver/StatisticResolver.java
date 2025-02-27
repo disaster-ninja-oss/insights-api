@@ -10,7 +10,6 @@ import io.kontur.insightsapi.repository.AxisRepository;
 import io.kontur.insightsapi.service.StatisticService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor

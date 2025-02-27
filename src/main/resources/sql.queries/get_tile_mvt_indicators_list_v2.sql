@@ -4,7 +4,7 @@ with res as (select sg.geom, sg.h3, st.indicator_uuid, st.indicator_value
              where sg.geom && ST_TileEnvelope(:z, :x, :y)
     and sg.resolution = :resolution
     and indicator_uuid IN (select internal_id
-    from %s
+    from bivariate_indicators_metadata
     where param_id IN
     (:ind0, :ind1, :ind2, :ind3)))
 select ST_AsMVT(q, 'stats', 8192, 'geom', 'h3ind') as tile
@@ -19,10 +19,10 @@ from (
               res b,
               res c,
               res d,
-              %s bi_a,
-              %s bi_b,
-              %s bi_c,
-              %s bi_d
+              bivariate_indicators_metadata bi_a,
+              bivariate_indicators_metadata bi_b,
+              bivariate_indicators_metadata bi_c,
+              bivariate_indicators_metadata bi_d
          where a.h3 = b.h3
            and a.h3 = c.h3
            and a.h3 = d.h3

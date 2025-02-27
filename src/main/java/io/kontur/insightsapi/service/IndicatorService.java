@@ -50,10 +50,6 @@ public class IndicatorService {
 
     public static final int UUID_STRING_LENGTH = 36;
 
-    private String getUploadId(BivariateIndicatorDto bivariateIndicatorDto) {
-        return randomUUID().toString();
-    }
-
     public ResponseEntity<String> uploadIndicatorData(HttpServletRequest request, boolean isUpdate) {
         try {
             BivariateIndicatorDto indicatorMetadata = null;
@@ -80,7 +76,7 @@ public class IndicatorService {
                     itemIndex++;
                 } else if (!item.isFormField() && "file".equals(item.getFieldName()) && itemIndex == 1) {
                     indicatorRepository.checkActiveUpload(indicatorMetadata);
-                    String uploadId = getUploadId(indicatorMetadata);
+                    String uploadId = randomUUID().toString();
                     Path tempFile = Paths.get("/tmp", "upload_" + uploadId + ".csv");
                     try (InputStream inputStream = item.openStream()) {
                         Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);

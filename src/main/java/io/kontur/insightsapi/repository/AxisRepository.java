@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,9 +35,6 @@ public class AxisRepository {
     private final AxisRowMapper axisRowMapper;
     private final TransformationRowMapper transformationRowMapper;
 
-    @Value("${calculations.useStatSeparateTables:false}")
-    private Boolean useStatSeparateTables;
-
     @Value("classpath:/sql.queries/transformation_info.sql")
     private Resource transformationInfo;
 
@@ -47,17 +43,11 @@ public class AxisRepository {
 
     @Transactional(readOnly = true)
     public List<Transformation> getTransformations(String numerator, String denominator) {
-        if (!useStatSeparateTables) {
-            return new ArrayList<>();
-        }
         return jdbcTemplate.query(queryFactory.getSql(transformationInfo), transformationRowMapper, numerator, denominator);
     }
 
     @Transactional(readOnly = true)
     public List<Axis> getAxes() {
-        if (!useStatSeparateTables) {
-            return new ArrayList<>();
-        }
         List<Axis> axes = jdbcTemplate.query(queryFactory.getSql(axisInfo), axisRowMapper);
         Map<Integer, Integer> resolutionToZoom = getZoomMapping();
         for (Axis axis : axes) {
