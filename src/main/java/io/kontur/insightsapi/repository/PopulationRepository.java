@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -59,6 +60,8 @@ public class PopulationRepository {
 
     private final Logger logger = LoggerFactory.getLogger(PopulationRepository.class);
 
+    private final JdbcTemplate jdbcTemplate;
+
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private final Helper helper;
@@ -68,6 +71,7 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var queryString = queryFactory.getSql(calculatePopulationAndAGdpV2);
         try {
+            jdbcTemplate.execute("set local enable_hashjoin = off");
             return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryString, paramSource, (rs, rowNum) ->
                     CalculatePopulationDto.builder()
                             .population(rs.getBigDecimal("population"))
