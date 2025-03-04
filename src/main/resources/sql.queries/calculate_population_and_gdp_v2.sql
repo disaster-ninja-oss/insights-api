@@ -23,14 +23,11 @@ hexes_in_area as materialized (
 ),
 res AS (
     -- Extract values for hexes from available indicators
-    SELECT st.h3, st.indicator_value, m.param_id
+    SELECT st.h3, st.indicator_value, st.indicator_uuid
     FROM hexes_in_area
     JOIN stat_h3_transposed st USING(h3)
-    JOIN bivariate_indicators_metadata m ON st.indicator_uuid = m.internal_id
     WHERE
-        m.param_id IN ('gdp', 'population', 'residential')
-        AND m.state = 'READY'
-        AND m.owner = 'disaster.ninja'
+        indicator_uuid in (%s)
 ),
 indicators_as_columns as (
     -- Pivot the table for easier summation.
@@ -38,9 +35,9 @@ indicators_as_columns as (
     -- ???: do we have to do it? seems to be only needed if we have two of the same indicators in READY state
     SELECT
         h3,
-        COALESCE(MAX(indicator_value) FILTER (WHERE param_id = 'population'), 0) AS population,
-        COALESCE(MAX(indicator_value) FILTER (WHERE param_id = 'gdp'), 0) AS gdp,
-        COALESCE(MAX(indicator_value) FILTER (WHERE param_id = 'residential'), 0) AS residential
+        COALESCE(MAX(indicator_value) FILTER (WHERE indicator_uuid = '%s'), 0) AS population,
+        COALESCE(MAX(indicator_value) FILTER (WHERE indicator_uuid = '%s'), 0) AS gdp,
+        COALESCE(MAX(indicator_value) FILTER (WHERE indicator_uuid = '%s'), 0) AS residential
     FROM res
     GROUP BY h3
 )

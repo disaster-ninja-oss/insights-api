@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.repository;
 
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.model.OsmQuality;
@@ -13,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.wololo.geojson.GeoJSONFactory;
 
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,9 +62,9 @@ public class PopulationRepository {
 
     private final Logger logger = LoggerFactory.getLogger(PopulationRepository.class);
 
-    private final JdbcTemplate jdbcTemplate;
-
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    private final IndicatorRepository indicatorRepository;
 
     private final Helper helper;
 
@@ -70,9 +72,16 @@ public class PopulationRepository {
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var queryString = queryFactory.getSql(calculatePopulationAndAGdpV2);
+        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "gdp", "residential"))
+            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
         try {
-            jdbcTemplate.execute("set local enable_hashjoin = off");
-            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryString, paramSource, (rs, rowNum) ->
+            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(
+                            String.format(
+                                queryString, 
+                                indicators.values().stream().map(value -> "'" + value + "'").collect(Collectors.joining(", ")),
+                                indicators.get("population"),
+                                indicators.get("gdp"),
+                                indicators.get("residential")), paramSource, (rs, rowNum) ->
                     CalculatePopulationDto.builder()
                             .population(rs.getBigDecimal("population"))
                             .gdp(rs.getBigDecimal("gdp"))
