@@ -120,8 +120,15 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var transformedGeometry = helper.transformGeometryToWkt(geometry);
         paramSource.addValue("transformed_geometry", transformedGeometry);
+        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "populated_area_km2"))
+            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
         try {
-            return namedParameterJdbcTemplate.query(queryFactory.getSql(populationHumanitarianImpactV2), paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.query(
+                        String.format(
+                            queryFactory.getSql(populationHumanitarianImpactV2),
+                            indicators.values().stream().map(value -> "'" + value + "'").collect(Collectors.joining(", ")),
+                            indicators.get("population"),
+                            indicators.get("populated_area_km2")), paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))

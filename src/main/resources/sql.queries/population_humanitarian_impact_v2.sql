@@ -9,22 +9,21 @@ with resolution as (select calculate_area_resolution_v2(ST_SetSRID(:geometry::ge
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution = (select resolution from resolution))),
      res as (select st.h3, indicator_uuid, indicator_value
-             from stat_h3_transposed st
-             join hexes using(h3)
-             where indicator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'population' and state = 'READY')
-             order by st.h3),
-     res1 as (select st.h3, indicator_uuid, indicator_value
-             from stat_h3_transposed st
-             join hexes using(h3)
-             where indicator_uuid = (select internal_id from bivariate_indicators_metadata where param_id = 'populated_area_km2' and state = 'READY')
-             order by st.h3),
-     stat_in_area as (select s.*, sum(population) over (order by population desc) as sum_pop
-                      from (select distinct h3,
-                                            res.indicator_value          as population,
-                                            res1.indicator_value         as area_km2,
-                                            h3_cell_to_boundary_geometry(h3)  as geom
-                            from res join res1 using(h3)) s),
-     total as (select sum(population) as population, round(sum(area_km2)::numeric, 2) as area from stat_in_area)
+             from hexes
+             JOIN stat_h3_transposed st USING(h3)
+             WHERE
+                 indicator_uuid in (%s)),
+     indicators_as_columns as (
+         SELECT
+             h3,
+             COALESCE(MAX(indicator_value) FILTER (WHERE indicator_uuid = '%s'), 0) AS population,
+             COALESCE(MAX(indicator_value) FILTER (WHERE indicator_uuid = '%s'), 0) AS populated_area_km2,
+             h3_cell_to_boundary_geometry(h3) as geom
+         FROM res
+         GROUP BY h3
+     ),
+     stat_in_area as (select s.*, sum(population) over (order by population desc) as sum_pop from indicators_as_columns s),
+     total as (select sum(population) as population, round(sum(populated_area_km2)::numeric, 2) as area from stat_in_area)
 select sum(s.population)                                as population,
        case
            when sum_pop <= t.population * 0.68 then '0-68'
@@ -34,7 +33,7 @@ select sum(s.population)                                as population,
            when sum_pop <= t.population * 0.68 then 'Kontur Urban Core'
            else 'Kontur Settled Periphery'
            end                                          as name,
-       round(sum(area_km2)::numeric, 2)                 as areaKm2,
+       round(sum(populated_area_km2)::numeric, 2)       as areaKm2,
        ST_AsGeoJSON(ST_Transform(ST_Union(geom), 4326)) as geometry,
        t.population                                     as totalPopulation,
        t.area                                           as totalAreaKm2
