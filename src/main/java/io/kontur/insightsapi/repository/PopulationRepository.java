@@ -1,5 +1,6 @@
 package io.kontur.insightsapi.repository;
 
+import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.dto.CalculatePopulationDto;
 import io.kontur.insightsapi.dto.HumanitarianImpactDto;
 import io.kontur.insightsapi.model.OsmQuality;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.wololo.geojson.GeoJSONFactory;
 
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -61,14 +64,24 @@ public class PopulationRepository {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
+    private final IndicatorRepository indicatorRepository;
+
     private final Helper helper;
 
     @Transactional(readOnly = true)
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var queryString = queryFactory.getSql(calculatePopulationAndAGdpV2);
+        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "gdp", "residential"))
+            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
         try {
-            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(queryString, paramSource, (rs, rowNum) ->
+            return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(
+                            String.format(
+                                queryString, 
+                                indicators.values().stream().map(value -> "'" + value + "'").collect(Collectors.joining(", ")),
+                                indicators.get("population"),
+                                indicators.get("gdp"),
+                                indicators.get("residential")), paramSource, (rs, rowNum) ->
                     CalculatePopulationDto.builder()
                             .population(rs.getBigDecimal("population"))
                             .gdp(rs.getBigDecimal("gdp"))
@@ -107,8 +120,15 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var transformedGeometry = helper.transformGeometryToWkt(geometry);
         paramSource.addValue("transformed_geometry", transformedGeometry);
+        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "populated_area_km2"))
+            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
         try {
-            return namedParameterJdbcTemplate.query(queryFactory.getSql(populationHumanitarianImpactV2), paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.query(
+                        String.format(
+                            queryFactory.getSql(populationHumanitarianImpactV2),
+                            indicators.values().stream().map(value -> "'" + value + "'").collect(Collectors.joining(", ")),
+                            indicators.get("population"),
+                            indicators.get("populated_area_km2")), paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))

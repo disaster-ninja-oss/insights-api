@@ -1,44 +1,50 @@
-with validated_input
-         as (select :geometry::geometry as geom),
-     boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
-     subdivision as (select st_subdivide(v.geom) geom from validated_input v),
-     hexes as materialized (
-             select distinct sh.h3
-             from boxinput bi
-                      cross join subdivision sb
-                      join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution = 8)),
-     res as (select st.h3, indicator_uuid, indicator_value, param_id
-                      from stat_h3_transposed st
-                      join hexes using(h3)
-                      join bivariate_indicators_metadata m on (
-                        st.indicator_uuid = m.internal_id and
-                        param_id in ('gdp', 'population', 'residential') and
-                        state = 'READY' and
-                        owner = 'disaster.ninja'
-                    )
-                ),
-     distinct_h3 as (select h3,
-                            st_transform(h3_cell_to_geometry(h3), 3857) geom,
-                            coalesce(max(indicator_value) filter (where param_id = 'population'), 0)    population,
-                            coalesce(max(indicator_value) filter (where param_id = 'gdp'), 0)           gdp,
-                            coalesce(max(indicator_value) filter (where param_id = 'residential'), 0)   residential
-                     from res
-                     group by h3
-                ),
-     distinct_h3_with_area as materialized (select *
-    from distinct_h3 sh
-    cross join
-    lateral (
-    select case
-    when ST_Intersects(sh.geom, bound)
-    then ST_Area(ST_Intersection(sh.geom, v.geom)) / ST_Area(sh.geom)
-    else 1::double precision
-    end "area"
-    from validated_input v,
-    ST_Boundary(v.geom) "bound"
-    ) h)
-select sum(dh.population * dh.area) as population,
-       sum(dh.population * dh.residential * dh.area) as urban,
-       sum(dh.gdp * dh.area)        as gdp,
-       'population'                 as type
-from distinct_h3_with_area dh;
+WITH validated_input AS (
+    -- Input geometry can be very complex in real scenarios, up to thousands of points.
+    -- This is coming from user and we have no real control over it.
+    select :geometry::geometry as geom
+),
+input_bbox AS (
+    -- For fast prefiltering using GIST index, generate a bbox for the input geometry
+    SELECT ST_Envelope(geom) AS bbox
+    FROM validated_input
+),
+input_subdivision AS (
+    -- For fast filtering after the bbox check, subdivide the geometry.
+    SELECT ST_Subdivide(geom, 64) AS geom
+    FROM validated_input
+),
+hexes_in_area as materialized (
+    -- Pick hexes that are present in the database that intersect the subdivided geometry
+    SELECT DISTINCT sh.h3  
+    FROM stat_h3_geom sh
+    JOIN input_subdivision sb ON ST_Intersects(sh.geom, sb.geom)
+    WHERE sh.resolution = 8
+        AND sh.geom && (SELECT bbox FROM input_bbox LIMIT 1)
+),
+res AS (
+    -- Extract values for hexes from available indicators
+    SELECT st.h3, st.indicator_value, st.indicator_uuid
+    FROM hexes_in_area
+    JOIN stat_h3_transposed st USING(h3)
+    WHERE
+        indicator_uuid in (%s)
+),
+indicators_as_columns as (
+    -- Pivot the table for easier summation.
+    -- Deduplicate the h3's if we somehow got multiple above.
+    -- ???: do we have to do it? seems to be only needed if we have two of the same indicators in READY state
+    SELECT
+        h3,
+        COALESCE(MAX(indicator_value) FILTER (WHERE indicator_uuid = '%s'), 0) AS population,
+        COALESCE(MAX(indicator_value) FILTER (WHERE indicator_uuid = '%s'), 0) AS gdp,
+        COALESCE(MAX(indicator_value) FILTER (WHERE indicator_uuid = '%s'), 0) AS residential
+    FROM res
+    GROUP BY h3
+)
+-- Finally, summarize the results.
+SELECT
+    SUM(dh.population) AS population,
+    SUM(dh.population * dh.residential) AS urban,
+    SUM(dh.gdp) AS gdp,
+    'population' AS type
+FROM indicators_as_columns dh;
