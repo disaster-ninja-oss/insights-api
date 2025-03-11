@@ -52,7 +52,7 @@ public class IndicatorController {
                     "${layer_ispublic}, \\\"copyrights\\\": ${layer_copyrights}, \\\"description\\\": " +
                     "${layer_description}, \\\"coverage\\\": ${layer_coverage}, \\\"updateFrequency\\\": " +
                     "${layer_update_freq}, \\\"unitId\\\": ${layer_unit_id}, \\\"emoji\\\": ${emoji}, " +
-                    "\\\"lastUpdated\\\": ${layer_last_updated}, \\\"downscale\\\": ${downscaleMethod}}\" " +
+                    "\\\"lastUpdated\\\": ${layer_last_updated}, \\\"downscale\\\": ${downscaleMethod}, \\\"hash\\\": ${hash}}\" " +
                     "--form 'file=@\"/path/to/file/indicator.csv\"'" +
 
                     "<br><br>Curl example with parameters: curl -w \":::\"%{http_code} --location --request POST " +
@@ -61,7 +61,7 @@ public class IndicatorController {
                     "\"Area\", \"direction\": [[\"neutral\"], [\"neutral\"]], \"isBase\": true, \"isPublic\": false, " +
                     "\"copyrights\": [\"Concept of areas © Brahmagupta, René Descartes\"], \"description\": \"\", " +
                     "\"coverage\": \"World\", \"updateFrequency\": \"static\", \"unitId\": \"km2\", \"emoji\": \"📐\", "+
-                    "\"lastUpdated\": \"\", \"downscale\": \"equal\"}' " +
+                    "\"lastUpdated\": \"\", \"downscale\": \"equal\", \"hash\": \"105062f2bbcba3aaad5fccd3f6dfb8af\"}' " +
                     "--form 'file=@\"data/area_km2.csv\"'",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful upload"),
@@ -91,7 +91,7 @@ public class IndicatorController {
                     "${layer_ispublic}, \\\"copyrights\\\": ${layer_copyrights}, \\\"description\\\": " +
                     "${layer_description}, \\\"coverage\\\": ${layer_coverage}, \\\"updateFrequency\\\": " +
                     "${layer_update_freq}, \\\"unitId\\\": ${layer_unit_id}, \\\"emoji\\\": ${emoji}, " +
-                    "\\\"lastUpdated\\\": ${layer_last_updated}, \\\"downscale\\\": ${downscaleMethod}}\" " +
+                    "\\\"lastUpdated\\\": ${layer_last_updated}, \\\"downscale\\\": ${downscaleMethod}, \\\"hash\\\": ${hash}}\" " +
                     "--form 'file=@\"/path/to/file/indicator.csv\"'" +
 
                     "<br><br>Curl example with parameters: curl -w \":::\"%{http_code} --location --request PUT " +
@@ -100,7 +100,7 @@ public class IndicatorController {
                     "\"Area\", \"uuid\": \"7efd9ba2-e7de-44b9-8140-26c89e8170d7\", \"direction\": [[\"neutral\"], [\"neutral\"]], \"isBase\": true, \"isPublic\": false, " +
                     "\"copyrights\": [\"Concept of areas © Brahmagupta, René Descartes\"], \"description\": \"\", " +
                     "\"coverage\": \"World\", \"updateFrequency\": \"static\", \"unitId\": \"km2\", \"emoji\": \"📐\", "+
-                    "\"lastUpdated\": \"\", \"downscale\": \"equal\"}' " +
+                    "\"lastUpdated\": \"\", \"downscale\": \"equal\", \"hash\": \"105062f2bbcba3aaad5fccd3f6dfb8af\"}' " +
                     "--form 'file=@\"data/area_km2.csv\"'",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Successful upload"),

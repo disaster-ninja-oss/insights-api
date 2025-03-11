@@ -35,4 +35,5 @@
     <include file="add_mean_stddev_all_res_to_bivariate_axis_v2.sql" relativeToChangelogFile="true"/>
     <include file="add_upload_id_to_bivariate_indicators_metadata.sql" relativeToChangelogFile="true"/>
     <include file="add_max_res_downscale_to_bivariate_indicators_metadata.sql" relativeToChangelogFile="true"/>
+    <include file="add_hash_to_bivariate_indicators_metadata.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>
