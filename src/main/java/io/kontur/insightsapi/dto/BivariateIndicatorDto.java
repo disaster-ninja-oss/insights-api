@@ -84,6 +84,9 @@ public class BivariateIndicatorDto {
     @Pattern(regexp = "equal|proportional", message = "Scale must be 'equal' or 'proportional'")
     private String downscale;
 
+    @JsonProperty(value = "hash")
+    private String hash;
+
     @JsonIgnore
     private String uploadId;
 }

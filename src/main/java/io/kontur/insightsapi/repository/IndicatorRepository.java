@@ -190,6 +190,24 @@ public class IndicatorRepository {
         }
     }
 
+    public void checkLastUploadHash(BivariateIndicatorDto indicator) throws Exception {
+        if (indicator.getHash() == null) {
+            return;
+        }
+        try {
+            var hash = jdbcTemplate.queryForObject(
+                "select hash from bivariate_indicators_metadata where external_id = ?::uuid order by date desc limit 1",
+                String.class, indicator.getExternalId());
+            if (hash != null && indicator.getHash().equals(hash)) {
+                throw new IndicatorDataProcessingException(
+                        String.format("indicator %s with hash %s already exists", indicator.getExternalId(), hash));
+            }
+        } catch (EmptyResultDataAccessException e) {
+            // indicator with this external_id not found
+            ;
+        }
+    }
+
     public void checkActiveUpload(BivariateIndicatorDto indicator) throws Exception {
         // first check COPY IN PROGRESS state (insights-api side of upload pipeline)
         try {
@@ -285,5 +303,6 @@ public class IndicatorRepository {
         ps.setString(16, bivariateIndicatorDto.getLastUpdated() == null ? null : bivariateIndicatorDto.getLastUpdated().toString());
         ps.setString(17, bivariateIndicatorDto.getUploadId());
         ps.setString(18, bivariateIndicatorDto.getDownscale());
+        ps.setString(19, bivariateIndicatorDto.getHash());
     }
 }
