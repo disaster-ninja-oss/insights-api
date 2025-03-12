@@ -6,8 +6,6 @@ import io.kontur.insightsapi.dto.NumeratorsDenominatorsUuidCorrelationDto;
 import io.kontur.insightsapi.mapper.*;
 import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.BivariateStatistic;
-import io.kontur.insightsapi.model.Indicator;
-import io.kontur.insightsapi.model.Overlay;
 import io.kontur.insightsapi.model.PolygonMetrics;
 import io.kontur.insightsapi.model.Statistic;
 import io.kontur.insightsapi.service.cacheable.CorrelationRateService;
@@ -93,19 +91,7 @@ public class StatisticRepository implements CorrelationRateService {
 
     @Transactional(readOnly = true)
     public BivariateStatistic getBivariateStatistic() {
-        BivariateStatistic bs = jdbcTemplate.queryForObject(queryFactory.getSql(bivariateStatisticV2), bivariateStatisticRowMapper);
-        Map<Integer, Integer> resolutionToZoom = axisRepository.getZoomMapping();
-        for (Overlay o : bs.getOverlays()) {
-            Axis x = o.getX();
-            for (Indicator quotient : x.getQuotients()) {
-                quotient.setMaxZoom(resolutionToZoom.get(quotient.getMaxRes()));
-            }
-            Axis y = o.getY();
-            for (Indicator quotient : y.getQuotients()) {
-                quotient.setMaxZoom(resolutionToZoom.get(quotient.getMaxRes()));
-            }
-        }
-        return bs;
+        return jdbcTemplate.queryForObject(queryFactory.getSql(bivariateStatisticV2), bivariateStatisticRowMapper);
     }
 
     @Transactional(readOnly = true)
