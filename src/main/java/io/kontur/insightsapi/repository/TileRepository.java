@@ -66,10 +66,14 @@ public class TileRepository {
         paramSource.addValue("y", y);
         paramSource.addValue("resolution", resolution);
 
+        // without this setting query planner may want to use parallel seq scan on stat_h3_geom
         jdbcTemplate.execute("set max_parallel_workers_per_gather = 0");
+        // gateway timeout is 60s. tile generation may unexpectedly hang (#21156), we stop the query after a minute to reduce the overall CPU load
+        jdbcTemplate.execute("set statement_timeout = '61s'");
         byte[] tile = namedParameterJdbcTemplate.queryForObject(query, paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
         jdbcTemplate.execute("reset max_parallel_workers_per_gather");
+        jdbcTemplate.execute("reset statement_timeout");
         return tile;
     }
 
