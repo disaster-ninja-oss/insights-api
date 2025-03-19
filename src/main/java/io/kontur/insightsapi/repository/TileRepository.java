@@ -66,8 +66,11 @@ public class TileRepository {
         paramSource.addValue("y", y);
         paramSource.addValue("resolution", resolution);
 
-        return namedParameterJdbcTemplate.queryForObject(query, paramSource,
+        jdbcTemplate.execute("set max_parallel_workers_per_gather = 0");
+        byte[] tile = namedParameterJdbcTemplate.queryForObject(query, paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
+        jdbcTemplate.execute("reset max_parallel_workers_per_gather");
+        return tile;
     }
 
     public byte[] getBivariateTileMvtIndicatorsListV2(Integer resolution, Integer z, Integer x, Integer y,
