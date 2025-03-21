@@ -11,6 +11,7 @@ import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.CannotAcquireLockException;
@@ -41,6 +42,7 @@ public class IndicatorRepository {
 
     private final ObjectMapper objectMapper;
 
+    @Qualifier("writeDataSource")
     private final DataSource dataSource;
 
     @Value("classpath:/sql.queries/insert_bivariate_indicators.sql")

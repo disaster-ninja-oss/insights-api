@@ -1,7 +1,10 @@
 spring:
   datasource:
     driverClassName: org.testcontainers.jdbc.ContainerDatabaseDriver
-    url: jdbc:tc:postgis:13-3.1-alpine:///
+    primary-url: jdbc:tc:postgis:13-3.1-alpine:///
+    secondary-url: jdbc:tc:postgis:13-3.1-alpine:///
+    username: postgres
+    password: postgres
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/test-master-changelog.xml

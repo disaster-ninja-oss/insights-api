@@ -9,7 +9,8 @@ spring:
     lazy-initialization: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: 'jdbc:postgresql://localhost:5432/postgres'
+    primary-url: 'jdbc:postgresql://localhost:5432/postgres?ApplicationName=Insights-Write'
+    secondary-url: 'jdbc:postgresql://localhost:5432/postgres?ApplicationName=Insights-Read'
     username: postgres
     password: postgres
     hikari:

@@ -19,9 +19,4 @@ public class AxisService {
         axisRepository.insertOverrides(request, owner);
     }
 
-    public void insertPreset(PresetDto request) {
-        String owner = authService.getCurrentUsername().orElseThrow();
-        axisRepository.insertPreset(request, owner);
-    }
-
 }
