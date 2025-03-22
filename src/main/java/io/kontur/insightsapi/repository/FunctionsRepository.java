@@ -80,19 +80,21 @@ public class FunctionsRepository implements FunctionsService {
         Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(paramIds)
             .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
         List<String> columns = new ArrayList<>();
+        List<String> uuids = new ArrayList<>();
         List<String> fromRes = new ArrayList<>();
         for (int i = 0; i < paramIds.size(); i++) {
             var uuid = indicators.get(paramIds.get(i));
             if (uuid != null) {
-                columns.add(String.format("res_%s.indicator_value as %s", i, paramIds.get(i)));
-                fromRes.add(String.format("left join stat_h3_transposed res_%s on (res_%s.indicator_uuid = '%s' and sh.h3 = res_%s.h3)", i, i, uuid, i));
+                uuids.add("'" + uuid + "'");
+                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
+                            uuid, paramIds.get(i)));
             } else {
                 columns.add(String.format("null::float as %s", paramIds.get(i)));
             }
         }
         var query = String.format(queryFactory.getSql(functionIntersectV2),
                 StringUtils.join(columns, ", "),
-                StringUtils.join(fromRes, " "),
+                StringUtils.join(uuids, ", "),
                 StringUtils.join(params, ", "));
         return query;
     }
