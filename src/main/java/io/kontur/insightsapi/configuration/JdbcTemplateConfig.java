@@ -11,23 +11,23 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 @Configuration
 public class JdbcTemplateConfig {
 
-    @Bean
+    @Bean(name = "writeJdbcTemplate")
     public JdbcTemplate jdbcTemplate(@Qualifier("writeDataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
 
-    @Bean
+    @Bean(name = "readJdbcTemplate")
     @Primary
     public JdbcTemplate readJdbcTemplate(@Qualifier("readDataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
 
-    @Bean
+    @Bean(name = "writeNamedParameterJdbcTemplate")
     public NamedParameterJdbcTemplate namedParameterJdbcTemplate(@Qualifier("writeDataSource") DataSource dataSource) {
         return new NamedParameterJdbcTemplate(dataSource);
     }
 
-    @Bean
+    @Bean(name = "readNamedParameterJdbcTemplate")
     @Primary
     public NamedParameterJdbcTemplate readNamedParameterJdbcTemplate(@Qualifier("readDataSource") DataSource dataSource) {
         return new NamedParameterJdbcTemplate(dataSource);

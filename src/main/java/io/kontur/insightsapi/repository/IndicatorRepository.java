@@ -38,6 +38,9 @@ public class IndicatorRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(IndicatorRepository.class);
 
+    @Qualifier("writeJdbcTemplate")
+    private final JdbcTemplate jdbcTemplateRW;
+
     private final JdbcTemplate jdbcTemplate;
 
     private final ObjectMapper objectMapper;
@@ -196,7 +199,7 @@ public class IndicatorRepository {
         // first check COPY IN PROGRESS state (insights-api side of upload pipeline)
         try {
             // specifically check for lock, as no lock = failed upload
-            jdbcTemplate.queryForObject(
+            jdbcTemplateRW.queryForObject(
                 "select 1 from bivariate_indicators_metadata where param_id = ? and owner = ? and state = 'COPY IN PROGRESS' for no key update nowait",
                 String.class, indicator.getId(), indicator.getOwner());
         } catch (EmptyResultDataAccessException e) {
@@ -209,7 +212,7 @@ public class IndicatorRepository {
 
         // then check TMP CREATED state (insights-db part of uploading)
         try {
-            String res = jdbcTemplate.queryForObject(
+            String res = jdbcTemplateRW.queryForObject(
                 "select 1 from bivariate_indicators_metadata where param_id = ? and owner = ? and state = 'TMP CREATED' limit 1",
                 String.class, indicator.getId(), indicator.getOwner());
             if (res != null) {
