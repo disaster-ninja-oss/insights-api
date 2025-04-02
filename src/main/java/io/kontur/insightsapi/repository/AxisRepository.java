@@ -8,14 +8,15 @@ import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.Indicator;
 import io.kontur.insightsapi.model.Transformation;
 import io.kontur.insightsapi.repository.IndicatorRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -31,6 +32,7 @@ public class AxisRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Autowired
     @Qualifier("writeJdbcTemplate")
     private final JdbcTemplate jdbcTemplateRW;
 
