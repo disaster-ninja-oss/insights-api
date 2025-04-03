@@ -1,10 +1,15 @@
 spring:
   datasource:
     driverClassName: org.testcontainers.jdbc.ContainerDatabaseDriver
-    primary-url: jdbc:tc:postgis:13-3.1-alpine:///
-    secondary-url: jdbc:tc:postgis:13-3.1-alpine:///
+    leader-url: jdbc:tc:postgis:13-3.1-alpine:///
+    replica-url: jdbc:tc:postgis:13-3.1-alpine:///
     username: postgres
     password: postgres
+    hikari:
+      register-mbeans: true
+      connection-timeout: 60000
+      validation-timeout: 1000
+      maximum-pool-size: 10
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/test-master-changelog.xml

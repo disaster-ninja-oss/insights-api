@@ -1,5 +1,7 @@
 package io.kontur.insightsapi.configuration;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseDataSource;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,11 +13,11 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 public class DataSourceConfig {
 
-    @Value("${spring.datasource.primary-url}")
-    private String primaryDatasourceUrl;
+    @Value("${spring.datasource.leader-url}")
+    private String leaderUrl;
 
-    @Value("${spring.datasource.secondary-url}")
-    private String secondaryDatasourceUrl;
+    @Value("${spring.datasource.replica-url}")
+    private String replicaUrl;
 
     @Value("${spring.datasource.password}")
     private String dbPassword;
@@ -23,23 +25,42 @@ public class DataSourceConfig {
     @Value("${spring.datasource.username}")
     private String dbUsername;
 
+    @Value("${spring.datasource.hikari.connection-timeout}")
+    private long connectionTimeout;
+
+    @Value("${spring.datasource.hikari.validation-timeout}")
+    private long validationTimeout;
+
+    @Value("${spring.datasource.hikari.maximum-pool-size}")
+    private int maximumPoolSize;
+
+    @Value("${spring.datasource.hikari.register-mbeans}")
+    private boolean registerMbeans;
+
+    private HikariConfig createHikariConfig(String url) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(dbUsername);
+        config.setPassword(dbPassword);
+        config.setConnectionTimeout(connectionTimeout);
+        config.setValidationTimeout(validationTimeout);
+        config.setMaximumPoolSize(maximumPoolSize);
+        config.setRegisterMbeans(registerMbeans);
+        return config;
+    }
+
     @Bean(name = "writeDataSource")
     @LiquibaseDataSource
     public DataSource writeDataSource() {
-        return DataSourceBuilder.create()
-                .url(primaryDatasourceUrl)
-                .username(dbUsername)
-                .password(dbPassword)
-                .build();
+        HikariConfig config = createHikariConfig(leaderUrl);
+        return new HikariDataSource(config);
     }
 
+    // most insights-api queries are only reading the data, so RO connection is default
     @Primary
     @Bean(name = "readDataSource")
     public DataSource readDataSource() {
-        return DataSourceBuilder.create()
-                .url(secondaryDatasourceUrl)
-                .username(dbUsername)
-                .password(dbPassword)
-                .build();
+        HikariConfig config = createHikariConfig(replicaUrl);
+        return new HikariDataSource(config);
     }
 }
