@@ -188,8 +188,11 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         var transformedGeometry = helper.transformGeometryToWkt(geojson);
         paramSource.addValue("transformed_polygon", transformedGeometry);
+        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population"))
+            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
         try {
-            return namedParameterJdbcTemplate.queryForObject(queryFactory.getSql(populationUrbanCoreV2), paramSource, (rs, rowNum) ->
+            return namedParameterJdbcTemplate.queryForObject(
+                    String.format(queryFactory.getSql(populationUrbanCoreV2), indicators.get("population")), paramSource, (rs, rowNum) ->
                     UrbanCore.builder()
                             .urbanCorePopulation(rs.getBigDecimal("urbanCorePopulation"))
                             .urbanCoreAreaKm2(rs.getBigDecimal("urbanCoreAreaKm2"))
