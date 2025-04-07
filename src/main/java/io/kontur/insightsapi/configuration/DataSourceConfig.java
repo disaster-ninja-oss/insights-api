@@ -37,14 +37,14 @@ public class DataSourceConfig {
     @Value("${spring.datasource.hikari.register-mbeans}")
     private boolean registerMbeans;
 
-    private HikariConfig createHikariConfig(String url) {
+    private HikariConfig createHikariConfig(String url, int poolSize) {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(url);
         config.setUsername(dbUsername);
         config.setPassword(dbPassword);
         config.setConnectionTimeout(connectionTimeout);
         config.setValidationTimeout(validationTimeout);
-        config.setMaximumPoolSize(maximumPoolSize);
+        config.setMaximumPoolSize(poolSize);
         config.setRegisterMbeans(registerMbeans);
         return config;
     }
@@ -52,7 +52,7 @@ public class DataSourceConfig {
     @Bean(name = "writeDataSource")
     @LiquibaseDataSource
     public DataSource writeDataSource() {
-        HikariConfig config = createHikariConfig(leaderUrl);
+        HikariConfig config = createHikariConfig(leaderUrl, maximumPoolSize / 3);  // don't need many write connections
         return new HikariDataSource(config);
     }
 
@@ -60,7 +60,7 @@ public class DataSourceConfig {
     @Primary
     @Bean(name = "readDataSource")
     public DataSource readDataSource() {
-        HikariConfig config = createHikariConfig(replicaUrl);
+        HikariConfig config = createHikariConfig(replicaUrl, maximumPoolSize);
         return new HikariDataSource(config);
     }
 }
