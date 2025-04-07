@@ -178,31 +178,4 @@ public class IndicatorController {
         return ResponseEntity.ok().body("");
     }
 
-    @Operation(
-            summary = "Create or update bivariate presets.",
-            tags = {"Indicators"},
-            description = """
-                Create bivariate presets by providing UUIDs for numerator/denominator pairs. Indicator UUIDs should exist for current user. x_numerator_id/x_denominator_id is vertical axis, y_numerator/y_denominator is horizontal one.
-                The "colors" field accepts escaped-json string for bivariate legend with 9 cells, example value:
-                "[{\\"id\\":\\"A1\\",\\"color\\":\\"rgb(232,232,157)\\"},{\\"id\\":\\"A2\\",\\"color\\":\\"rgb(239,163,127)\\"},{\\"id\\":\\"A3\\",\\"color\\":\\"rgb(228,26,28)\\"},{\\"id\\":\\"B1\\",\\"color\\":\\"rgb(186,226,153)\\"},{\\"id\\":\\"B2\\",\\"color\\":\\"rgb(161,173,88)\\"},{\\"id\\":\\"B3\\",\\"color\\":\\"rgb(191,108,63)\\"},{\\"id\\":\\"C1\\",\\"color\\":\\"rgb(90,200,127)\\"},{\\"id\\":\\"C2\\",\\"color\\":\\"rgb(112,186,128)\\"},{\\"id\\":\\"C3\\",\\"color\\":\\"rgb(83,152,106)\\"}]"
-            """,
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Bad Request"),
-                    @ApiResponse(responseCode = "500", description = "Internal error")})
-    @PostMapping(value = "/axis/preset")
-    public ResponseEntity<String> uploadPreset(@Valid @RequestBody PresetDto request, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            return ResponseEntity.badRequest().body("Validation error: " + bindingResult.getFieldError().getDefaultMessage());
-        }
-        try {
-            axisService.insertPreset(request);
-        } catch (DataIntegrityViolationException e) {
-            // catch 'invalid syntax for type...' to hide plain SQL in error response
-            return ResponseEntity.badRequest().body("Invalid input data format");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-        return ResponseEntity.ok().body("");
-    }
 }

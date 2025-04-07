@@ -10,10 +10,12 @@ import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.scheduling.annotation.Async;
@@ -37,10 +39,16 @@ public class IndicatorRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(IndicatorRepository.class);
 
+    @Autowired
+    @Qualifier("writeJdbcTemplate")
+    private final JdbcTemplate jdbcTemplateRW;
+
     private final JdbcTemplate jdbcTemplate;
 
     private final ObjectMapper objectMapper;
 
+    @Autowired
+    @Qualifier("writeDataSource")
     private final DataSource dataSource;
 
     @Value("classpath:/sql.queries/insert_bivariate_indicators.sql")
@@ -194,7 +202,7 @@ public class IndicatorRepository {
         // first check COPY IN PROGRESS state (insights-api side of upload pipeline)
         try {
             // specifically check for lock, as no lock = failed upload
-            jdbcTemplate.queryForObject(
+            jdbcTemplateRW.queryForObject(
                 "select 1 from bivariate_indicators_metadata where param_id = ? and owner = ? and state = 'COPY IN PROGRESS' for no key update nowait",
                 String.class, indicator.getId(), indicator.getOwner());
         } catch (EmptyResultDataAccessException e) {
@@ -207,7 +215,7 @@ public class IndicatorRepository {
 
         // then check TMP CREATED state (insights-db part of uploading)
         try {
-            String res = jdbcTemplate.queryForObject(
+            String res = jdbcTemplateRW.queryForObject(
                 "select 1 from bivariate_indicators_metadata where param_id = ? and owner = ? and state = 'TMP CREATED' limit 1",
                 String.class, indicator.getId(), indicator.getOwner());
             if (res != null) {

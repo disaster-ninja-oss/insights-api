@@ -8,12 +8,14 @@ import io.kontur.insightsapi.model.Axis;
 import io.kontur.insightsapi.model.Indicator;
 import io.kontur.insightsapi.model.Transformation;
 import io.kontur.insightsapi.repository.IndicatorRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,6 +31,11 @@ public class AxisRepository {
     private final QueryFactory queryFactory;
 
     private final JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    @Qualifier("writeJdbcTemplate")
+    private final JdbcTemplate jdbcTemplateRW;
+
     private final IndicatorRepository indicatorRepository;
     private final TileRepository tileRepository;
 
@@ -78,50 +85,6 @@ public class AxisRepository {
                 throw new IllegalArgumentException(String.format("No indicator %s for user %s", uuid, owner));
     }
 
-    public void insertPreset(PresetDto preset, String owner)
-            throws IllegalArgumentException {
-        validateIndicators(List.of(
-            preset.getX_numerator_id(),
-            preset.getX_denominator_id(),
-            preset.getY_numerator_id(),
-            preset.getY_denominator_id()), owner);
-        String sql = """
-                insert into bivariate_overlays_v2
-                (ord, name, description, x_numerator_id, x_denominator_id, y_numerator_id, y_denominator_id,
-                 active, colors, application, is_public)
-                values
-                (?, ?, ?, ?::uuid, ?::uuid, ?::uuid, ?::uuid, ?, ?::jsonb, ?::json, ?)
-                on conflict (x_numerator_id, x_denominator_id, y_numerator_id, y_denominator_id) do update
-                set
-                    ord = excluded.ord,
-                    name = excluded.name,
-                    description = excluded.description,
-                    active = excluded.active,
-                    colors = excluded.colors,
-                    application = excluded.application,
-                    is_public = excluded.is_public
-        """;
-        try {
-            jdbcTemplate.update(
-                sql,
-                preset.getOrd(),
-                preset.getName(),
-                preset.getDescription(),
-                preset.getX_numerator_id(),
-                preset.getX_denominator_id(),
-                preset.getY_numerator_id(),
-                preset.getY_denominator_id(),
-                preset.getActive(),
-                preset.getColors(),
-                preset.getApplication(),
-                preset.getIs_public()
-                );
-        } catch (Exception e) {
-            logger.error("Could not update preset.", e);
-            throw new IllegalArgumentException("Could not update preset.", e);
-        }
-    }
-
     public void insertOverrides(AxisOverridesRequest request, String owner)
             throws IllegalArgumentException {
         String numerator = request.getNumerator_id();
@@ -146,7 +109,7 @@ public class AxisRepository {
                     p75_label = excluded.p75_label
         """;
         try {
-            jdbcTemplate.update(
+            jdbcTemplateRW.update(
                 sql,
                 numerator,
                 denominator,

@@ -9,12 +9,12 @@ spring:
     lazy-initialization: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: 'jdbc:postgresql://localhost:5432/postgres'
+    leader-url: 'jdbc:postgresql://localhost:5432/postgres?ApplicationName=Insights-Write'
+    replica-url: 'jdbc:postgresql://localhost:5432/postgres?ApplicationName=Insights-Read'
     username: postgres
     password: postgres
     hikari:
       register-mbeans: true
-      pool-name: HikariPool-1
       connection-timeout: 60000
       validation-timeout: 1000
       maximum-pool-size: 10
