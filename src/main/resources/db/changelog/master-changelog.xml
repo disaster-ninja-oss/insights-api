@@ -5,35 +5,11 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <include  file="map_to_geometry_obj.sql" relativeToChangelogFile="true"/>
+    <include  file="init_schema.sql" relativeToChangelogFile="true"/>
     <include  file="calculate_area_resolution_performance_fix.sql" relativeToChangelogFile="true"/>
     <include  file="create_function_zoom_to_h3_resolution.sql" relativeToChangelogFile="true"/>
-    <include  file="refactor_stat_h3_transposed.sql" relativeToChangelogFile="true"/>
-
-    <include  file="add_table_bivariate_indicators.sql" relativeToChangelogFile="true"/>
+    <include  file="map_to_geometry_obj.sql" relativeToChangelogFile="true"/>
     <include  file="add_table_bivariate_unit.sql" relativeToChangelogFile="true"/>
     <include  file="add_table_bivariate_unit_localization.sql" relativeToChangelogFile="true"/>
     <include  file="add_table_bivariate_colors.sql" relativeToChangelogFile="true"/>
-    <include  file="add_table_bivariate_overlays.sql" relativeToChangelogFile="true"/>
-    <include  file="add_table_bivariate_axis_v2.sql" relativeToChangelogFile="true"/>
-    <include  file="add_table_bivariate_axis_correlation_v2.sql" relativeToChangelogFile="true"/>
-    <include  file="add_table_bivariate_axis_stats_v2.sql" relativeToChangelogFile="true"/>
-    <include  file="add_table_bivariate_axis_overrides.sql" relativeToChangelogFile="true"/>
-    <include  file="14855_add_table_shedlock.sql" relativeToChangelogFile="true"/>
-    <include  file="16269_use_uuid_as_foreign_key.sql" relativeToChangelogFile="true"/>
-    <include file="16981_update_bivariate_indicators_metadata_primary_key.sql" relativeToChangelogFile="true"/>
-    <include file="add-indicator-external-id.sql" relativeToChangelogFile="true"/>
-    <include file="add-indicator-internal-id.sql" relativeToChangelogFile="true"/>
-    <include file="add-task-queue-table.sql" relativeToChangelogFile="true"/>
-    <include file="rebuild_bivariate_axis_correlation_v2.sql" relativeToChangelogFile="true"/>
-    <include file="add_constraints_bivariate_axis_v2.sql" relativeToChangelogFile="true"/>
-    <include file="create_bivariate_overlays_v2.sql" relativeToChangelogFile="true"/>
-    <include file="18054_add_field_to_store_emoji_in_bivariate_indicators_metadata_table.sql" relativeToChangelogFile="true"/>
-    <include file="create_llm_cache_table.sql" relativeToChangelogFile="true"/>
-    <include file="create_nominatim_cache_table.sql" relativeToChangelogFile="true"/>
-    <include file="create_search_history_table.sql" relativeToChangelogFile="true"/>
-    <include file="add_mean_stddev_all_res_to_bivariate_axis_v2.sql" relativeToChangelogFile="true"/>
-    <include file="add_upload_id_to_bivariate_indicators_metadata.sql" relativeToChangelogFile="true"/>
-    <include file="add_max_res_downscale_to_bivariate_indicators_metadata.sql" relativeToChangelogFile="true"/>
-    <include file="add_hash_to_bivariate_indicators_metadata.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>
