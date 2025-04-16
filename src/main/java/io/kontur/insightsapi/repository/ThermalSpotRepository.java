@@ -29,6 +29,13 @@ public class ThermalSpotRepository implements ThermalSpotStatisticService {
             "forestAreaKm2", "sumX"
     );
 
+    private static final Map<String, String> paramIdMap = Map.of(
+            "industrialAreaKm2", "industrial_area",
+            "hotspotDaysPerYearMax", "wildfires",
+            "volcanoesCount", "volcanos_count",
+            "forestAreaKm2", "forest"
+    );
+
     private final Logger logger = LoggerFactory.getLogger(ThermalSpotRepository.class);
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -39,7 +46,7 @@ public class ThermalSpotRepository implements ThermalSpotStatisticService {
     public ThermalSpotStatistic calculateThermalSpotStatistic(String geojson, List<String> fieldList) {
         var paramSource = new MapSqlParameterSource("polygon", geojson);
         List<FunctionArgs> args = fieldList.stream()
-            .map(f -> new FunctionArgs(f, funcMap.get(f), f, null))
+            .map(f -> new FunctionArgs(f, funcMap.get(f), paramIdMap.get(f), null))
             .collect(Collectors.toList());
         String query = functionsRepository.getFunctionsQuery(args);
         try {
