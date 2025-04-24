@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.wololo.geojson.GeoJSONFactory;
 
 import java.sql.ResultSet;
 import java.time.OffsetDateTime;
@@ -60,6 +61,12 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
         bivariateIndicatorDto.setEmoji(resultSet.getString(BivariateIndicatorsColumns.emoji.name()));
         bivariateIndicatorDto.setDownscale(resultSet.getString(BivariateIndicatorsColumns.downscale.name()));
         bivariateIndicatorDto.setHash(resultSet.getString(BivariateIndicatorsColumns.hash.name()));
+        String coveragePolygon = resultSet.getString(BivariateIndicatorsColumns.coverage_polygon.name());
+        if (coveragePolygon != null) {
+            bivariateIndicatorDto.setCoveragePolygon(GeoJSONFactory.create(coveragePolygon));
+        } else {
+            bivariateIndicatorDto.setCoveragePolygon(null);
+        }
         bivariateIndicatorDto.setLastUpdated(resultSet.getObject(BivariateIndicatorsColumns.last_updated.name(),
                 OffsetDateTime.class));
         return bivariateIndicatorDto;
@@ -68,6 +75,6 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
     private enum BivariateIndicatorsColumns {
         param_id, param_label, copyrights, direction, is_base, external_id, internal_id, owner, state, is_public,
         allowed_users, date, description, coverage, update_frequency, application, unit_id, emoji, last_updated,
-        downscale, hash
+        downscale, hash, coverage_polygon 
     }
 }

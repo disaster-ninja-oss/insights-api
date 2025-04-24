@@ -12,4 +12,5 @@
     <include  file="add_table_bivariate_unit.sql" relativeToChangelogFile="true"/>
     <include  file="add_table_bivariate_unit_localization.sql" relativeToChangelogFile="true"/>
     <include  file="add_table_bivariate_colors.sql" relativeToChangelogFile="true"/>
+    <include  file="add_column_coverage_polygon.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.wololo.geojson.GeoJSON;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -86,6 +87,9 @@ public class BivariateIndicatorDto {
 
     @JsonProperty(value = "hash")
     private String hash;
+
+    @JsonProperty(value = "coveragePolygon")
+    private GeoJSON coveragePolygon;
 
     @JsonIgnore
     private String uploadId;

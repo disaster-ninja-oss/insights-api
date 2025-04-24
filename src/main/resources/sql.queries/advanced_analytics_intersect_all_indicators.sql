@@ -6,7 +6,7 @@ with validated_input as (select ST_MakeValid(ST_SimplifyVW((:polygon)::geometry,
              from boxinput bi
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution <= :max_resolution)),
-     ids as materialized (select internal_id from bivariate_indicators_metadata where state = 'READY' and is_public),
+     ids as materialized (select distinct on (param_id) internal_id from bivariate_indicators_metadata where state = 'READY' and is_public order by param_id, date desc),
      res as (select st.h3, st.indicator_uuid, st.indicator_value
              from stat_h3_transposed st
              join hexes h on (h.h3 = st.h3)
