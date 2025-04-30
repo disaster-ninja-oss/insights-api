@@ -22,11 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
@@ -68,35 +68,29 @@ public class FunctionsRepository implements FunctionsService {
         List<String> params = args.stream()
                 .map(this::createFunctionsForSelect)
                 .toList();
-        List<String> paramIds = new ArrayList<>();
-        for (FunctionArgs arg : args) {
-            if (!paramIds.contains(arg.getX())) {
-                paramIds.add(arg.getX());
-            }
-            if (arg.getY() != null && !paramIds.contains(arg.getY())) {
-                paramIds.add(arg.getY());
-            }
-        }
-        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(paramIds)
-            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
-        List<String> columns = new ArrayList<>();
-        List<String> uuids = new ArrayList<>();
-        List<String> fromRes = new ArrayList<>();
-        for (int i = 0; i < paramIds.size(); i++) {
-            var uuid = indicators.get(paramIds.get(i));
-            if (uuid != null) {
-                uuids.add("'" + uuid + "'");
-                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
-                            uuid, paramIds.get(i)));
-            } else {
-                columns.add(String.format("null::float as %s", paramIds.get(i)));
-            }
-        }
-        var query = String.format(queryFactory.getSql(functionIntersectV2),
-                StringUtils.join(columns, ", "),
-                StringUtils.join(uuids, ", "),
-                StringUtils.join(params, ", "));
-        return query;
+
+        List<String> paramIds = args.stream()
+                .flatMap(arg -> Stream.of(arg.getX(), arg.getY()))
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getSelectedBivariateIndicators(paramIds);
+        // TODO: move to indicatorRepository.getSelectedBivariateIndicators?
+        List<String> existingIndicatorIds = bivariateIndicatorDtos.stream()
+                .map(i -> i.getId())
+                .toList();
+        
+        paramIds.stream()
+                .filter(p -> !existingIndicatorIds.contains(p))
+                .findFirst()
+                .ifPresent(p -> {
+                    logger.warn("No such indicator: " + p);
+                    throw new EmptyResultDataAccessException("No such indicator: " + p, 1);
+                });
+       
+        String CTE = DatabaseUtil.buildCTE("8", bivariateIndicatorDtos, "");
+        return String.format(queryFactory.getSql(functionIntersectV2), CTE, StringUtils.join(params, ", "));
     }
 
     private String createFunctionsForSelect(FunctionArgs functionArgs) {

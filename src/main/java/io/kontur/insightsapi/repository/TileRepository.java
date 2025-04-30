@@ -1,6 +1,5 @@
 package io.kontur.insightsapi.repository;
 
-import com.google.common.collect.Lists;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -109,20 +108,8 @@ public class TileRepository {
         List<BivariateIndicatorDto> bivariateIndicatorDtos =
                 indicatorRepository.getSelectedBivariateIndicators(bivariateIndicators);
 
-        List<String> columns = Lists.newArrayList();
-        List<String> uuids = Lists.newArrayList();
-
-        for (BivariateIndicatorDto indicator : bivariateIndicatorDtos) {
-            if (indicator.getId().equals("one")) {
-                columns.add("1.0::float as \"one\"");
-            } else if (indicator.getId().equals("area_km2")) {
-                columns.add("ST_Area(h3_cell_to_boundary_geography(h3)) / 1000000.0 as \"area_km2\"");
-            } else {
-                uuids.add("'" + indicator.getInternalId() + "'");
-                columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
-                        indicator.getInternalId(), indicator.getId()));
-            }
-        }
+        List<String> columns = DatabaseUtil.getColumns(bivariateIndicatorDtos);
+        List<String> uuids = DatabaseUtil.getUUIDs(bivariateIndicatorDtos);
 
         return resolution > 8 ?
             String.format(queryFactory.getSql(getTileMvtGenerateHighRes), StringUtils.join(uuids, ", "), StringUtils.join(uuids, ", "), StringUtils.join(columns, ", ")) :

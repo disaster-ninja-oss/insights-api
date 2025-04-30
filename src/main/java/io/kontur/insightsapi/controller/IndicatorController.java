@@ -3,7 +3,6 @@ package io.kontur.insightsapi.controller;
 import io.kontur.insightsapi.dto.BivariateIndicatorDto;
 import io.kontur.insightsapi.service.AxisService;
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
-import io.kontur.insightsapi.dto.PresetDto;
 import io.kontur.insightsapi.service.IndicatorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

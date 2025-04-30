@@ -1,7 +1,6 @@
 package io.kontur.insightsapi.service;
 
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
-import io.kontur.insightsapi.dto.PresetDto;
 import io.kontur.insightsapi.repository.AxisRepository;
 import io.kontur.insightsapi.service.auth.AuthService;
 import lombok.AllArgsConstructor;

@@ -2,20 +2,7 @@ with
      validated_input as (select (:polygon)::geometry as geom),
      boxinput as (select ST_Envelope(v.geom) as bbox from validated_input as v),
      subdivision as (select ST_Subdivide(v.geom) geom from validated_input v),
-     hexes as (select distinct sh.h3
-             from
-                stat_h3_geom sh,
-                subdivision sb
-             where
-                sh.resolution = 8
-                and sh.geom && (select bbox from boxinput)
-                and ST_Intersects(sh.geom, sb.geom)
-     ),
-     res as (select %s
-            from stat_h3_transposed st
-            join hexes sg on (sg.h3 = st.h3)
-            where indicator_uuid in (%s)
-                    group by sg.h3
-                )
+     -- hexes, indicators_as_columns CTE:
+     %s
 select %s
-from res st;
+from indicators_as_columns

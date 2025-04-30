@@ -1,7 +1,6 @@
 package io.kontur.insightsapi.repository;
 
 import io.kontur.insightsapi.dto.AxisOverridesRequest;
-import io.kontur.insightsapi.dto.PresetDto;
 import io.kontur.insightsapi.mapper.AxisRowMapper;
 import io.kontur.insightsapi.mapper.TransformationRowMapper;
 import io.kontur.insightsapi.model.Axis;
