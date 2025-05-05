@@ -1,17 +1,3 @@
-with hexes as (select sg.geom, sg.h3
-                     from stat_h3_geom sg
-                     where sg.geom && ST_TileEnvelope(:z, :x, :y)
-                       and sg.resolution = :resolution
-                ),
-    res as (select sg.geom, sg.h3, st.indicator_uuid, st.indicator_value
-            from stat_h3_transposed st
-            join hexes sg on (sg.h3 = st.h3)
-            where indicator_uuid in (%s)
-                )
+with %s
 select ST_AsMVT(q, 'stats', 8192, 'geom', 'h3ind') as tile
-from (select
-                  %s,
-                  ST_AsMVTGeom(geom, ST_TileEnvelope(:z, :x, :y), 8192, 64, true) as geom,
-                  h3index_to_bigint(h3) as h3ind
-      from res
-      group by geom, h3) q;
+from indicators_as_columns q;

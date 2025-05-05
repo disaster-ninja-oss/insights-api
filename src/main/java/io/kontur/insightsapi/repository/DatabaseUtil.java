@@ -73,10 +73,20 @@ public class DatabaseUtil {
     public static String buildCTE(
             String resolution,
             List<BivariateIndicatorDto> bivariateIndicatorDtos,
-            String additionalColumns) {
+            String additionalColumns,
+            Boolean isTile) {
         List<String> columns = DatabaseUtil.getColumns(bivariateIndicatorDtos);
         List<String> uuids = DatabaseUtil.getUUIDs(bivariateIndicatorDtos);
-        String sqlTemplate = """
+        String hexes = isTile ? """
+                hexes as (
+                    select
+                        sh.geom, sh.h3
+                    from stat_h3_geom sh
+                    where
+                        sh.geom && ST_TileEnvelope(:z, :x, :y)
+                        and sh.resolution = %s
+                ),
+        """ : """
                 hexes as materialized (
                     select
                         distinct sh.h3
@@ -86,9 +96,13 @@ public class DatabaseUtil {
                         and sh.geom && (select bbox from boxinput)
                         and ST_Intersects(sh.geom, sb.geom)
                 ),
+        """;
+        String sqlTemplate = hexes + """
                 res as (
                     select
                         h3, indicator_uuid, indicator_value
+                        -- additional cols from hexes, like geom, if needed:
+                        %s
                     from hexes
                     join stat_h3_transposed st using(h3)
                     where indicator_uuid in (
@@ -103,12 +117,11 @@ public class DatabaseUtil {
                         -- additionalColumns
                         %s
                     from res
-                    group by h3
-                )
-        """;
+                    group by""" + (isTile ? " geom, " : "") + " h3)";
         return String.format(
                 sqlTemplate,
                 resolution,
+                isTile ? ", geom" : "",
                 StringUtils.join(uuids, ", "),
                 StringUtils.join(columns, ", "),
                 additionalColumns

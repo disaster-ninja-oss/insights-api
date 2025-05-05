@@ -73,7 +73,7 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var queryString = queryFactory.getSql(calculatePopulationAndAGdpV2);
         List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "gdp", "residential"));
-        String CTE = DatabaseUtil.buildCTE("8", bivariateIndicatorDtos, "");
+        String CTE = DatabaseUtil.buildCTE("8", bivariateIndicatorDtos, "", false);
         try {
             return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(
                             String.format(
@@ -117,7 +117,7 @@ public class PopulationRepository {
         var transformedGeometry = helper.transformGeometryToWkt(geometry);
         paramSource.addValue("transformed_geometry", transformedGeometry);
         List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "populated_area_km2"));
-        String CTE = DatabaseUtil.buildCTE("(select resolution from resolution)", bivariateIndicatorDtos, ", h3_cell_to_boundary_geometry(h3) as geom");
+        String CTE = DatabaseUtil.buildCTE("(select resolution from resolution)", bivariateIndicatorDtos, ", h3_cell_to_boundary_geometry(h3) as geom", false);
         try {
             return namedParameterJdbcTemplate.query(
                         String.format(
@@ -185,7 +185,7 @@ public class PopulationRepository {
         Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population"))
             .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
         List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population"));
-        String CTE = DatabaseUtil.buildCTE("(select resolution from resolution)", bivariateIndicatorDtos, ", h3_cell_area(h3, 'km^2') as area_km2");
+        String CTE = DatabaseUtil.buildCTE("(select resolution from resolution)", bivariateIndicatorDtos, ", h3_cell_area(h3, 'km^2') as area_km2", false);
         try {
             return namedParameterJdbcTemplate.queryForObject(
                     String.format(queryFactory.getSql(populationUrbanCoreV2), CTE), paramSource, (rs, rowNum) ->

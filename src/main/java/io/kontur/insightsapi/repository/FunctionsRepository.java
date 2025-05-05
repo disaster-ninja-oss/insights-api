@@ -89,7 +89,7 @@ public class FunctionsRepository implements FunctionsService {
                     throw new EmptyResultDataAccessException("No such indicator: " + p, 1);
                 });
        
-        String CTE = DatabaseUtil.buildCTE("8", bivariateIndicatorDtos, "");
+        String CTE = DatabaseUtil.buildCTE("8", bivariateIndicatorDtos, "", false);
         return String.format(queryFactory.getSql(functionIntersectV2), CTE, StringUtils.join(params, ", "));
     }
 
