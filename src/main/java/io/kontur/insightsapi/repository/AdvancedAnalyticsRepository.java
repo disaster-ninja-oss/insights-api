@@ -242,7 +242,9 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         paramSource.addValue("max_resolution", maxResolution);
 
         List<String> uuids = DatabaseUtil.getUUIDs(indicators);
-        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectAllIndicators), StringUtils.join(uuids, ", "));
+        String query = String.format(
+                queryFactory.getSql(advancedAnalyticsIntersectAllIndicators),
+                "(" + StringUtils.join(uuids, "), (") + ")");
 
         List<AdvancedAnalytics> result = new ArrayList<>();
 

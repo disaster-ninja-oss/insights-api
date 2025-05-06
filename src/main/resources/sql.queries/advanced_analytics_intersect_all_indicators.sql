@@ -6,10 +6,11 @@ with validated_input as (select ST_MakeValid(ST_SimplifyVW((:polygon)::geometry,
              from boxinput bi
                       cross join subdivision sb
                       join stat_h3_geom sh on (sh.geom && bi.bbox and st_intersects(sh.geom, sb.geom) and sh.resolution <= :max_resolution)),
+     ids(internal_id) as materialized (values %s),
      res as (select st.h3, st.indicator_uuid, st.indicator_value
              from stat_h3_transposed st
              join hexes h on (h.h3 = st.h3)
-             where indicator_uuid in (%s)),
+             where indicator_uuid in (select internal_id::uuid from ids)),
      normalized_indicators as (select a.indicator_uuid                        as numerator_uuid,
                                       b.indicator_uuid                        as denominator_uuid,
                                       (a.indicator_value / b.indicator_value) as normalized_value,
