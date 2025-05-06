@@ -241,7 +241,8 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         paramSource.addValue("polygon", argGeometry);
         paramSource.addValue("max_resolution", maxResolution);
 
-        String query = queryFactory.getSql(advancedAnalyticsIntersectAllIndicators);
+        List<String> uuids = DatabaseUtil.getUUIDs(indicators);
+        String query = String.format(queryFactory.getSql(advancedAnalyticsIntersectAllIndicators), StringUtils.join(uuids, ", "));
 
         List<AdvancedAnalytics> result = new ArrayList<>();
 
