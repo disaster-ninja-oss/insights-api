@@ -216,7 +216,7 @@ public class IndicatorRepository {
 
     public String getIndicatorIdByUploadId(String owner, String uploadId) {
         try {
-            return jdbcTemplate.queryForObject(
+            return jdbcTemplateRW.queryForObject(
                 "SELECT external_id || '/' || state FROM bivariate_indicators_metadata WHERE owner = ? AND upload_id = ?::uuid",
                 String.class, owner, uploadId);
         } catch (EmptyResultDataAccessException e) {

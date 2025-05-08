@@ -72,16 +72,12 @@ public class PopulationRepository {
     public Map<String, CalculatePopulationDto> getPopulationAndGdp(String geometry) {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var queryString = queryFactory.getSql(calculatePopulationAndAGdpV2);
-        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "gdp", "residential"))
-            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
+        List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "gdp", "residential"));
+        String CTE = DatabaseUtil.buildCTE("8", bivariateIndicatorDtos, "", false);
         try {
             return Map.of("population", Objects.requireNonNull(namedParameterJdbcTemplate.queryForObject(
                             String.format(
-                                queryString, 
-                                indicators.values().stream().map(value -> "'" + value + "'").collect(Collectors.joining(", ")),
-                                indicators.get("population"),
-                                indicators.get("gdp"),
-                                indicators.get("residential")), paramSource, (rs, rowNum) ->
+                                queryString, CTE), paramSource, (rs, rowNum) ->
                     CalculatePopulationDto.builder()
                             .population(rs.getBigDecimal("population"))
                             .gdp(rs.getBigDecimal("gdp"))
@@ -120,15 +116,13 @@ public class PopulationRepository {
         var paramSource = new MapSqlParameterSource("geometry", geometry);
         var transformedGeometry = helper.transformGeometryToWkt(geometry);
         paramSource.addValue("transformed_geometry", transformedGeometry);
-        Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "populated_area_km2"))
-            .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
+        List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population", "populated_area_km2"));
+        String CTE = DatabaseUtil.buildCTE("(select resolution from resolution)", bivariateIndicatorDtos, ", h3_cell_to_boundary_geometry(h3) as geom", false);
         try {
             return namedParameterJdbcTemplate.query(
                         String.format(
-                            queryFactory.getSql(populationHumanitarianImpactV2),
-                            indicators.values().stream().map(value -> "'" + value + "'").collect(Collectors.joining(", ")),
-                            indicators.get("population"),
-                            indicators.get("populated_area_km2")), paramSource, (rs, rowNum) ->
+                            queryFactory.getSql(populationHumanitarianImpactV2), CTE),
+                        paramSource, (rs, rowNum) ->
                     HumanitarianImpactDto.builder()
                             .areaKm2(rs.getBigDecimal("areaKm2"))
                             .population(rs.getBigDecimal("population"))
@@ -190,9 +184,11 @@ public class PopulationRepository {
         paramSource.addValue("transformed_polygon", transformedGeometry);
         Map<String, String> indicators = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population"))
             .stream().collect(Collectors.toMap(BivariateIndicatorDto::getId, BivariateIndicatorDto::getInternalId));
+        List<BivariateIndicatorDto> bivariateIndicatorDtos = indicatorRepository.getSelectedBivariateIndicators(Arrays.asList("population"));
+        String CTE = DatabaseUtil.buildCTE("(select resolution from resolution)", bivariateIndicatorDtos, ", h3_cell_area(h3, 'km^2') as area_km2", false);
         try {
             return namedParameterJdbcTemplate.queryForObject(
-                    String.format(queryFactory.getSql(populationUrbanCoreV2), indicators.get("population")), paramSource, (rs, rowNum) ->
+                    String.format(queryFactory.getSql(populationUrbanCoreV2), CTE), paramSource, (rs, rowNum) ->
                     UrbanCore.builder()
                             .urbanCorePopulation(rs.getBigDecimal("urbanCorePopulation"))
                             .urbanCoreAreaKm2(rs.getBigDecimal("urbanCoreAreaKm2"))

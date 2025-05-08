@@ -1,5 +1,4 @@
-with pairs as (select *
-               from (values %s) as q (nominator, denominator)),
+with pairs(nominator, denominator) as (values %s),
      validated_input
          as (select (:polygon)::geometry as geom),
      boxinput as (select st_envelope(v.geom) as bbox from validated_input as v),
