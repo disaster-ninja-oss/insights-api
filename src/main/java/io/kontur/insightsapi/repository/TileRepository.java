@@ -69,12 +69,15 @@ public class TileRepository {
         jdbcTemplate.execute("set max_parallel_workers_per_gather = 0");
         // with outdated stats tiles tend to be generated using hash join, which is slow and large
         jdbcTemplate.execute("set enable_hashjoin = 'off'");
+        // seq scan appears cheaper for small partitions, but becomes too slow when run in many loops
+        jdbcTemplate.execute("set enable_seqscan = 'off'");
         // gateway timeout is 60s. tile generation may unexpectedly hang (#21156), we stop the query after a minute to reduce the overall CPU load
         jdbcTemplate.execute("set statement_timeout = '61s'");
         byte[] tile = namedParameterJdbcTemplate.queryForObject(query, paramSource,
                 (rs, rowNum) -> rs.getBytes("tile"));
         jdbcTemplate.execute("reset max_parallel_workers_per_gather");
         jdbcTemplate.execute("reset enable_hashjoin");
+        jdbcTemplate.execute("reset enable_seqscan");
         jdbcTemplate.execute("reset statement_timeout");
         return tile;
     }
