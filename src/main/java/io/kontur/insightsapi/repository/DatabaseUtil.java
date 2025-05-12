@@ -52,6 +52,8 @@ public class DatabaseUtil {
         for (BivariateIndicatorDto indicator : indicators) {
             uuids.add("'" + indicator.getInternalId() + "'");
         }
+        // for better SQL performance, sort uuids:
+        uuids.sort(String::compareTo);
         return uuids;
     }
 
