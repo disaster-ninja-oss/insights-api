@@ -244,7 +244,7 @@ public class AdvancedAnalyticsRepository implements AdvancedAnalyticsService {
         List<String> uuids = DatabaseUtil.getUUIDs(indicators);
         String query = String.format(
                 queryFactory.getSql(advancedAnalyticsIntersectAllIndicators),
-                "(" + StringUtils.join(uuids, "), (") + ")");
+                StringUtils.join(uuids, ","));
 
         List<AdvancedAnalytics> result = new ArrayList<>();
 

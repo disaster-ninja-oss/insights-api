@@ -121,7 +121,7 @@ public class TileRepository {
                     DatabaseUtil.buildCTE(
                         resolution.toString(),
                         bivariateIndicatorDtos, """
-                            ,ST_AsMVTGeom(geom, ST_TileEnvelope(:z, :x, :y), 8192, 64, true) as geom
+                            ,ST_AsMVTGeom(st_transform(h3_cell_to_boundary_geometry(h3), 3857), ST_TileEnvelope(:z, :x, :y), 8192, 64, true) as geom
                             ,h3index_to_bigint(h3) as h3ind""",
                         true));
 

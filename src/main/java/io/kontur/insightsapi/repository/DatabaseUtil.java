@@ -62,8 +62,6 @@ public class DatabaseUtil {
         for (BivariateIndicatorDto indicator : indicators) {
             if (indicator.getId().equals("one")) {
                 columns.add("1.0::float as \"one\"");
-            } else if (indicator.getId().equals("area_km2")) {
-                columns.add("ST_Area(h3_cell_to_boundary_geography(h3)) / 1000000.0 as \"area_km2\"");
             } else {
                 columns.add(String.format("coalesce(avg(indicator_value) filter (where indicator_uuid = '%s'), 0) as \"%s\"",
                         indicator.getInternalId(), indicator.getId()));
@@ -82,7 +80,7 @@ public class DatabaseUtil {
         String hexes = isTile ? """
                 hexes as (
                     select
-                        sh.geom, sh.h3
+                        sh.h3
                     from stat_h3_geom sh
                     where
                         sh.geom && ST_TileEnvelope(:z, :x, :y)
@@ -100,16 +98,18 @@ public class DatabaseUtil {
                 ),
         """;
         String sqlTemplate = hexes + """
+                h3_list(arr) as (
+                    select array_agg(h3 order by h3) from hexes
+                ),
                 res as (
                     select
                         h3, indicator_uuid, indicator_value
-                        -- additional cols from hexes, like geom, if needed:
-                        %s
-                    from hexes
-                    join stat_h3_transposed st using(h3)
-                    where indicator_uuid in (
-                        -- list of required indicator uuids for this query:
-                        %s
+                    from stat_h3_transposed
+                    where
+                        h3 = any((select arr from h3_list limit 1)::h3index[])
+                        and indicator_uuid in (
+                            -- list of required indicator uuids for this query:
+                            %s
                 )),
                 indicators_as_columns as (
                     select
@@ -119,11 +119,11 @@ public class DatabaseUtil {
                         -- additionalColumns
                         %s
                     from res
-                    group by""" + (isTile ? " geom, " : "") + " h3)";
+                    group by h3)
+        """;
         return String.format(
                 sqlTemplate,
                 resolution,
-                isTile ? ", geom" : "",
                 StringUtils.join(uuids, ", "),
                 StringUtils.join(columns, ", "),
                 additionalColumns
