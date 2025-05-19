@@ -25,8 +25,7 @@ from (select a.h3,
     bivariate_indicators_metadata bi_b,
     bivariate_indicators_metadata bi_c,
     bivariate_indicators_metadata bi_d,
-    bivariate_indicators_metadata bi_e,
-    bivariate_indicators_metadata bi_f  -- TODO: not used?
+    bivariate_indicators_metadata bi_e
     where
     a.h3 = b.h3 and a.h3= c.h3 and a.h3=d.h3 and a.h3=e.h3 and a.indicator_uuid = bi_a.internal_id
     and b.indicator_uuid = bi_b.internal_id
