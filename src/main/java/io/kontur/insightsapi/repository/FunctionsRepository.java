@@ -105,7 +105,7 @@ public class FunctionsRepository implements FunctionsService {
                     validX + ") filter (where " + validX + " != 0 and " + validX + " is not null)) * 100 as result" + validId;
             case "maxX" -> "max(" + validX + ") as result" + validId;
             case "minX" -> "min(" + validX + ") as result" + validId;
-            case "avgX" -> "avg(" + validX + ") as result" + validId;
+            case "avgX" -> "(avg(" + validX + ") filter (where " + validX + " != 0 and " + validX + " is not null)) as result" + validId;
             case "countX" -> "count(" + validX + ") as result" + validId;
             default -> null;
         };
