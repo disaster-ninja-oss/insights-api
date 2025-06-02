@@ -71,7 +71,13 @@ public class IndicatorService {
                                     "Indicator with uuid " + indicatorMetadata.getExternalId() + " not found");
                         }
                     } else {
-                        indicatorMetadata.setExternalId(randomUUID().toString());
+                        String existingId = indicatorRepository.getExternalIdByOwnerAndParamId(
+                                indicatorMetadata.getOwner(), indicatorMetadata.getId());
+                        if (existingId != null) {
+                            indicatorMetadata.setExternalId(existingId);
+                        } else {
+                            indicatorMetadata.setExternalId(randomUUID().toString());
+                        }
                     }
                     itemIndex++;
                 } else if (!item.isFormField() && "file".equals(item.getFieldName()) && itemIndex == 1) {

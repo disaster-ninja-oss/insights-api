@@ -294,6 +294,16 @@ public class IndicatorRepository {
         }
     }
 
+    public String getExternalIdByOwnerAndParamId(String owner, String paramId) {
+        try {
+            return jdbcTemplateRW.queryForObject(
+                    "SELECT external_id FROM bivariate_indicators_metadata WHERE owner = ? AND param_id = ? ORDER BY date DESC LIMIT 1",
+                    String.class, owner, paramId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
     // TODO: possibly will be added something about owner field here
     @Transactional(readOnly = true)
     public List<BivariateIndicatorDto> getAllBivariateIndicators() {
