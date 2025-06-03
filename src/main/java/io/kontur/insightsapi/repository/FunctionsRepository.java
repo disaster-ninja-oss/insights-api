@@ -65,9 +65,17 @@ public class FunctionsRepository implements FunctionsService {
     }
 
     public String getFunctionsQuery(List<FunctionArgs> args) {
+        // Build list of SQL expressions for requested functions. Unsupported
+        // functions are filtered out to avoid malformed SQL with dangling commas.
         List<String> params = args.stream()
                 .map(this::createFunctionsForSelect)
+                .filter(Objects::nonNull)
                 .toList();
+
+        if (params.isEmpty()) {
+            logger.error("No valid functions provided for query");
+            throw new IllegalArgumentException("Empty functions list");
+        }
 
         List<String> paramIds = args.stream()
                 .flatMap(arg -> Stream.of(arg.getX(), arg.getY()))
@@ -107,7 +115,10 @@ public class FunctionsRepository implements FunctionsService {
             case "minX" -> "min(" + validX + ") as result" + validId;
             case "avgX" -> "(avg(" + validX + ") filter (where " + validX + " != 0 and " + validX + " is not null)) as result" + validId;
             case "countX" -> "count(" + validX + ") as result" + validId;
-            default -> null;
+            default -> {
+                logger.warn("Unsupported function name: {}", functionArgs.getName());
+                yield null;
+            }
         };
     }
 
