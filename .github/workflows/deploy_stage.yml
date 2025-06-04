@@ -122,7 +122,7 @@ jobs:
       - name: Checkout CD repository
         uses: actions/checkout@v4
         with:
-          repository: konturio/insights-api-cd
+          repository: konturio/disaster-ninja-cd
           token: ${{ secrets.CD_GITHUB_TOKEN }}
           path: cd
 
