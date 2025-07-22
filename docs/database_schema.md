@@ -39,6 +39,9 @@ Metadata for uploaded indicators.
 - `owner`, `state`, `is_public`, `allowed_users` and other attributes
 - `unit_id` – reference to `bivariate_unit`
 - `coverage_polygon` (added in later changelog)
+- `layer_spatial_res` – spatial resolution of the original data layer
+- `layer_temporal_ext` – temporal extent of the original data layer
+- `category` – list of categories describing the layer
 
 ## bivariate_unit / bivariate_unit_localization
 Contains information about measurement units and their localized names.

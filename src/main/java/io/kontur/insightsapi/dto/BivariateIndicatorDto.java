@@ -88,6 +88,15 @@ public class BivariateIndicatorDto {
     @JsonProperty(value = "hash")
     private String hash;
 
+    @JsonProperty(value = "layerSpatialRes")
+    private String layerSpatialRes;
+
+    @JsonProperty(value = "layerTemporalExt")
+    private String layerTemporalExt;
+
+    @JsonProperty(value = "category")
+    private List<String> category;
+
     @JsonProperty(value = "coveragePolygon")
     private GeoJSON coveragePolygon;
 

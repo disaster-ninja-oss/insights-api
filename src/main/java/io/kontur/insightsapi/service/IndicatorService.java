@@ -187,8 +187,8 @@ public class IndicatorService {
         }
         return switch (fieldName) {
             case "isPublic", "isBase" -> String.format("%s field supports only boolean values", fieldName);
-            case "id", "label" -> String.format("%s field supports only string values", fieldName);
-            case "copyrights", "allowedUsers" ->
+            case "id", "label", "layerSpatialRes", "layerTemporalExt" -> String.format("%s field supports only string values", fieldName);
+            case "copyrights", "allowedUsers", "category" ->
                     String.format("Incorrect type of %s field, array expected.", fieldName);
             case "direction" -> String.format("Incorrect type of %s field, array of arrays expected.", fieldName);
             default -> String.format("Incorrect type of %s field", fieldName);

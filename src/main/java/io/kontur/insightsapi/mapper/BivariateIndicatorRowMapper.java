@@ -61,6 +61,12 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
         bivariateIndicatorDto.setEmoji(resultSet.getString(BivariateIndicatorsColumns.emoji.name()));
         bivariateIndicatorDto.setDownscale(resultSet.getString(BivariateIndicatorsColumns.downscale.name()));
         bivariateIndicatorDto.setHash(resultSet.getString(BivariateIndicatorsColumns.hash.name()));
+        bivariateIndicatorDto.setLayerSpatialRes(resultSet.getString(BivariateIndicatorsColumns.layer_spatial_res.name()));
+        bivariateIndicatorDto.setLayerTemporalExt(resultSet.getString(BivariateIndicatorsColumns.layer_temporal_ext.name()));
+        bivariateIndicatorDto.setCategory(resultSet.getString(BivariateIndicatorsColumns.category.name()) == null
+                ? null : objectMapper.readValue(resultSet.getString(BivariateIndicatorsColumns.category.name()),
+                new TypeReference<>() {
+                }));
         String coveragePolygon = resultSet.getString(BivariateIndicatorsColumns.coverage_polygon.name());
         if (coveragePolygon != null) {
             bivariateIndicatorDto.setCoveragePolygon(GeoJSONFactory.create(coveragePolygon));
@@ -75,6 +81,6 @@ public class BivariateIndicatorRowMapper implements RowMapper<BivariateIndicator
     private enum BivariateIndicatorsColumns {
         param_id, param_label, copyrights, direction, is_base, external_id, internal_id, owner, state, is_public,
         allowed_users, date, description, coverage, update_frequency, application, unit_id, emoji, last_updated,
-        downscale, hash, coverage_polygon 
+        downscale, hash, layer_spatial_res, layer_temporal_ext, category, coverage_polygon
     }
 }
