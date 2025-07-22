@@ -8,5 +8,8 @@ type Indicator {
     description: String,
     coverage: String,
     updateFrequency: String,
+    layerSpatialRes: String,
+    layerTemporalExt: String,
+    category: [String],
     unit: Unit
 }

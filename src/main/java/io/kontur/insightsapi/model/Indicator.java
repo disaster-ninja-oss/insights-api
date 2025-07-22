@@ -23,6 +23,12 @@ public class Indicator {
 
     private String updateFrequency;
 
+    private String layerSpatialRes;
+
+    private String layerTemporalExt;
+
+    private List<String> category;
+
     private Unit unit;
 
     private String emoji;
@@ -49,5 +55,35 @@ public class Indicator {
     @SuppressWarnings("unused")
     public void setUpdate_frequency(String updateFrequency) {
         this.updateFrequency = updateFrequency;
+    }
+
+    @SuppressWarnings("unused")
+    public String getLayer_spatial_res() {
+        return layerSpatialRes;
+    }
+
+    @SuppressWarnings("unused")
+    public void setLayer_spatial_res(String layerSpatialRes) {
+        this.layerSpatialRes = layerSpatialRes;
+    }
+
+    @SuppressWarnings("unused")
+    public String getLayer_temporal_ext() {
+        return layerTemporalExt;
+    }
+
+    @SuppressWarnings("unused")
+    public void setLayer_temporal_ext(String layerTemporalExt) {
+        this.layerTemporalExt = layerTemporalExt;
+    }
+
+    @SuppressWarnings("unused")
+    public List<String> getCategory() {
+        return category;
+    }
+
+    @SuppressWarnings("unused")
+    public void setCategory(List<String> category) {
+        this.category = category;
     }
 }
