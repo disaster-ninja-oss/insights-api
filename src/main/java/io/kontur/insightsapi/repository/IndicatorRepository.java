@@ -209,6 +209,9 @@ public class IndicatorRepository {
                     max_res,
                     downscale,
                     hash,
+                    layer_spatial_res,
+                    layer_temporal_ext,
+                    category,
                     null coverage_polygon
                 FROM bivariate_indicators_metadata WHERE owner = ?""",
                 bivariateIndicatorRowMapper, owner);
@@ -279,6 +282,9 @@ public class IndicatorRepository {
                     max_res,
                     downscale,
                     hash,
+                    layer_spatial_res,
+                    layer_temporal_ext,
+                    category,
                     ST_AsGeoJSON(coverage_polygon) coverage_polygon
                 FROM bivariate_indicators_metadata WHERE owner = ? AND param_id = ?""",
                 bivariateIndicatorRowMapper, owner, paramId);
@@ -337,6 +343,9 @@ public class IndicatorRepository {
                     max_res,
                     downscale,
                     hash,
+                    layer_spatial_res,
+                    layer_temporal_ext,
+                    category,
                     null coverage_polygon
                 FROM bivariate_indicators_metadata WHERE %s is_public and state = 'READY' order by param_id, date desc""",
                         (indicatorIds == null ? "" : String.format("param_id in ('%s') and ", String.join("','", indicatorIds)))),
@@ -380,5 +389,8 @@ public class IndicatorRepository {
         ps.setString(17, bivariateIndicatorDto.getUploadId());
         ps.setString(18, bivariateIndicatorDto.getDownscale());
         ps.setString(19, bivariateIndicatorDto.getHash());
+        ps.setString(20, bivariateIndicatorDto.getLayerSpatialRes());
+        ps.setString(21, bivariateIndicatorDto.getLayerTemporalExt());
+        ps.setString(22, bivariateIndicatorDto.getCategory() == null ? null : objectMapper.writeValueAsString(bivariateIndicatorDto.getCategory()));
     }
 }
