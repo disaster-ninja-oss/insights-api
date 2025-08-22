@@ -1,0 +1,201 @@
+# Bivariate Manager
+
+This doc contains a general overview of the application, its features without technical details and its users. 
+
+For more details about the project Insights Engine, please see [[Tasks/project: Insights Engine #^131cd711-3bb4-11e9-9428-04d77e8d50cb/18207470-38bc-11ec-bd76-9dbe0bd3c740]] 
+
+|     |     |
+| --- | --- |
+| **Useful links to video** | ***If you don't have access to recording, please, just ask for access using google functionality*** 2021-06-24 - Express intro into bivariate <https://drive.google.com/file/d/1dcjV9lQRnxZ5wLEMZ2EUvlMcjX_2L93q/view>  2022-06-16 - Discussion about Sentiment color management <https://drive.google.com/file/d/1Rq4R7fZeUJs9FWRLTx0sg3NoAqc5Hash/view?usp=sharing> \[RU\]  |
+
+## **Overview**
+
+Bivariate manager is a tool for analyzing and finding new insights from a set of suggested layers.
+
+## Vocabulary
+* **Annex axis** - a vertical axis from axis matrix that could be controlled by person/user. Annex axis includes pair of indicators without base indicators. For, example user can map unmapped OSM buildings at a selected region. 
+* **Axis** - a pair of indicators where one is normalized by the other one (= divided by another one). For example, a number of people per square kilometer in a hexagon cell.
+* **Axis group** - set of axes with the same parent. Axis can have different parents by annex and base sides. 
+* **Base axis** - a horizontal axis from a matrix that couldn't be controlled. It guides how to interpret values in the annex axis.
+* **Base indicator** - indicator's value by which we can't influence. Base indicators are allowed to use them as axis denominator.
+* **Bivariate layer** - a two-dimensional layer is assembled from two axes.
+* **Denominator** (in axis) - a divisor indicator in axis.
+* **Indicator** - any value at a cell. For example, a number of people at hexagon cell. 
+* **Numerator** (in axis) - a dividend indicator in axis.
+* **Quality** - a metric to show how much the map tiles will be the same at the adjacent zoom after normalization by axis denominator. Axes having low quality aren't shown. For example, the date normalized by sq. km is a misunderstanding axis, its quality is low and it isn't chosen for analysis.
+* **Stops** (in axis legend) - several values that cut off some groups inside axis values. They divide everything into 3 intervals of 33 and 66 quantiles among cells of an indicator.
+* **Sentiment** - an attitude that can be assigned to a combination of an indicator and its value (low amount of population, high amount of OSM objects). Examples of sentiments: bad, good, important, etc.
+
+## **Layers**
+
+### Bivariate layer
+
+The heart of the bivariate manager is its bivariate layers. They allow you to see two things at once on a single map. For example, we see a bivariate layer represented *Total Buildings Estimate* and *OSM Buildings* axes at the map.
+
+![image.png](https://kontur.fibery.io/api/files/321fbac7-a006-4345-80bf-23c56f7a3f26#align=%3Aalignment%2Fblock-left&width=665&height=510 "")
+
+### Annex and base axes
+
+Our bivariate layers are combined with 2 axes: annex and base ones. Annex axis is a vertical axis from matrix, where the base axis is horizontal one from matrix. 
+
+The base axis is the full set of all available indicators in BM. Annex axis doesn't include **base indicators **(we will describe them in the part ***Base indicators*** below), so far we have a rectangle matrix with all axes.  
+
+### ![image.png](https://kontur.fibery.io/api/files/3cf277f7-9862-4eaa-aa43-37a5a3f72856#width=948&height=791 "")Legend for bivariate layer
+
+We choose a pair of axes from base and annex axes and get a single bivariate layer. The selected pair of axes is illustrated from all others in the separate legend. This legend is a colour matrix with labeled axes, ranged values at axes and a description of used indicators in axes under the matrix. Legend is situated in the left lower corner of the bivariate manager. We use the same legend for bivariate layers at [[Tasks/project: Disaster Ninja#^131cd711-3bb4-11e9-9428-04d77e8d50cb/e23db600-3e7d-11e9-83ef-692ac8203621]] .
+
+### Legend of axes
+
+Let's describe more legend. Every axis has its own label corresponding to the selected layer from annex and base axes and the range depended on the indicator value. Axis values are divided into 3 intervals of 33 and 66 quantiles. Here are 2 axes:
+* horizontal axis - selected pair of indicators from Base axis
+* vertical axis  - selected pair of indicators from Annex axis
+
+### ![image.png](https://kontur.fibery.io/api/files/2825847b-7f1f-408f-bf1a-ba5a48a74488#align=%3Aalignment%2Fblock-left&width=330&height=310 "")Colors in matrix
+
+We get an array of values from axes and arrange it in the color matrix. Every cell from the matrix shows an intersection of values from 2 axes. We color cells and get legend pallets from the corresponding properties of the axes. We talk about colors in the matrix in part below - ***Axis properties, Colours***.
+
+### Labels in matrix
+
+Every cell in the matrix is labeled. They should be the same as labels at Disaster Ninja's legend for bivariate layers.
+
+### ![Screen Shot 2021-04-14 at 21.54.59.png](https://kontur.fibery.io/api/files/ad1dad37-e214-4f8f-98fb-153a2eee68a7#align=%3Aalignment%2Fblock-left&width=337&height=207 "")Disaster Ninja presets
+
+![Screen Shot 2021-04-14 at 21.53.47.png](https://kontur.fibery.io/api/files/70889c36-edaf-49f7-b747-2b26e0a7cab5#align=%3Aalignment%2Fblock-left&width=342&height=454 "")We use some ready bivariate layers so-called **presets.** They are available below the legend. These layers are taken from Disaster Ninja. Every preset has a name used in the header of the legend.
+
+Here is a list of them (as an example, may be updated):
+* Kontur OpenStreetMap Quantity
+* Kontur OpenStreetMap Building Quantity
+* Kontur OpenStreetMap Road Length
+* Kontur OpenStreetMap Mapping Activity
+* Kontur OpenStreetMap Antiquity
+
+### Numerators and denominators
+
+Every layer is combined with a pair of numerator and denominator (2 indicators). For example, *OSM Buildings* indicator can create several layers with different denominators (*Area*, *Population*, *Total Buildings Estimate etc.*).
+
+### Base indicators
+
+We limit the number of available denominators into an annex axis opposite to base one. The difference between base and annex axes is a list of indicators that we use as denominators for all layers. They are called **base indicators**. 
+
+Here is a list of them:
+* Population (population)
+
+  ![image.png](https://kontur.fibery.io/api/files/e5ded69f-f620-4a2f-a71c-aeb83f4315c1#align=%3Aalignment%2Finline-left&width=45&height=35 "")
+* Populated area (populated_area_km2)
+
+  ![image.png](https://kontur.fibery.io/api/files/74b5b84f-834d-4808-9890-8aa607940734#align=%3Aalignment%2Finline-left&width=45&height=34 "")
+* Total Buildings Estimate (total_building_count)
+
+  ![image.png](https://kontur.fibery.io/api/files/05724d1d-f6f8-46fd-b554-dd13cf44638b#align=%3Aalignment%2Finline-left&width=44&height=33 "")
+* Area (area_km2) 
+
+  ![image.png](https://kontur.fibery.io/api/files/4b2311dc-bee0-4c55-9349-67c61249027a#align=%3Aalignment%2Finline-left&width=47&height=32 "")
+* One (one) 
+
+  ![image.png](https://kontur.fibery.io/api/files/7ca8a813-e765-4709-ab80-c509bd37e234#align=%3Aalignment%2Finline-left&width=45&height=31 "")
+* Total Roads length (total_road_length) 
+
+![image.png](https://kontur.fibery.io/api/files/121711c4-09b5-4e51-b51e-8bb57645d23a#align=%3Aalignment%2Fblock-left&width=34&height=29 "")
+
+## Indicator properties
+
+Every indicator has a list of properties:
+* param_id - layer id
+* param_label - full spelt indicator name
+* direction - array of indicator features to combine colour matrix in bivariate layers (sentiment)
+* is_base - boolean for **base indicators** aforementioned
+
+Here is table with all info for indicators (not updated. please, check actual in db, `bivariate_indicators` table or this git file <https://gitlab.com/kontur-private/platform/geocint/-/blob/master/tables/bivariate_indicators.sql>).
+
+|     |     |     |     |
+| --- | --- | --- | --- |
+| **param_id** | **param_label** | **direction** | **is_base** |
+| area_km2 | Area | \[\["neutral"\], \["neutral"\]\] | TRUE |
+| avg_ndvi | Average NDVI, JUN 2019 | \[\["bad"\], \["good"\]\] | FALSE |
+| avg_slope | Average slope | \[\["good", "unimportant"\], \["bad", "important"\]\] | FALSE |
+| avgmax_ts | OSM Last Edit Date (avg) | \[\["bad", "unimportant"\], \["good"\]\] | FALSE |
+| building_count | OSM Buildings | \[\["bad"\], \["good"\]\] | FALSE |
+| building_count_6_months | OSM Buildings (last 6 months) | \[\["bad"\], \["good"\]\] | FALSE |
+| count | OSM Objects | \[\["bad"\], \["good"\]\] | FALSE |
+| count_6_months | OSM Objects (last 6 months) | \[\["bad"\], \["good"\]\] | FALSE |
+| covid19_cases | COVID19 Cases (per 100,000 people, 7-day average) | \[\["good"\], \["bad"\]\] | FALSE |
+| covid19_confirmed | COVID19 Confirmed Cases | \[\["good"\], \["bad"\]\] | FALSE |
+| covid19_vaccines | COVID19 Vaccine Acceptance | \[\["bad"\], \["neutral"\]\] | FALSE |
+| forest | Forest Landcover Area | \[\["unimportant"\], \["important"\]\] | FALSE |
+| gdp | Gross Domestic Product | \[\["bad"\], \["good"\]\] | FALSE |
+| highway_length | OSM Road Length | \[\["bad"\], \["good"\]\] | FALSE |
+| highway_length_6_months | OSM Road Length (last 6 months) | \[\["bad"\], \["good"\]\] | FALSE |
+| local_hours | OSM Mapping Hours by Local Mappers | \[\["bad"\], \["good"\]\] | FALSE |
+| max_ts | OSM Last Edit Date (max) | \[\["bad", "unimportant"\], \["good"\]\] | FALSE |
+| min_ts | OSM First Edit Date (min) | \[\["good"\], \["neutral"\]\] | FALSE |
+| one | 1 | \[\["neutral"\], \["neutral"\]\] | TRUE |
+| osm_users | OSM Mappers Edited Here | \[\["bad"\], \["good"\]\] | FALSE |
+| population | Population | \[\["unimportant"\], \["important"\]\] | TRUE |
+| population_v2 | Population (previous version) | \[\["unimportant"\], \["important"\]\] | FALSE |
+| total_building_count | Total Buildings Estimate | \[\["unimportant"\], \["important"\]\] | TRUE |
+| total_hours | OSM Mapping Hours by All Mappers | \[\["bad"\], \["good"\]\] | FALSE |
+| view_count | OSM Map Views | \[\["bad", "unimportant"\], \["good", "important"\]\] | FALSE |
+| wildfires | Wildfire Days Per Year | \[\["good", "unimportant"\], \["bad", "important"\]\] | FALSE |
+
+### Colors combinations
+
+Every axis in the bivariate layer has a **direction** property - an array of axis features used to build a coloured bivariate map.  We use different layers and as the result get a set of direction combinations corresponding to each corner at the matrix. 
+
+Colours at corners are combined from the numerator's direction in the following way:\
+`['annex indicator (numerator from annex axis)', 'base indicator (numerator from base axis)']`
+
+![image.png](https://kontur.fibery.io/api/files/d021e426-9101-476e-bbad-4967b4ddd783#align=%3Aalignment%2Fblock-left&width=498&height=424.9166564941406 "")
+
+More examples:
+
+![Untitled Diagram.drawio (1).png](https://kontur.fibery.io/api/files/738bbcb6-1171-42cd-b69a-d616d20fa2fd#align=%3Aalignment%2Fblock-left&width=502&height=271 "")
+
+Every combination is assigned to certain color in the corners.
+
+![Screen Shot 2021-04-15 at 00.11.53.png](https://kontur.fibery.io/api/files/1363aea1-f76a-4291-a486-3fc4e848131c#align=%3Aalignment%2Fblock-left&width=485&height=400 "")Сolours at corners have values corresponding to the generated arrays from directions, intermediate сolours are mixed from corners. 
+
+Here is a table with results of mixing directions and corresponding colours used in bivariate layers at corners: [https://docs.google.com/spreadsheets/d/11ZqJ7cqV3UU2PhJpNXZpocamBTdY1WjsHK31Rbpm1qc/edit#gid=1930268049](https://docs.google.com/spreadsheets/d/11ZqJ7cqV3UU2PhJpNXZpocamBTdY1WjsHK31Rbpm1qc/edit#gid=1930268049)
+
+## Stops calculation
+* Current logic:**
+* we calculate only one set of stops for the legend for all resolutions
+* 3 intervals: min (0 percentile) -> 33 percentile -> 66 percentile -> max (100 percentile)
+* percentiles are calculated with conditions: nominator != 0 and denominator != 0 and population > 0
+* for some layers (in presets) we set stops manually (distance to fire stations, road completeness)
+  * it's quite ok as for some layers there is some business logic inside
+* we generate stop labels for some layers (dates: 10 Nov 2013), but only geocint knows for which layers such labels should be calculated
+  * it should be reduced after we'll use units for indicators and will send the flag of data type to FE
+
+## **Metrics**
+
+### Correlations
+
+We use the correlation model for suggested layers. Correlations are measured from **-1 to 1.**
+
+They are calculated in several ways:
+* Average values for layer
+* For manually drawn polygon
+* For the selected administrative boundary - we point at the interesting location and choose the necessary territory to get a correlation for it
+
+### How indicators are selected for correlations in polygons
+
+We calculate the correlations in the polygon between the layers, normalized by some measure:
+
+`corr (annex axis, base axis) = corr (annex_num / annex_den, base_num / base_den)`
+
+Initially, we had a condition `(base_num! = annex_num or base_den! = annex_den)` and the result was not quite correct, because the highest correlations were found between the same layer with different normalizations. 
+
+To remove self-correlations with different denominator in polygon, the condition corrected to `(base_num! = annex_num)`  and now the most interesting correlations are found between different layers.
+
+### Layer Quality
+* Quality** is currently considered as a metric to determine how much the map will be the same at the adjacent zoom to cut off layers with incorrect normalization. Metric is calculated for a pair of indicators and describes how much they can be applied together.
+
+Measurement - from **0 to 100**. The more value is the better.
+
+For example, 100/100 opposite to axes means that if you zoom into a red hexagon, it will break down into red hexagons.
+
+We show on matrix only axes that have "good" quality (>50).
+
+### Layer average correlation
+
+To determine the most interesting layers, we calculate an average correlation for each layer (numerator+denominator) but different for each matrix side. It is because a base side has more layers than an annex side.
